@@ -15,6 +15,32 @@ The store domain is **vinyl records and accessories**: genres as categories, lim
 
 ---
 
+
+## For Team Members — Local Setup
+1. **Clone:** `git clone <repo-url> && cd vinyl-store`
+2. **Database:** `docker compose up -d`
+3. **Backend:**
+   ```bash
+   cd backend
+   npm install
+   cp .env.example .env
+   npx prisma migrate dev
+   npm run dev
+   ```
+4. **Frontend** (once scaffolded): `cd frontend && npm install && npm run dev`
+
+Test backend at `http://localhost:3000`.
+
+### If using AI tools
+Paste this repo's screenshot of folder and file skeleton to the AI first, plus:
+- Stack: Node + Express + Prisma + PostgreSQL, JWT + bcrypt
+- Use Prisma Client only (no raw SQL)
+- Follow controller/service/routes separation
+- Read `prisma/schema.prisma` before DB code
+
+Don't accept AI-suggested folder changes unless discussed with team first; structure is team-agreed.
+
+
 ## Tech Stack
 
 | Layer | Choice |
