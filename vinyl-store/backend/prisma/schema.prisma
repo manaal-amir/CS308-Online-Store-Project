@@ -114,7 +114,7 @@ model Cart {
   updatedAt DateTime   @updatedAt
 }
 
-/// CartItem
+/// CartItem: doesnt include price, price should be copied from Product.price
 model CartItem {
   id       Int @id @default(autoincrement())
   quantity Int @default(1) // can't exceed the quantity in stock Product.quantity
