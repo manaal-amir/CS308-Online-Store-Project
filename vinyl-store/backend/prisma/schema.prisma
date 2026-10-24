@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// options for role column in  the User table
+enum Role {
+  CUSTOMER
+  SALES_MANAGER
+  PRODUCT_MANAGER
+  SUPPORT_AGENT
+}
+
+// options for the status of an order
+enum OrderStatus {
+  PROCESSING
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+// PEOPLE TABLE
+/// all users share this table: customers, managers, agents
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  lastname     String
+  email        String   @unique
+  passwordHash String // HASHED
+  taxId        String? // oprional for managers, agents; mandatory for customers
+  homeAddress  String? // optional because Managers and Agents don't need it, API should check it for customers
+  role         Role     @default(CUSTOMER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  cart         Cart?
+  orders       Order[]
+}
+
+// CATALOG TABLES
+///category table: producst type: vinyl, record player, accesssory
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  Products Product[]
+}
+
+/// genre table: different music styles
+model Genre {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  Artists     Artist[]
+  Products    Product[]
+  description String?
+}
+
+/// Product Table
+model Product {
+  id             Int      @id @default(autoincrement())
+  name           String
+  model          String //edition
+  serialNumber   String   @unique
+  quantity       Int      @default(0) //stock
+  price          Decimal  @db.Decimal(10, 2)
+  cost           Decimal? @db.Decimal(10, 2) //optional bc if its empty just use 0.5xprice
+  warrantyStatus String
+  distributor    String //label or distribution
+  description    String //required for req 7
+  imageUrl       String? //maybe can add default image
+  createdAt      DateTime @default(now())
+
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  artistId Int?
+  artist   Artist? @relation(fields: [artistId], references: [id])
+
+  genreId Int?
+  genre   Genre? @relation(fields: [genreId], references: [id])
+
+  cartItems CartItem[]
+
+  orderItems OrderItem[]
+}
+
+/// Artist Table
+model Artist {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  Products    Product[]
+  description String?
+  imageUrl    String?
+
+  genreId Int?
+  genre   Genre? @relation(fields: [genreId], references: [id])
+}
+
+///discount table
+model Discount {
+  id Int @id
+}
+
+//shopping tables: carts and wishlists
+/// Cart table: each logged in user has one cart, the cart is a live item, 
+//changes done in prices and quantities can change the info in the cart
+model Cart {
+  id        Int        @id @default(autoincrement())
+  userId    Int        @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  updatedAt DateTime   @updatedAt
+}
+
+/// CartItem: doesnt include price, price should be copied from Product.price
+model CartItem {
+  id       Int @id @default(autoincrement())
+  quantity Int @default(1) // can't exceed the quantity in stock Product.quantity
+
+  cartId Int
+  cart   Cart @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@unique([cartId, productId]) // no duplicate products, instead an items quatity is increased
+}
+
+// Orders, Delivery and money management
+/// Order table: order is history so new changes arent reflected on it
+model Order {
+  id              Int         @id @default(autoincrement())
+  status          OrderStatus @default(PROCESSING)
+  totalPrice      Decimal     @db.Decimal(10, 2)
+  deliveryAddress String // copied at checkout, not linked to User.homeAddress
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  userId Int
+  user   User        @relation(fields: [userId], references: [id])
+  items  OrderItem[]
+}
+
+/// OrderItem table
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2) // price actually paid, discount included
+  unitCost  Decimal @db.Decimal(10, 2) // product cost at checkout (or 50% of price)
+
+  orderId Int
+  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+}
