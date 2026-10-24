@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// options for role column in  the User table
+enum Role {
+  CUSTOMER
+  SALES_MANAGER
+  PRODUCT_MANAGER
+  SUPPORT_AGENT
+}
+
+// PEOPLE TABLE
+/// all users share this table: customers, managers, agents
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  lastname     String
+  email        String   @unique
+  passwordHash String // HASHED
+  taxId        String? // oprional for managers, agents; mandatory for customers
+  homeAddress  String? // optional because Managers and Agents don't need it, API should check it for customers
+  role         Role     @default(CUSTOMER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// CATALOG TABLES
+///category table: producst type: vinyl, record player, accesssory
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  Products Product[]
+}
+
+/// genre table: different music styles
+model Genre {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  Artists     Artist[]
+  Products    Product[]
+  description String?
+}
+
+/// Product Table
+model Product {
+  id             Int      @id @default(autoincrement())
+  name           String
+  model          String //edition
+  serialNumber   String   @unique
+  quantity       Int      @default(0) //stock
+  price          Decimal  @db.Decimal(10, 2)
+  cost           Decimal? @db.Decimal(10, 2) //optional bc if its empty just use 0.5xprice
+  warrantyStatus String
+  distributor    String //label or distribution
+  description    String //required for req 7
+  imageUrl       String? //maybe can add default image
+  createdAt      DateTime @default(now())
+
+  categoryId Int
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  artistId Int?
+  artist   Artist? @relation(fields: [artistId], references: [id])
+
+  genreId Int?
+  genre   Genre? @relation(fields: [genreId], references: [id])
+}
+
+/// Artist Table
+model Artist {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  Products    Product[]
+  description String?
+  imageUrl    String?
+
+  genreId Int?
+  genre   Genre? @relation(fields: [genreId], references: [id])
+}
