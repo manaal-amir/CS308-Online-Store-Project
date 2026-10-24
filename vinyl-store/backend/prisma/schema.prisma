@@ -15,6 +15,14 @@ enum Role {
   SUPPORT_AGENT
 }
 
+// options for the status of an order
+enum OrderStatus {
+  PROCESSING
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
 // PEOPLE TABLE
 /// all users share this table: customers, managers, agents
 model User {
@@ -28,6 +36,8 @@ model User {
   role         Role     @default(CUSTOMER)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  cart         Cart?
+  orders       Order[]
 }
 
 // CATALOG TABLES
@@ -70,6 +80,10 @@ model Product {
 
   genreId Int?
   genre   Genre? @relation(fields: [genreId], references: [id])
+
+  cartItems CartItem[]
+
+  orderItems OrderItem[]
 }
 
 /// Artist Table
@@ -82,4 +96,63 @@ model Artist {
 
   genreId Int?
   genre   Genre? @relation(fields: [genreId], references: [id])
+}
+
+///discount table
+model Discount {
+  id Int @id
+}
+
+//shopping tables: carts and wishlists
+/// Cart table: each logged in user has one cart, the cart is a live item, 
+//changes done in prices and quantities can change the info in the cart
+model Cart {
+  id        Int        @id @default(autoincrement())
+  userId    Int        @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  updatedAt DateTime   @updatedAt
+}
+
+/// CartItem
+model CartItem {
+  id       Int @id @default(autoincrement())
+  quantity Int @default(1) // can't exceed the quantity in stock Product.quantity
+
+  cartId Int
+  cart   Cart @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@unique([cartId, productId]) // no duplicate products, instead an items quatity is increased
+}
+
+// Orders, Delivery and money management
+/// Order table: order is history so new changes arent reflected on it
+model Order {
+  id              Int         @id @default(autoincrement())
+  status          OrderStatus @default(PROCESSING)
+  totalPrice      Decimal     @db.Decimal(10, 2)
+  deliveryAddress String // copied at checkout, not linked to User.homeAddress
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  userId Int
+  user   User        @relation(fields: [userId], references: [id])
+  items  OrderItem[]
+}
+
+/// OrderItem table
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2) // price actually paid, discount included
+  unitCost  Decimal @db.Decimal(10, 2) // product cost at checkout (or 50% of price)
+
+  orderId Int
+  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
 }
