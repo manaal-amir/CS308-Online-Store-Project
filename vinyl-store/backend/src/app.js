@@ -1,5 +1,6 @@
 const express = require('express');
 const authRoutes = require('./modules/auth/auth.routes');
+const cartRoutes = require('./modules/cart/cart.routes');
 const errorHandler = require('./middlewares/errorHandler');
 const notFound = require('./middlewares/notFound');
 
@@ -14,6 +15,8 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+//cart routes, only for logged in customers
+app.use('/api/cart', cartRoutes);
 
 //any request that didn't match a route above becomes a 404
 app.use(notFound);
