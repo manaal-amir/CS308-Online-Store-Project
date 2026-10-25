@@ -1,6 +1,7 @@
 const express = require('express');
 const authRoutes = require('./modules/auth/auth.routes');
 const errorHandler = require('./middlewares/errorHandler');
+const notFound = require('./middlewares/notFound');
 
 const app = express();
 
@@ -13,6 +14,9 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+
+//any request that didn't match a route above becomes a 404
+app.use(notFound);
 
 // Error handler must be last
 app.use(errorHandler);
