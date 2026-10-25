@@ -6,7 +6,12 @@ const PORT = process.env.PORT || 3000;
 
 async function main() {
   await prisma.$connect();
-  app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
+});
