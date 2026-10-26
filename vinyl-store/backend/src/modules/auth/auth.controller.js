@@ -32,7 +32,9 @@ async function login(req, res, next) {
 }
 
 async function logout(req, res) {
+  // JWT is stateless — logout is client-side token deletion.
+  // This endpoint exists so the frontend has something to call.
   res.status(200).json({ message: 'Logged out' });
 }
 
-module.exports = { register, login };
+module.exports = { register, login, logout };
