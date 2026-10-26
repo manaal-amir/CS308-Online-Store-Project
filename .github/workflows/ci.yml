@@ -1,0 +1,39 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: vinyl
+          POSTGRES_PASSWORD: vinyl_dev
+          POSTGRES_DB: vinyl_store
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+        working-directory: vinyl-store/backend
+      - run: npx prisma@5 migrate deploy
+        working-directory: vinyl-store/backend
+        env:
+          DATABASE_URL: postgresql://vinyl:vinyl_dev@localhost:5432/vinyl_store?schema=public
+      - run: npx prisma@5 db seed
+        working-directory: vinyl-store/backend
+        env:
+          DATABASE_URL: postgresql://vinyl:vinyl_dev@localhost:5432/vinyl_store?schema=public
+      - run: npm test
+        working-directory: vinyl-store/backend
+        env:
+          DATABASE_URL: postgresql://vinyl:vinyl_dev@localhost:5432/vinyl_store?schema=public
+          JWT_SECRET: test_secret
