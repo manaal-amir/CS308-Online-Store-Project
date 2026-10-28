@@ -24,6 +24,7 @@ The store domain is **vinyl records and accessories**: genres as categories, lim
    cd backend
    npm install
    cp .env.example .env
+   npx prisma@5 db seed   
    npx prisma migrate dev
    npm run dev
    ```
@@ -116,7 +117,8 @@ npm run dev                  # starts server on :3000
 cd ../frontend
 npm install
 npm run dev
-```
+```  
+> **Important:** always run Prisma with `@5` — `npx prisma@5 migrate dev`, `npx prisma@5 db seed`. Bare `npx prisma` downloads the Prisma 8 RC and breaks these commands.
 
 ### Environment Variables (backend/.env)
 ```
@@ -160,7 +162,7 @@ PORT=3000
 ### Testing
 - Authors write unit tests for their own code (counts toward ≥25 tests/demo)
 - Rotating QA person does manual/integration testing and files bug reports
-- Bug reports tracked as GitHub Issues with `bug` label
+- Bug reports tracked in Jira (project: Vinyl Store)  
 
 ---
 
