@@ -1,0 +1,1022 @@
+.account-site {
+  color: #e1d9c1;
+  background: #1d1d00;
+  min-height: 100vh;
+}
+
+.account-page,
+.auth-page {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  padding: 26px 48px 72px;
+}
+
+.account-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #aba68f;
+  font-size: 10px;
+  margin: 0 0 26px;
+}
+
+.account-breadcrumb a:hover,
+.account-panel-heading > a:hover,
+.security-row a:hover {
+  color: #ba8247;
+}
+
+.account-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 48px;
+  align-items: start;
+}
+
+.account-sidebar {
+  padding: 4px 0 0;
+  font-size: 10px;
+}
+
+.account-avatar {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #625a3e;
+  border-radius: 50%;
+  background: #29280e;
+  color: #d7cba8;
+  font: 14px "Cormorant Garamond", Georgia, serif;
+}
+
+.account-sidebar h2 {
+  margin: 12px 0 2px;
+  color: #e1d9c1;
+  font: 500 17px/1.2 "Cormorant Garamond", Georgia, serif;
+}
+
+.account-sidebar > p {
+  color: #aba68f;
+  font-size: 9px;
+}
+
+.account-edit-link {
+  display: inline-flex;
+  justify-content: center;
+  width: 100%;
+  margin: 15px 0 18px;
+  padding: 8px;
+  border: 1px solid #625a3e;
+}
+
+.account-edit-link:hover,
+.account-secondary-button:hover {
+  border-color: #ba8247;
+  color: #e2b27a;
+}
+
+.account-sidebar nav {
+  display: grid;
+  gap: 2px;
+  padding-top: 5px;
+  border-top: 1px solid #49472a;
+}
+
+.account-sidebar nav a {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 31px;
+  padding: 0 8px;
+  border-left: 2px solid transparent;
+  color: #c6bea4;
+  font-size: 10px;
+}
+
+.account-sidebar nav a span {
+  width: 12px;
+  color: #ba8247;
+  font-size: 12px;
+  text-align: center;
+}
+
+.account-sidebar nav a:hover,
+.account-sidebar nav a.is-active {
+  color: #f0e5c7;
+  background: #29280e;
+  border-left-color: #ba8247;
+}
+
+.sidebar-help {
+  margin-top: 35px;
+  padding-top: 16px;
+  border-top: 1px solid #49472a;
+}
+
+.sidebar-help h3 {
+  margin: 0 0 5px;
+  font: 500 16px "Cormorant Garamond", Georgia, serif;
+}
+
+.sidebar-help p,
+.sidebar-help a {
+  color: #aba68f;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.sidebar-help a {
+  display: inline-block;
+  margin-top: 8px;
+  color: #d6ad75;
+}
+
+.account-content {
+  min-width: 0;
+}
+
+.account-heading {
+  margin: 0 0 25px;
+}
+
+.account-eyebrow {
+  display: block;
+  color: #ba8247;
+  font-size: 9px;
+  letter-spacing: .12em;
+}
+
+.account-heading h1,
+.auth-form-panel h1 {
+  margin: 6px 0 3px;
+  color: #e8dfc7;
+  font: 500 clamp(31px, 4vw, 40px)/1.05 "Cormorant Garamond", Georgia, serif;
+  letter-spacing: 0;
+}
+
+.account-heading > p,
+.account-heading > div > p {
+  color: #aba68f;
+  font-size: 10px;
+}
+
+.account-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.account-stat-card,
+.account-panel,
+.settings-panel {
+  border: 1px solid #49472a;
+  background: rgba(41, 40, 14, .42);
+}
+
+.account-stat-card {
+  min-height: 91px;
+  padding: 13px 15px;
+}
+
+.account-stat-card span,
+.account-stat-card small {
+  display: block;
+  color: #aba68f;
+  font-size: 9px;
+}
+
+.account-stat-card strong {
+  display: block;
+  margin: 2px 0;
+  color: #e5dbc0;
+  font: 500 25px/1.1 "Cormorant Garamond", Georgia, serif;
+}
+
+.account-stat-card small {
+  color: #8e8974;
+}
+
+.overview-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
+  gap: 14px;
+}
+
+.account-panel {
+  padding: 17px;
+}
+
+.account-panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.account-panel-heading h2,
+.settings-panel h2 {
+  margin: 4px 0 0;
+  color: #e1d9c1;
+  font: 500 20px/1.15 "Cormorant Garamond", Georgia, serif;
+}
+
+.account-panel-heading > a {
+  flex: 0 0 auto;
+  color: #c2a277;
+  font-size: 9px;
+}
+
+.order-date {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 14px 0;
+  color: #aba68f;
+  font-size: 9px;
+}
+
+.order-status {
+  color: #b6a36c;
+}
+
+.order-record {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid #49472a;
+  border-bottom: 1px solid #49472a;
+}
+
+.order-record .record-artwork {
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+}
+
+.order-record .record-art-title,
+.mini-record .record-art-title {
+  display: none;
+}
+
+.order-record h3 {
+  margin: 0 0 3px;
+  color: #e1d9c1;
+  font: 500 14px "Cormorant Garamond", Georgia, serif;
+}
+
+.order-record p,
+.order-record span {
+  display: block;
+  color: #aba68f;
+  font-size: 9px;
+}
+
+.order-record span {
+  margin-top: 7px;
+}
+
+.order-record b {
+  margin-left: 14px;
+  color: #e1d9c1;
+  font-weight: 500;
+}
+
+.order-total {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 11px;
+  font-size: 10px;
+}
+
+.account-details dl {
+  display: grid;
+  gap: 12px;
+  margin: 17px 0 0;
+}
+
+.account-details dl div {
+  display: grid;
+  gap: 3px;
+}
+
+.account-details dt {
+  color: #928c76;
+  font-size: 9px;
+}
+
+.account-details dd {
+  margin: 0;
+  color: #ddd4bb;
+  font-size: 10px;
+}
+
+.account-recommendations {
+  margin-top: 25px;
+}
+
+.account-recommendations > .account-panel-heading {
+  margin-bottom: 13px;
+}
+
+.account-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 13px;
+}
+
+.mini-record {
+  min-width: 0;
+}
+
+.mini-record-art {
+  display: block;
+  aspect-ratio: 1 / .78;
+  overflow: hidden;
+}
+
+.mini-record h3 {
+  margin: 7px 0 1px;
+  color: #e1d9c1;
+  font: 500 15px "Cormorant Garamond", Georgia, serif;
+}
+
+.mini-record p,
+.mini-record strong {
+  display: block;
+  color: #aba68f;
+  font-size: 9px;
+}
+
+.mini-record strong {
+  margin-top: 4px;
+  color: #d8c49e;
+}
+
+.wishlist-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 18px;
+}
+
+.wishlist-sort {
+  display: grid;
+  gap: 5px;
+  color: #aba68f;
+  font-size: 9px;
+}
+
+.wishlist-sort select {
+  min-width: 138px;
+  padding: 8px 26px 8px 9px;
+  border: 1px solid #625a3e;
+  border-radius: 0;
+  background: #222206;
+  color: #e1d9c1;
+  font-size: 9px;
+}
+
+.wishlist-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px 14px;
+}
+
+.wishlist-artwork {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1;
+  background: #29280e;
+}
+
+.record-artwork {
+  position: relative;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  background: #3e493b;
+}
+
+.art-prism {
+  background: linear-gradient(145deg, #12151b, #293140 68%, #6b593e);
+}
+
+.art-cream {
+  background: linear-gradient(135deg, #ddc8a4, #a9896b 45%, #463b30);
+}
+
+.art-portrait {
+  background: linear-gradient(135deg, #2d211b, #9b5531 53%, #160e0d);
+}
+
+.art-pink {
+  background: linear-gradient(135deg, #cc7990, #9a4560 52%, #39212b);
+}
+
+.art-street {
+  background: linear-gradient(135deg, #d6c5a4, #77806b 52%, #373c36);
+}
+
+.art-blue {
+  background: linear-gradient(135deg, #5b9eb6, #174b66 52%, #0c202a);
+}
+
+.record-art-disc {
+  position: absolute;
+  width: 79%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  right: -25%;
+  top: 8%;
+  z-index: -1;
+  background: repeating-radial-gradient(circle, #181816 0 2px, #2d2c28 3px 4px);
+  opacity: .8;
+}
+
+.record-art-label {
+  position: absolute;
+  top: 50%;
+  right: 14%;
+  display: grid;
+  width: 20%;
+  aspect-ratio: 1;
+  place-items: center;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: #b77c48;
+  color: #211b13;
+  font: 500 clamp(6px, .7vw, 10px) "Cormorant Garamond", Georgia, serif;
+}
+
+.record-art-title {
+  position: absolute;
+  left: 8%;
+  bottom: 8%;
+  max-width: 74%;
+  color: #f2e7ca;
+  font: 500 clamp(8px, 1.2vw, 16px)/1.1 "Cormorant Garamond", Georgia, serif;
+  text-shadow: 0 1px 5px #000b;
+}
+
+.art-prism .record-art-disc {
+  width: 58%;
+  right: 8%;
+  top: 20%;
+  opacity: .58;
+}
+
+.record-prism {
+  position: absolute;
+  z-index: 1;
+  top: 26%;
+  left: 15%;
+  width: 68%;
+  height: 48%;
+  background: linear-gradient(110deg, transparent 0 48%, #f6f0dc 49% 51%, #bd3441 52% 56%, #f3c24c 57% 61%, #55a9a2 62% 66%, #848cc0 67% 71%, transparent 72%);
+  clip-path: polygon(0 50%, 100% 0, 100% 100%);
+}
+
+.art-street .record-crosswalk {
+  position: absolute;
+  inset: 36% -10% -16%;
+  transform: rotate(-16deg);
+  background: repeating-linear-gradient(90deg, #ddd5c1 0 13%, #343a37 13% 23%);
+  opacity: .74;
+}
+
+.wishlist-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 25px;
+  height: 25px;
+  border: 0;
+  border-radius: 50%;
+  background: #1d1d00d9;
+  color: #dcaa69;
+  cursor: pointer;
+}
+
+.wishlist-record-info {
+  min-height: 62px;
+  padding: 7px 0 4px;
+}
+
+.wishlist-record-info p {
+  overflow: hidden;
+  color: #aba68f;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wishlist-record-info h2 {
+  overflow: hidden;
+  margin: 2px 0;
+  color: #e1d9c1;
+  font: 500 15px/1.1 "Cormorant Garamond", Georgia, serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wishlist-record-info strong {
+  color: #d8c49e;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.account-primary-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 15px;
+  border: 0;
+  background: #62000e;
+  color: #f1e7cd;
+  font-size: 10px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.account-primary-button:hover {
+  background: #820a1a;
+}
+
+.wishlist-add {
+  width: 100%;
+  min-height: 29px;
+}
+
+.wishlist-footnote {
+  margin-top: 19px;
+  color: #928c76;
+  font-size: 9px;
+}
+
+.empty-wishlist {
+  display: grid;
+  min-height: 310px;
+  justify-items: center;
+  align-content: center;
+  gap: 9px;
+  text-align: center;
+}
+
+.empty-wishlist > span {
+  color: #ba8247;
+  font-size: 32px;
+}
+
+.empty-wishlist h2 {
+  margin: 0;
+  font: 500 25px "Cormorant Garamond", Georgia, serif;
+}
+
+.empty-wishlist p {
+  margin-bottom: 9px;
+  color: #aba68f;
+  font-size: 10px;
+}
+
+.settings-form {
+  display: grid;
+  gap: 14px;
+}
+
+.settings-panel {
+  padding: 18px;
+}
+
+.settings-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 17px;
+}
+
+.account-avatar.small {
+  width: 35px;
+  height: 35px;
+  flex: 0 0 35px;
+  font-size: 11px;
+}
+
+.settings-section-heading h2 {
+  margin: 0;
+}
+
+.settings-section-heading p {
+  margin-top: 3px;
+  color: #928c76;
+  font-size: 9px;
+}
+
+.settings-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 11px 14px;
+}
+
+.settings-fields label,
+.auth-form-panel form > label {
+  display: grid;
+  gap: 5px;
+  color: #c6bea4;
+  font-size: 9px;
+}
+
+.settings-fields input,
+.settings-fields textarea,
+.auth-form-panel input:not([type="checkbox"]) {
+  width: 100%;
+  min-width: 0;
+  min-height: 32px;
+  padding: 8px 10px;
+  border: 1px solid #49472a;
+  border-radius: 0;
+  outline: none;
+  background: #222206;
+  color: #e1d9c1;
+  font-size: 10px;
+}
+
+.settings-fields textarea {
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.settings-fields input:focus,
+.settings-fields textarea:focus,
+.auth-form-panel input:focus {
+  border-color: #ba8247;
+}
+
+.settings-bio {
+  grid-column: 1 / -1;
+}
+
+.preferences-panel > div:first-child {
+  margin-bottom: 8px;
+}
+
+.preference-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  min-height: 49px;
+  border-top: 1px solid #49472a;
+  cursor: pointer;
+}
+
+.preference-row span,
+.preference-row small {
+  display: block;
+}
+
+.preference-row strong,
+.security-row strong {
+  color: #ddd4bb;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.preference-row small,
+.security-row p {
+  margin-top: 2px;
+  color: #928c76;
+  font-size: 8px;
+}
+
+.preference-row input {
+  appearance: none;
+  width: 25px;
+  height: 14px;
+  flex: 0 0 25px;
+  margin: 0;
+  border: 1px solid #70674b;
+  border-radius: 99px;
+  background: #373522;
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.preference-row input::before {
+  content: "";
+  display: block;
+  width: 10px;
+  height: 10px;
+  margin: 1px;
+  border-radius: 50%;
+  background: #bdb69e;
+  transition: transform .15s;
+}
+
+.preference-row input:checked {
+  background: #ba8247;
+}
+
+.preference-row input:checked::before {
+  transform: translateX(11px);
+  background: #211c12;
+}
+
+.security-panel > div:first-child {
+  margin-bottom: 8px;
+}
+
+.security-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  min-height: 48px;
+  border-top: 1px solid #49472a;
+}
+
+.security-row a,
+.security-row button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #c2a277;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.settings-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.account-secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid #625a3e;
+  color: #e1d9c1;
+  font-size: 10px;
+}
+
+.settings-actions > span {
+  margin-left: auto;
+  color: #928c76;
+  font-size: 8px;
+}
+
+.account-notice {
+  margin: 10px 0 0;
+  color: #d6ad75;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.settings-notice {
+  margin-top: 0;
+}
+
+.auth-page {
+  width: min(1120px, 100%);
+  padding-top: 19px;
+}
+
+.auth-page .account-breadcrumb {
+  margin-bottom: 15px;
+}
+
+.auth-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 465px;
+  gap: clamp(32px, 5vw, 70px);
+  align-items: center;
+}
+
+.auth-story {
+  position: relative;
+  display: flex;
+  min-height: 385px;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px 22px;
+  overflow: hidden;
+  isolation: isolate;
+  background: #44301d var(--auth-image) center / cover no-repeat;
+}
+
+.auth-story::after {
+  position: absolute;
+  z-index: -1;
+  content: "";
+  inset: 0;
+  background: linear-gradient(180deg, #0d0b06a1, #0d0b0661 40%, #0d0b06e8);
+}
+
+.auth-story-mark {
+  color: #f3e8cc;
+  font: 500 22px "Cormorant Garamond", Georgia, serif;
+  letter-spacing: .12em;
+}
+
+.auth-story h1 {
+  margin: 0 0 8px;
+  color: #f2e7ce;
+  font: 500 clamp(32px, 4vw, 44px)/.95 "Cormorant Garamond", Georgia, serif;
+}
+
+.auth-story p {
+  color: #e2d9c1;
+  font: 12px/1.45 "Cormorant Garamond", Georgia, serif;
+}
+
+.auth-form-panel {
+  width: min(100%, 360px);
+  margin: 0 auto;
+}
+
+.auth-form-panel h1 {
+  font-size: 35px;
+}
+
+.auth-intro {
+  margin: 6px 0 18px;
+  color: #aba68f;
+  font-size: 10px;
+}
+
+.auth-form-panel form {
+  display: grid;
+  gap: 8px;
+}
+
+.auth-form-panel form > label:not(:first-child) {
+  margin-top: 4px;
+}
+
+.auth-form-panel input:not([type="checkbox"]) {
+  min-height: 35px;
+  background: #222206;
+}
+
+.auth-form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 2px 0 6px;
+  color: #aba68f;
+  font-size: 9px;
+}
+
+.auth-form-options a {
+  color: #c2a277;
+}
+
+.auth-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.auth-checkbox input {
+  margin: 0;
+  accent-color: #ba8247;
+}
+
+.auth-form-panel .account-primary-button {
+  min-height: 36px;
+  margin-top: 3px;
+}
+
+.auth-switch {
+  margin-top: 13px;
+  color: #aba68f;
+  font-size: 9px;
+  text-align: center;
+}
+
+.auth-switch a {
+  color: #d6ad75;
+}
+
+.account-site .vinyl-footer {
+  margin-top: 0;
+}
+
+@media (max-width: 900px) {
+  .account-page,
+  .auth-page {
+    padding-right: 28px;
+    padding-left: 28px;
+  }
+
+  .account-layout {
+    grid-template-columns: 180px minmax(0, 1fr);
+    gap: 28px;
+  }
+
+  .overview-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .account-page,
+  .auth-page {
+    padding: 19px 18px 45px;
+  }
+
+  .account-layout {
+    display: block;
+  }
+
+  .account-sidebar {
+    margin-bottom: 28px;
+  }
+
+  .account-sidebar nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sidebar-help {
+    display: none;
+  }
+
+  .account-stat-grid {
+    gap: 7px;
+  }
+
+  .account-stat-card {
+    min-height: 83px;
+    padding: 10px;
+  }
+
+  .account-stat-card span,
+  .account-stat-card small {
+    font-size: 8px;
+  }
+
+  .wishlist-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 12px;
+  }
+
+  .auth-layout {
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+
+  .auth-story {
+    min-height: 250px;
+  }
+
+  .auth-form-panel {
+    width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .account-stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .account-stat-card {
+    min-height: 72px;
+  }
+
+  .account-mini-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .settings-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-bio {
+    grid-column: auto;
+  }
+
+  .wishlist-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .settings-actions {
+    flex-wrap: wrap;
+  }
+
+  .settings-actions > span {
+    width: 100%;
+    margin: 4px 0 0;
+  }
+}
