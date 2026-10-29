@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { registerUser } from "../services/api.js";
 import NavBar from "../components/layout/navBar.jsx";
 import Footer from "../components/layout/footer.jsx";
 import heroImage from "../assets/hero/hero.png";
@@ -44,6 +45,41 @@ export default function Account() {
     setNotice("This is a frontend preview. Account services are not connected yet.");
   }
 
+
+async function handleRegister(event) {
+  event.preventDefault();
+  setNotice("");
+
+  const form = event.currentTarget;
+  const formData = new FormData(form);
+
+  const password = formData.get("password");
+  const confirmPassword = formData.get("confirm-password");
+
+  if (password !== confirmPassword) {
+    setNotice("Passwords do not match.");
+    return;
+  }
+
+  const userData = {
+    name: formData.get("name").trim(),
+    lastname: formData.get("lastname").trim(),
+    taxId: formData.get("taxId").trim(),
+    homeAddress: formData.get("homeAddress").trim(),
+    email: formData.get("email").trim(),
+    password: password,
+  };
+
+  try {
+    await registerUser(userData);
+    setNotice("Account created successfully! You can now sign in.");
+    form.reset();
+  } catch (error) {
+    setNotice(error.message || "Registration failed. Please try again.");
+  }
+}
+
+
   function pageContent() {
     if (path === "/sign-in") {
       return (
@@ -61,7 +97,7 @@ export default function Account() {
         <AuthPage
           mode="create-account"
           notice={notice}
-          onSubmit={showPrototypeNotice}
+          onSubmit={handleRegister}
           onNotice={setNotice}
         />
       );
@@ -144,8 +180,41 @@ function AuthPage({ mode, notice, onSubmit, onNotice }) {
           <form onSubmit={handleSubmit}>
             {!isSignIn && (
               <>
-                <label htmlFor="account-name">Full name</label>
-                <input id="account-name" name="name" autoComplete="name" placeholder="Your name" required />
+                  <label htmlFor="account-name">First name</label>
+                  <input
+                   id="account-name"
+                   name="name"
+                   autoComplete="given-name"
+                   placeholder="Your first name"
+                   required
+                  />
+
+                <label htmlFor="account-lastname">Last name</label>
+                <input
+                 id="account-lastname"
+                 name="lastname"
+                 autoComplete="family-name"
+                 placeholder="Your last name"
+                 required
+                />
+              
+                <label htmlFor="account-tax-id">Tax ID</label>
+                <input
+                id="account-tax-id"
+                name="taxId"
+                type="text"
+                placeholder="Your tax ID"
+                required
+                />
+
+                <label htmlFor="account-address">Home address</label>
+                <input
+                id="account-address"
+                name="homeAddress"
+                autoComplete="street-address"
+                placeholder="Your home address"
+                required
+                />
               </>
             )}
             <label htmlFor="account-email">Email address</label>
