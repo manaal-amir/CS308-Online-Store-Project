@@ -1,3 +1,4 @@
+import Cart from "./pages/cart.jsx";
 import Home from "./pages/home.jsx";
 import Shop from "./pages/shop.jsx";
 import Genre from "./pages/genre.jsx";
@@ -19,6 +20,10 @@ function App() {
   if (path === "/shop") {
     return <Shop />;
   }
+
+  if (path === "/cart") {
+  return <Cart />;
+}
 
   if (
     path === "/sign-in" ||

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { getCatalogProducts } from "../../services/api.js";
+import { addToGuestCart } from "../../utils/guestCart.js";
 
 function getRelationName(value) {
   return typeof value === "object" && value !== null ? value.name : value;
@@ -131,6 +132,25 @@ export default function CatalogRecords({
 
 function CatalogCard({ product }) {
   const [saved, setSaved] = useState(false);
+  const [cartMessage, setCartMessage] = useState("");
+  const [cartError, setCartError] = useState("");
+
+  function handleAddToCart() {
+   try {
+    addToGuestCart(
+      Number(product.id),
+      1,
+      Number(product.quantity)
+    );
+
+     setCartMessage("Added to cart!");
+     setCartError("");
+   } catch (error) {
+     setCartError(error.message);
+     setCartMessage("");
+   }
+  }
+
   const artist = getRelationName(product.artist) || product.distributor || "Various Artists";
   const category = getRelationName(product.category);
   const isVinyl = category?.toLowerCase() === "vinyl";
@@ -170,7 +190,24 @@ function CatalogCard({ product }) {
         <span className="catalog-record-price">{formatPrice(product.price)}</span>
         {product.quantity === 0 && <span className="catalog-stock">Out of stock</span>}
       </a>
-      <a className="catalog-add-button" href="/cart">Add to Cart</a>
+      
+       <button
+        type="button"
+        className="catalog-add-button"
+        onClick={handleAddToCart}
+        disabled={Number(product.quantity) <= 0}
+       >
+       {Number(product.quantity) <= 0 ? "Out of Stock" : "Add to Cart"}
+       </button>
+
+      {cartMessage && (
+      <p role="status">{cartMessage}</p>
+      )}
+
+      {cartError && (
+       <p role="alert">{cartError}</p>
+      )}
+
     </article>
   );
 }
