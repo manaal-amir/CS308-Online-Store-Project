@@ -123,3 +123,23 @@ describe('POST /api/auth/login', () => {
     expect(authService.login).not.toHaveBeenCalled();
   });
 });
+
+describe('password size and invalid json', () => {
+  //test 12: a password under 72 characters but over 72 bytes is rejected, bcrypt would cut it off
+  it('rejects a password longer than 72 bytes', async () => {
+    const res = await register({ password: 'ğ'.repeat(40) });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'password is too long' });
+    expect(authService.register).not.toHaveBeenCalled();
+  });
+
+  //test 13: invalid json gets a clean 400 through the error handler
+  it('rejects invalid json with a clean message', async () => {
+    const res = await request(app)
+      .post('/api/auth/login')
+      .set('Content-Type', 'application/json')
+      .send('{"email": "a@b.com",}');
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Invalid JSON body' });
+  });
+});

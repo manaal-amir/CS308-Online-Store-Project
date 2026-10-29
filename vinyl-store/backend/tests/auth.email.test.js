@@ -52,4 +52,29 @@ describe('email normalization', () => {
     expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { email: 'ayesha@example.com' } });
     expect(result.token).toBeDefined();
   });
+
+  //test 4: two sign ups at the same moment, the second one hits the database unique rule
+  //it must get the same 409 as a normal duplicate, not a 500
+  it('gives 409 when the same email is registered twice at the same moment', async () => {
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.create.mockRejectedValue(Object.assign(new Error('Unique constraint failed'), { code: 'P2002' }));
+
+    await expect(
+      authService.register({
+        name: 'A', lastname: 'B', email: 'a@b.com', password: 'Vinyl1234!', taxId: '1', homeAddress: 'x',
+      })
+    ).rejects.toMatchObject({ status: 409, message: 'Email already registered' });
+  });
+
+  //test 5: other database errors are not hidden
+  it('passes on other database errors when registering', async () => {
+    prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.create.mockRejectedValue(new Error('connection lost'));
+
+    await expect(
+      authService.register({
+        name: 'A', lastname: 'B', email: 'a@b.com', password: 'Vinyl1234!', taxId: '1', homeAddress: 'x',
+      })
+    ).rejects.toThrow('connection lost');
+  });
 });

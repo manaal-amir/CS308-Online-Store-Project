@@ -147,4 +147,11 @@ describe('validate middleware', () => {
     expect(err).toBeUndefined();
     expect(req.query.inStock).toBe(true);
   });
+
+  //test 20: maxBytes counts bytes, so 40 letters like "ğ" (80 bytes) are too long for 72 bytes
+  it('rejects text that is too long in bytes', () => {
+    const schema = { body: { password: { type: 'string', maxBytes: 72, trim: false } } };
+    expect(run(schema, { body: { password: 'ğ'.repeat(40) } }).message).toBe('password is too long');
+    expect(run(schema, { body: { password: 'a'.repeat(72) } })).toBeUndefined();
+  });
 });
