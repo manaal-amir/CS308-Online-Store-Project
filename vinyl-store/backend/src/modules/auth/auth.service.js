@@ -2,7 +2,16 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const prisma = require('../../config/prisma');
 
+//emails are not case sensitive, so "Person@x.com" and "person@x.com" must be the same account
+//every email is saved and looked up in lowercase
+function normalizeEmail(email) {
+  return String(email).trim().toLowerCase();
+}
+
 async function register({ name, lastname, email, password, taxId, homeAddress }) {
+  
+  email = normalizeEmail(email);
+
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     const err = new Error('Email already registered');
@@ -18,6 +27,9 @@ async function register({ name, lastname, email, password, taxId, homeAddress })
 }
 
 async function login({ email, password }) {
+  
+  email = normalizeEmail(email);
+  
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
     const err = new Error('Invalid credentials');
