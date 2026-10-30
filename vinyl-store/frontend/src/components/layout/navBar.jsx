@@ -1,16 +1,19 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function NavBar() {
   const [open, setOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState(() =>
     new URLSearchParams(window.location.search).get("search") || "",
   );
-  const searchInput = useRef(null);
 
   useEffect(() => {
-    if (searchOpen) searchInput.current?.focus();
-  }, [searchOpen]);
+    function handleSearchCleared() {
+      setQuery("");
+    }
+
+    window.addEventListener("catalog:search-cleared", handleSearchCleared);
+    return () => window.removeEventListener("catalog:search-cleared", handleSearchCleared);
+  }, []);
 
   function submitSearch(event) {
     event.preventDefault();
@@ -43,20 +46,24 @@ export default function NavBar() {
         <a href="/#newsletter">Magazine</a>
       </nav>
 
-      <div className="nav-actions">
-        <button
-          type="button"
-          className="nav-search-toggle"
-          aria-label={searchOpen ? "Close search" : "Search records"}
-          aria-expanded={searchOpen}
-          onClick={() => setSearchOpen((value) => !value)}
-        >
-          <svg viewBox="0 0 24 24">
+      <form className="nav-search-form" role="search" onSubmit={submitSearch}>
+        <label className="sr-only" htmlFor="site-record-search">Search records</label>
+        <input
+          id="site-record-search"
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search records..."
+        />
+        <button type="submit" aria-label="Submit search">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="10.8" cy="10.8" r="6.5" />
             <path d="m16 16 5 5" />
           </svg>
         </button>
+      </form>
 
+      <div className="nav-actions">
         <a href="/profile" aria-label="Your profile">
           <svg viewBox="0 0 24 24">
             <circle cx="12" cy="7" r="3.3" />
@@ -72,20 +79,6 @@ export default function NavBar() {
           </svg>
         </a>
       </div>
-      {searchOpen && (
-        <form className="nav-search-form" role="search" onSubmit={submitSearch}>
-          <label className="sr-only" htmlFor="site-record-search">Search records</label>
-          <input
-            ref={searchInput}
-            id="site-record-search"
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search albums, artists, genres..."
-          />
-          <button type="submit">Search</button>
-        </form>
-      )}
     </header>
   );
 }

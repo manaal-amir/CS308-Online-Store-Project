@@ -37,8 +37,7 @@
   font-size: 11px;
 }
 
-.catalog-tools select,
-.filter-toggle {
+.catalog-tools select {
   min-height: 36px;
   border: 1px solid #625a3e;
   border-radius: 2px;
@@ -52,13 +51,6 @@
   min-width: 120px;
 }
 
-.filter-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
 .catalog-layout {
   display: grid;
   grid-template-columns: 140px minmax(0, 1fr);
@@ -68,10 +60,6 @@
 
 .catalog-sidebar {
   padding-top: 1px;
-}
-
-.catalog-sidebar.is-closed {
-  display: none;
 }
 
 .filter-group {

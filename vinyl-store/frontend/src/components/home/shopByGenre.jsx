@@ -1,6 +1,6 @@
 import rockImage from "../../assets/genres/rock.png";
 import jazzImage from "../../assets/genres/jazz.png";
-import soulImage from "../../assets/genres/soulAndR&B.png";
+import classicalImage from "../../assets/genres/classical.png";
 import hiphopImage from "../../assets/genres/hiphop.png";
 
 const genres = [
@@ -22,7 +22,7 @@ const genres = [
     title: "CLASSICAL",
     description: "Timeless performances",
     image: "classical",
-    artwork: soulImage,
+    artwork: classicalImage,
     filter: "Classical",
   },
   {

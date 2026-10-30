@@ -21,13 +21,14 @@ export default function Shop() {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [stockStatus, setStockStatus] = useState("all");
   const [maxPrice, setMaxPrice] = useState(14990);
-  const searchQuery = new URLSearchParams(window.location.search).get("search") || "";
+  const [searchQuery, setSearchQuery] = useState(
+    () => new URLSearchParams(window.location.search).get("search") || "",
+  );
   const [sort, setSort] = useState(() =>
     new URLSearchParams(window.location.search).get("sort") === "newest"
       ? "newest"
       : "featured",
   );
-  const [filtersVisible, setFiltersVisible] = useState(true);
   const [expanded, setExpanded] = useState({
     genre: true,
     format: true,
@@ -35,7 +36,18 @@ export default function Shop() {
     price: true,
   });
 
+  function clearSearch() {
+    if (!searchQuery) return;
+
+    setSearchQuery("");
+    const url = new URL(window.location.href);
+    url.searchParams.delete("search");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    window.dispatchEvent(new Event("catalog:search-cleared"));
+  }
+
   function toggleGenre(genre) {
+    clearSearch();
     setSelectedGenres((current) =>
       current.includes(genre)
         ? current.filter((item) => item !== genre)
@@ -48,6 +60,7 @@ export default function Shop() {
   }
 
   function clearFilters() {
+    clearSearch();
     setSelectedGenres([]);
     setSelectedCategories([]);
     setStockStatus("all");
@@ -55,6 +68,7 @@ export default function Shop() {
   }
 
   function toggleCategory(category) {
+    clearSearch();
     setSelectedCategories((current) =>
       current.includes(category)
         ? current.filter((item) => item !== category)
@@ -80,7 +94,10 @@ export default function Shop() {
             <select
               id="record-sort"
               value={sort}
-              onChange={(event) => setSort(event.target.value)}
+              onChange={(event) => {
+                clearSearch();
+                setSort(event.target.value);
+              }}
             >
               <option value="featured">Featured</option>
               <option value="newest">Newest</option>
@@ -88,22 +105,11 @@ export default function Shop() {
               <option value="price-high">Price: High to Low</option>
               <option value="name">Name</option>
             </select>
-            <button
-              type="button"
-              className="filter-toggle"
-              aria-expanded={filtersVisible}
-              onClick={() => setFiltersVisible((value) => !value)}
-            >
-              <span aria-hidden="true">☷</span> Filter
-            </button>
           </div>
         </div>
 
         <div className="catalog-layout">
-          <aside
-            className={`catalog-sidebar${filtersVisible ? " is-open" : " is-closed"}`}
-            aria-label="Record filters"
-          >
+          <aside className="catalog-sidebar is-open" aria-label="Record filters">
             <FilterGroup
               title="Genre"
               open={expanded.genre}
@@ -151,7 +157,10 @@ export default function Shop() {
                     type="radio"
                     name="stock-status"
                     checked={stockStatus === "all"}
-                    onChange={() => setStockStatus("all")}
+                    onChange={() => {
+                      clearSearch();
+                      setStockStatus("all");
+                    }}
                   />
                   All products
                 </label>
@@ -160,7 +169,10 @@ export default function Shop() {
                     type="radio"
                     name="stock-status"
                     checked={stockStatus === "in-stock"}
-                    onChange={() => setStockStatus("in-stock")}
+                    onChange={() => {
+                      clearSearch();
+                      setStockStatus("in-stock");
+                    }}
                   />
                   In stock
                 </label>
@@ -169,7 +181,10 @@ export default function Shop() {
                     type="radio"
                     name="stock-status"
                     checked={stockStatus === "out-of-stock"}
-                    onChange={() => setStockStatus("out-of-stock")}
+                    onChange={() => {
+                      clearSearch();
+                      setStockStatus("out-of-stock");
+                    }}
                   />
                   Out of stock
                 </label>
@@ -189,7 +204,10 @@ export default function Shop() {
                   max="14990"
                   step="100"
                   value={maxPrice}
-                  onChange={(event) => setMaxPrice(Number(event.target.value))}
+                  onChange={(event) => {
+                    clearSearch();
+                    setMaxPrice(Number(event.target.value));
+                  }}
                 />
               </div>
             </FilterGroup>

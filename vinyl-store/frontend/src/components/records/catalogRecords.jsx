@@ -53,18 +53,19 @@ export default function CatalogRecords({
 
   const records = useMemo(() => {
     const selectedGenres = genre ? [genre] : genres;
-    const searchTerm = search.trim().toLocaleLowerCase();
+    const searchTerm = search.trim().toLowerCase();
     const matching = products.filter((product) => {
       const productGenre = getGenre(product).toLowerCase();
       const category = getRelationName(product.category) || "";
       const artist = getRelationName(product.artist) || product.distributor || "";
       const searchableText = [
         product.name,
+        product.description,
         artist,
         productGenre,
         category,
         product.serialNumber,
-      ].filter(Boolean).join(" ").toLocaleLowerCase();
+      ].filter(Boolean).join(" ").toLowerCase();
       const searchMatches = !searchTerm || searchableText.includes(searchTerm);
       const genreMatches = !selectedGenres.length || selectedGenres.some((selected) => {
         const normalized = selected.toLowerCase();
@@ -117,7 +118,11 @@ export default function CatalogRecords({
         </p>
       )}
       {records.length === 0 ? (
-        <p className="catalog-state">No records found for these filters.</p>
+        <p className="catalog-state">
+          {search.trim()
+            ? `No records found matching “${search.trim()}”. Try another name or description.`
+            : "No records found for these filters."}
+        </p>
       ) : (
         <div className="catalog-records">
           {records.map((product) => (
