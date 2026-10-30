@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./modules/auth/auth.routes');
 const cartRoutes = require('./modules/cart/cart.routes');
+const productRoutes = require('./modules/products/product.routes');
 const errorHandler = require('./middlewares/errorHandler');
 const notFound = require('./middlewares/notFound');
 
@@ -21,6 +22,7 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes);
 //cart routes, only for logged in customers
 app.use('/api/cart', cartRoutes);
 
