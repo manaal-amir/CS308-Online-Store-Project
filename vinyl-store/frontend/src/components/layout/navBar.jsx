@@ -7,9 +7,14 @@ import {
 export default function NavBar() {
   const [cartCount, setCartCount] = useState(getGuestCartCount);
   const [open, setOpen] = useState(false);
+ 
   const [query, setQuery] = useState(() =>
     new URLSearchParams(window.location.search).get("search") || "",
   );
+
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInput = useRef(null);
+
 
   useEffect(() => {
 
@@ -22,17 +27,25 @@ export default function NavBar() {
     if (searchOpen) searchInput.current?.focus();
   }, [searchOpen]);
 
-  useEffect(() => {
-    function handleSearchCleared() {
-      setQuery("");
-    }
+  
+useEffect(() => {
+  function handleSearchCleared() {
+    setQuery("");
+  }
 
-    window.addEventListener("catalog:search-cleared", handleSearchCleared);
+  window.addEventListener(
+    "catalog:search-cleared",
+    handleSearchCleared
+  );
 
-    return () => {
-      window.removeEventListener("catalog:search-cleared", handleSearchCleared);
-    };
-  }, []);
+  return () => {
+    window.removeEventListener(
+      "catalog:search-cleared",
+      handleSearchCleared
+    );
+  };
+}, []);
+
 
 
   function submitSearch(event) {
