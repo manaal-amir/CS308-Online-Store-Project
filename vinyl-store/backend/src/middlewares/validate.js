@@ -57,6 +57,12 @@ function checkField(name, value, rules) {
     return `${name} must be at most ${rules.maxLength} characters`;
   }
 
+  //size limit in bytes, letters like "ğ" or emojis take more than 1 byte each
+  //e.g. bcrypt only uses the first 72 bytes of a password
+  if (rules.maxBytes !== undefined && Buffer.byteLength(value, 'utf8') > rules.maxBytes) {
+    return `${name} is too long`;
+  }
+
   //every rule passed
   return null;
 }

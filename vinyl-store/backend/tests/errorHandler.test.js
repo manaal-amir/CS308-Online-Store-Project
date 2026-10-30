@@ -88,4 +88,44 @@ describe('errorHandler', () => {
     expect(next).toHaveBeenCalledWith(err);
     expect(res.status).not.toHaveBeenCalled();
   });
+
+  //test 9: a prisma duplicate error (P2002) becomes 409 and is not logged
+  it('turns a prisma duplicate error into 409', () => {
+    const err = Object.assign(new Error('Unique constraint failed on the fields: (`email`)'), { code: 'P2002' });
+    const res = mockRes();
+    errorHandler(err, {}, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith({ error: 'This record already exists' });
+    expect(console.error).not.toHaveBeenCalled();
+  });
+
+  //test 10: a prisma record not found error (P2025) becomes 404
+  it('turns a prisma not found error into 404', () => {
+    const err = Object.assign(new Error('Record to update not found.'), { code: 'P2025' });
+    const res = mockRes();
+    errorHandler(err, {}, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Record not found' });
+  });
+
+  //test 11: other prisma errors are still hidden as 500
+  it('keeps unknown prisma errors as 500', () => {
+    const err = Object.assign(new Error('Foreign key constraint failed'), { code: 'P2003' });
+    const res = mockRes();
+    errorHandler(err, {}, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Internal server error' });
+  });
+
+  //test 12: broken json in the request body gives a clean message instead of the parser's text
+  it('gives a clean message for invalid json', () => {
+    const err = Object.assign(new SyntaxError('Expected double-quoted property name in JSON at position 20'), {
+      type: 'entity.parse.failed',
+      status: 400,
+    });
+    const res = mockRes();
+    errorHandler(err, {}, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Invalid JSON body' });
+  });
 });

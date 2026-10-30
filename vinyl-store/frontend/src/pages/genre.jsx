@@ -3,7 +3,9 @@ import Footer from "../components/layout/footer.jsx";
 import CatalogRecords from "../components/records/catalogRecords.jsx";
 import rockImage from "../assets/genres/rock.png";
 import jazzImage from "../assets/genres/jazz.png";
-import soulImage from "../assets/genres/soulAndR&B.png";
+import popImage from "../assets/genres/pop.png";
+import electronicImage from "../assets/genres/electronic.png";
+import classicalImage from "../assets/genres/classical.png";
 import hiphopImage from "../assets/genres/hiphop.png";
 import "../styles/home.css";
 import "../styles/catalog.css";
@@ -22,17 +24,17 @@ const genreDetails = {
   },
   pop: {
     name: "Pop",
-    image: soulImage,
+    image: popImage,
     description: "Discover the records and artists that define the sound of now.",
   },
   electronic: {
     name: "Electronic",
-    image: hiphopImage,
+    image: electronicImage,
     description: "Explore electronic sounds, from deep grooves to dance-floor classics.",
   },
   classical: {
     name: "Classical",
-    image: jazzImage,
+    image: classicalImage,
     description: "Find enduring performances and essential orchestral recordings.",
   },
   "hip-hop": {
@@ -47,17 +49,17 @@ const genreDetails = {
   },
   soul: {
     name: "Soul",
-    image: soulImage,
+    image: popImage,
     description: "Feel every note with soulful voices and timeless grooves.",
   },
   "soul-rb": {
     name: "Soul & R&B",
-    image: soulImage,
+    image: popImage,
     description: "Feel every note with soulful voices and timeless grooves.",
   },
   funk: {
     name: "Funk",
-    image: soulImage,
+    image: popImage,
     description: "Find deep grooves, bold basslines, and records made to move you.",
   },
   blues: {
