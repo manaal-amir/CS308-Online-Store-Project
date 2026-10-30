@@ -50,3 +50,38 @@ export async function getCatalogProducts(signal) {
     };
   }
 }
+
+
+export async function registerUser(userData) {
+  let response;
+
+  try {
+    response = await fetch(`${API_BASE}/api/auth/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(userData),
+    });
+  } catch {
+    throw new Error("Could not reach the server. Please try again later.");
+  }
+
+  let data;
+
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error(
+      "Could not reach the server. Please try again later."
+    );
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data?.error || data?.message || "Registration failed."
+    );
+  }
+
+  return data;
+}

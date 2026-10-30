@@ -1,19 +1,52 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import {
+  getGuestCartCount,
+  subscribeToGuestCart,
+} from "../../utils/guestCart.js";
 
 export default function NavBar() {
+  const [cartCount, setCartCount] = useState(getGuestCartCount);
   const [open, setOpen] = useState(false);
+ 
   const [query, setQuery] = useState(() =>
     new URLSearchParams(window.location.search).get("search") || "",
   );
 
-  useEffect(() => {
-    function handleSearchCleared() {
-      setQuery("");
-    }
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInput = useRef(null);
 
-    window.addEventListener("catalog:search-cleared", handleSearchCleared);
-    return () => window.removeEventListener("catalog:search-cleared", handleSearchCleared);
+
+  useEffect(() => {
+
+    return subscribeToGuestCart(() => {
+      setCartCount(getGuestCartCount());
+    });
   }, []);
+
+  useEffect(() => {
+    if (searchOpen) searchInput.current?.focus();
+  }, [searchOpen]);
+
+  
+useEffect(() => {
+  function handleSearchCleared() {
+    setQuery("");
+  }
+
+  window.addEventListener(
+    "catalog:search-cleared",
+    handleSearchCleared
+  );
+
+  return () => {
+    window.removeEventListener(
+      "catalog:search-cleared",
+      handleSearchCleared
+    );
+  };
+}, []);
+
+
 
   function submitSearch(event) {
     event.preventDefault();
@@ -71,13 +104,25 @@ export default function NavBar() {
           </svg>
         </a>
 
-        <a href="/cart" aria-label="Shopping cart">
-          <svg viewBox="0 0 24 24">
-            <path d="M3 4h2l2.2 11h11.5l2-8H6" />
-            <circle cx="9" cy="20" r="1" />
-            <circle cx="18" cy="20" r="1" />
-          </svg>
-        </a>
+        
+<a
+  href="/cart"
+  className="nav-cart-link"
+  aria-label={`Shopping cart, ${cartCount} items`}
+>
+  <svg viewBox="0 0 24 24">
+    <path d="M3 4h2l2.2 11h11.5l2-8H6" />
+    <circle cx="9" cy="20" r="1" />
+    <circle cx="18" cy="20" r="1" />
+  </svg>
+
+  {cartCount > 0 && (
+    <span className="cart-count-badge" aria-hidden="true">
+      {cartCount}
+    </span>
+  )}
+</a>
+
       </div>
     </header>
   );
