@@ -37,3 +37,15 @@ jobs:
         env:
           DATABASE_URL: postgresql://vinyl:vinyl_dev@localhost:5432/vinyl_store?schema=public
           JWT_SECRET: test_secret
+
+  frontend-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+        working-directory: vinyl-store/frontend
+      - run: npm test
+        working-directory: vinyl-store/frontend
