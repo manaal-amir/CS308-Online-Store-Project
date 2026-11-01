@@ -11,4 +11,19 @@ async function getProducts(req, res, next) {
   }
 }
 
-module.exports = { getProducts };
+//GET /api/products/:id
+async function getProductById(req, res, next) {
+  try {
+    const product = await productService.getProductById(req.params.id);
+    if (!product) {
+      const err = new Error('Product not found');
+      err.status = 404;
+      return next(err);
+    }
+    res.status(200).json(product);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getProducts, getProductById };
