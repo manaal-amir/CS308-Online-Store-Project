@@ -12,8 +12,8 @@ export default function NavBar() {
     new URLSearchParams(window.location.search).get("search") || "",
   );
 
-  const [searchOpen, setSearchOpen] = useState(false);
-  const searchInput = useRef(null);
+  //const [searchOpen, setSearchOpen] = useState(false);
+  //const searchInput = useRef(null);
 
 
   useEffect(() => {
@@ -23,9 +23,9 @@ export default function NavBar() {
     });
   }, []);
 
-  useEffect(() => {
-    if (searchOpen) searchInput.current?.focus();
-  }, [searchOpen]);
+  //useEffect(() => {
+    //if (searchOpen) searchInput.current?.focus();
+  //}, [searchOpen]);
 
   
 useEffect(() => {
