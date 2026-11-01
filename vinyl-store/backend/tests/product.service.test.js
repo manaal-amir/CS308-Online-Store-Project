@@ -165,4 +165,40 @@ describe('product service', () => {
       select: SELECT,
     });
   });
+
+  it('sorts by price ascending', async () => {
+    prisma.product.findMany.mockResolvedValue([]);
+
+    await productService.getProducts({ sort: 'price_asc' });
+
+    expect(prisma.product.findMany).toHaveBeenCalledWith({
+      where: undefined,
+      orderBy: { price: 'asc' },
+      select: SELECT,
+    });
+  });
+
+  it('sorts by price descending', async () => {
+    prisma.product.findMany.mockResolvedValue([]);
+
+    await productService.getProducts({ sort: 'price_desc' });
+
+    expect(prisma.product.findMany).toHaveBeenCalledWith({
+      where: undefined,
+      orderBy: { price: 'desc' },
+      select: SELECT,
+    });
+  });
+
+  it('falls back to default order for an unrecognized sort value', async () => {
+    prisma.product.findMany.mockResolvedValue([]);
+
+    await productService.getProducts({ sort: 'garbage' });
+
+    expect(prisma.product.findMany).toHaveBeenCalledWith({
+      where: undefined,
+      orderBy: { createdAt: 'desc' },
+      select: SELECT,
+    });
+  });
 });

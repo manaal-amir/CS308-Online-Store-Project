@@ -84,4 +84,15 @@ describe('product routes', () => {
     expect(productService.getProducts).toHaveBeenCalledWith({ genre: undefined, search: 'moon' });
   });
   
+  it('passes the sort query param through to the service', async () => {
+    productService.getProducts.mockResolvedValue([]);
+
+    await request(app).get('/api/products?sort=price_asc');
+
+    expect(productService.getProducts).toHaveBeenCalledWith({
+      genre: undefined,
+      search: undefined,
+      sort: 'price_asc',
+    });
+  });
 });
