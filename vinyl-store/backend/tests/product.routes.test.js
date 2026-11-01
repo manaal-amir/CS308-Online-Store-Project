@@ -2,6 +2,7 @@ const request = require('supertest');
 
 jest.mock('../src/modules/products/product.service', () => ({
   getProducts: jest.fn(),
+  getProductById: jest.fn(),
 }));
 const productService = require('../src/modules/products/product.service');
 const app = require('../src/app');
@@ -50,6 +51,29 @@ describe('product routes', () => {
     await request(app).get('/api/products?genre=Rock');
 
     expect(productService.getProducts).toHaveBeenCalledWith({ genre: 'Rock' });
+  });
+
+  it('returns one product by id', async () => {
+    productService.getProductById.mockResolvedValue({ id: 1, name: 'Kind of Blue' });
+
+    const response = await request(app).get('/api/products/1');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ id: 1, name: 'Kind of Blue' });
+  });
+
+  it('returns 404 when the product does not exist', async () => {
+    productService.getProductById.mockResolvedValue(null);
+
+    const response = await request(app).get('/api/products/99999');
+
+    expect(response.status).toBe(404);
+  });
+
+  it('returns 400 for a non-numeric id', async () => {
+    const response = await request(app).get('/api/products/abc');
+
+    expect(response.status).toBe(400);
   });
   
 });

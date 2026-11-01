@@ -1,6 +1,7 @@
 jest.mock('../src/config/prisma', () => ({
   product: {
     findMany: jest.fn(),
+    findUnique: jest.fn(),
   },
 }));
 const prisma = require('../src/config/prisma');
@@ -81,5 +82,40 @@ describe('product service', () => {
       orderBy: { createdAt: 'desc' },
       select: SELECT,
     });
+  });
+
+  it('returns one product by id', async () => {
+    prisma.product.findUnique.mockResolvedValue({
+      id: 1,
+      name: 'Kind of Blue',
+      model: 'Reissue',
+      serialNumber: 'VS-LP-001',
+      quantity: 3,
+      price: { toString: () => '2500.50' },
+      distributor: 'Blue Note',
+      description: 'A jazz record',
+      imageUrl: null,
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      category: { name: 'Vinyl' },
+      artist: { name: 'Miles Davis' },
+      genre: { name: 'Jazz' },
+    });
+
+    const product = await productService.getProductById(1);
+
+    expect(prisma.product.findUnique).toHaveBeenCalledWith({
+      where: { id: 1 },
+      select: SELECT,
+    });
+    expect(product.price).toBe(2500.5);
+    expect(product.name).toBe('Kind of Blue');
+  });
+
+  it('returns null when the product does not exist', async () => {
+    prisma.product.findUnique.mockResolvedValue(null);
+
+    const product = await productService.getProductById(99999);
+
+    expect(product).toBeNull();
   });
 });
