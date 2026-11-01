@@ -10,3 +10,5 @@ async function getProducts(req, res, next) {
     next(err);
   }
 }
+
+module.exports = { getProducts };

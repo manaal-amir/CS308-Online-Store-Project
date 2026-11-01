@@ -43,4 +43,13 @@ describe('product routes', () => {
     expect(errorLog).toHaveBeenCalledTimes(1);
     errorLog.mockRestore();
   });
+
+  it('passes the genre query param through to the service', async () => {
+    productService.getProducts.mockResolvedValue([]);
+
+    await request(app).get('/api/products?genre=Rock');
+
+    expect(productService.getProducts).toHaveBeenCalledWith({ genre: 'Rock' });
+  });
+  
 });
