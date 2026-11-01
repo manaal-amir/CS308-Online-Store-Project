@@ -75,5 +75,13 @@ describe('product routes', () => {
 
     expect(response.status).toBe(400);
   });
+
+  it('passes the search query param through to the service', async () => {
+    productService.getProducts.mockResolvedValue([]);
+
+    await request(app).get('/api/products?search=moon');
+
+    expect(productService.getProducts).toHaveBeenCalledWith({ genre: undefined, search: 'moon' });
+  });
   
 });

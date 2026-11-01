@@ -66,7 +66,11 @@ describe('product service', () => {
     await productService.getProducts({ genre: 'rock' });
 
     expect(prisma.product.findMany).toHaveBeenCalledWith({
-      where: { genre: { name: { equals: 'rock', mode: 'insensitive' } } },
+      where: {
+        AND: [
+          { genre: { name: { equals: 'rock', mode: 'insensitive' } } },
+        ],
+      },
       orderBy: { createdAt: 'desc' },
       select: SELECT,
     });
@@ -117,5 +121,48 @@ describe('product service', () => {
     const product = await productService.getProductById(99999);
 
     expect(product).toBeNull();
+  });
+
+  it('searches by name, case-insensitively', async () => {
+    prisma.product.findMany.mockResolvedValue([]);
+
+    await productService.getProducts({ search: 'moon' });
+
+    expect(prisma.product.findMany).toHaveBeenCalledWith({
+      where: {
+        AND: [
+          {
+            OR: [
+              { name: { contains: 'moon', mode: 'insensitive' } },
+              { description: { contains: 'moon', mode: 'insensitive' } },
+            ],
+          },
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
+      select: SELECT,
+    });
+  });
+
+  it('combines genre and search filters with AND', async () => {
+    prisma.product.findMany.mockResolvedValue([]);
+
+    await productService.getProducts({ genre: 'Rock', search: 'the' });
+
+    expect(prisma.product.findMany).toHaveBeenCalledWith({
+      where: {
+        AND: [
+          { genre: { name: { equals: 'Rock', mode: 'insensitive' } } },
+          {
+            OR: [
+              { name: { contains: 'the', mode: 'insensitive' } },
+              { description: { contains: 'the', mode: 'insensitive' } },
+            ],
+          },
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
+      select: SELECT,
+    });
   });
 });
