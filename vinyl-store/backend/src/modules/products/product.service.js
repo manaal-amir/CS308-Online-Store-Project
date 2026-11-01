@@ -1,11 +1,24 @@
 const prisma = require('../../config/prisma');
 
 //Returns the public catalog fields needed by the storefront.
-async function getProducts({ genre } = {}) {
+async function getProducts({ genre, search } = {}) {
+    const conditions = [];
+
+  if (genre) {
+    conditions.push({ genre: { name: { equals: genre, mode: 'insensitive' } } });
+  }
+
+  if (search) {
+    conditions.push({
+      OR: [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ],
+    });
+  }
+
   const products = await prisma.product.findMany({
-    where: genre
-      ? { genre: { name: { equals: genre, mode: 'insensitive' } } }
-      : undefined,
+    where: conditions.length ? { AND: conditions } : undefined,
     orderBy: { createdAt: 'desc' },
     select: {
       id: true,
