@@ -1,6 +1,7 @@
+// Displays catalog records and prevents spreadsheet-preview items from being added to the cart.
 import { useEffect, useMemo, useState } from "react";
 import { getCatalogProducts } from "../../services/api.js";
-import { addToGuestCart } from "../../utils/guestCart.js";
+import { addCatalogProductToCart } from "../../utils/catalogCart.js";
 
 function getRelationName(value) {
   return typeof value === "object" && value !== null ? value.name : value;
@@ -114,9 +115,7 @@ export default function CatalogRecords({
   return (
     <div className="catalog-results">
       {isPreview && (
-        <p className="catalog-preview-note" role="status">
-          Showing spreadsheet preview data. Live product API unavailable: {errorMessage}
-        </p>
+        <CatalogPreviewNotice />
       )}
       {records.length === 0 ? (
         <p className="catalog-state">
@@ -127,7 +126,7 @@ export default function CatalogRecords({
       ) : (
         <div className="catalog-records">
           {records.map((product) => (
-            <CatalogCard key={product.id} product={product} />
+            <CatalogCard key={product.id} product={product} isPreview={isPreview} />
           ))}
         </div>
       )}
@@ -135,25 +134,29 @@ export default function CatalogRecords({
   );
 }
 
-function CatalogCard({ product }) {
+export function CatalogPreviewNotice() {
+  return (
+    <p className="catalog-preview-note" role="status">
+      Take a look around! These preview records are just for browsing and can’t be added to your cart.
+    </p>
+  );
+}
+
+export function CatalogCard({ product, isPreview = false }) {
   const [saved, setSaved] = useState(false);
   const [cartMessage, setCartMessage] = useState("");
   const [cartError, setCartError] = useState("");
 
   function handleAddToCart() {
-   try {
-    addToGuestCart(
-      Number(product.id),
-      1,
-      Number(product.quantity)
-    );
+    try {
+      if (!addCatalogProductToCart(product, isPreview)) return;
 
-     setCartMessage("Added to cart!");
-     setCartError("");
-   } catch (error) {
-     setCartError(error.message);
-     setCartMessage("");
-   }
+      setCartMessage("Added to cart!");
+      setCartError("");
+    } catch (error) {
+      setCartError(error.message);
+      setCartMessage("");
+    }
   }
 
   const artist = getRelationName(product.artist) || product.distributor || "Various Artists";
@@ -200,7 +203,7 @@ function CatalogCard({ product }) {
         type="button"
         className="catalog-add-button"
         onClick={handleAddToCart}
-        disabled={Number(product.quantity) <= 0}
+        disabled={isPreview || Number(product.quantity) <= 0}
        >
        {Number(product.quantity) <= 0 ? "Out of Stock" : "Add to Cart"}
        </button>
