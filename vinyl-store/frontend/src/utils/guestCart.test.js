@@ -1,5 +1,6 @@
 //tests for the guest cart helper
-//they only use describe, it, expect and beforeEach, so they run in jest or vitest without changes
+//Vitest globals are imported explicitly so these tests work without global test configuration.
+import { beforeEach, describe, expect, it } from 'vitest';
 import {
   getGuestCart,
   getGuestCartCount,
