@@ -69,6 +69,11 @@ export function ProductDetails({ product }) {
         <p className="product-eyebrow">{genre || category || "Vinyl"}</p>
         <h1>{product.name}</h1>
         {artist && <p className="product-artist">{artist}</p>}
+        {(product.distributor || product.releaseYear) && (
+          <p className="product-meta">
+            {[product.distributor, product.releaseYear].filter(Boolean).join(" · ")}
+          </p>
+        )}
 
         <p className="product-price">{formatPrice(product.price)}</p>
         <p className={`product-stock${inStock ? "" : " is-out"}`} role="status">

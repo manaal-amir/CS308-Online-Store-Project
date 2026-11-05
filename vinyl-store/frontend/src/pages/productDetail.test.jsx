@@ -70,6 +70,22 @@ describe("ProductDetails", () => {
     expect(render({ ...product, releaseYear: 1971 })).toContain("1971");
   });
 
+  test("shows label and release year together under the artist", () => {
+    expect(render({ ...product, releaseYear: 1971 })).toContain("Elektra Records · 1971");
+  });
+
+  test("shows only the label when there is no release year", () => {
+    const html = render(product);
+    expect(html).toContain(">Elektra Records<");
+    expect(html).not.toContain("·");
+  });
+
+  test("renders the cover image when imageUrl is set", () => {
+    const html = render({ ...product, imageUrl: "/cover.png" });
+    expect(html).toContain('src="/cover.png"');
+    expect(html).not.toContain("placeholder-record-disc");
+  });
+
   test("uses a placeholder when there is no cover image", () => {
     expect(render(product)).toContain("placeholder-record-disc");
   });

@@ -72,6 +72,12 @@
   font-size: 16px;
 }
 
+.product-meta {
+  margin-top: 4px;
+  color: #aba68f;
+  font-size: 13px;
+}
+
 .product-price {
   margin-top: 22px;
   color: #e1d9c1;
