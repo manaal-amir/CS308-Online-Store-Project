@@ -34,6 +34,7 @@ async function getProducts({ genre, search, sort } = {}) {
       serialNumber: true,
       quantity: true,
       price: true,
+      warrantyStatus: true,
       distributor: true,
       description: true,
       imageUrl: true,
