@@ -31,6 +31,19 @@ export async function getProducts(signal) {
   return products;
 }
 
+// Fetches one product. Returns null when the API answers 404.
+export async function getProductById(id, signal) {
+  const response = await fetch(`${API_BASE}/api/products/${encodeURIComponent(id)}`, { signal });
+
+  if (response.status === 404) return null;
+
+  if (!response.ok) {
+    throw new Error(`Product API returned ${response.status}`);
+  }
+
+  return response.json();
+}
+
 export async function getCatalogProducts(signal) {
   try {
     return {
