@@ -4,6 +4,7 @@ import Shop from "./pages/shop.jsx";
 import Genre from "./pages/genre.jsx";
 import Genres from "./pages/genres.jsx";
 import Account from "./pages/account.jsx";
+import ProductDetail from "./pages/productDetail.jsx";
 
 function App() {
   const path = window.location.pathname;
@@ -19,6 +20,11 @@ function App() {
 
   if (path === "/shop") {
     return <Shop />;
+  }
+
+  const productMatch = path.match(/^\/product\/(\d+)\/?$/);
+  if (productMatch) {
+    return <ProductDetail id={productMatch[1]} />;
   }
 
   if (path === "/cart") {
