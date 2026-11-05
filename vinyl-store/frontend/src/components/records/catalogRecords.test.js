@@ -1,45 +1,11 @@
-
- // Regression tests for preview cart blocking and normal API-product cart behavior.
+// Regression tests for preview cart blocking and normal API-product cart behavior.
 import assert from "node:assert/strict";
-import { afterAll, beforeAll, test } from "vitest";
-import path from "node:path";
+import { afterEach, describe, test } from "vitest";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { createServer } from "vite";
-import { fileURLToPath } from "node:url";
-
-const root = fileURLToPath(new URL("../../../", import.meta.url));
-
-let vite;
-let CatalogCard;
-let CatalogPreviewNotice;
-let addCatalogProductToCart;
-let getGuestCart;
-let resetGuestCartForTests;
-
-beforeAll(async () => {
-  vite = await createServer({
-    configFile: path.join(root, "vite.config.js"),
-    server: { middlewareMode: true },
-    appType: "custom",
-  });
-
-  ({ CatalogCard, CatalogPreviewNotice } = await vite.ssrLoadModule(
-    "/src/components/records/catalogRecords.jsx"
-  ));
-
-  ({ addCatalogProductToCart } = await vite.ssrLoadModule(
-    "/src/utils/catalogCart.js"
-  ));
-
-  ({ getGuestCart, resetGuestCartForTests } = await vite.ssrLoadModule(
-    "/src/utils/guestCart.js"
-  ));
-});
-
-afterAll(async () => {
-  await vite?.close();
-});
+import { CatalogCard, CatalogPreviewNotice } from "./catalogRecords.jsx";
+import { addCatalogProductToCart } from "../../utils/catalogCart.js";
+import { getGuestCart, resetGuestCartForTests } from "../../utils/guestCart.js";
 
 const product = {
   id: 17,
@@ -51,62 +17,42 @@ const product = {
   quantity: 3,
 };
 
-test("preview records show an explanation and a disabled Add to Cart button", () => {
-  const notice = renderToStaticMarkup(
-    React.createElement(CatalogPreviewNotice)
-  );
-
-  const card = renderToStaticMarkup(
-    React.createElement(CatalogCard, {
-      product,
-      isPreview: true,
-    })
-  );
-
-  assert.match(
-    notice,
-    /Take a look around! These preview records are just for browsing and can’t be added to your cart/
-  );
-
-  assert.doesNotMatch(
-    notice,
-    /API|unavailable|trouble loading/i
-  );
-
-  assert.match(
-    card,
-    /class="catalog-add-button"[^>]*disabled/
-  );
+afterEach(() => {
+  resetGuestCartForTests();
 });
 
-test("preview records cannot change the guest cart, even through the cart handler", () => {
-  resetGuestCartForTests();
+describe("catalogRecords preview cart blocking", () => {
+  test("preview records show an explanation and a disabled Add to Cart button", () => {
+    const notice = renderToStaticMarkup(React.createElement(CatalogPreviewNotice));
+    const card = renderToStaticMarkup(
+      React.createElement(CatalogCard, { product, isPreview: true })
+    );
 
-  const added = addCatalogProductToCart(product, true);
+    assert.match(
+      notice,
+      /Take a look around! These preview records are just for browsing and can’t be added to your cart/
+    );
+    assert.doesNotMatch(notice, /API|unavailable|trouble loading/i);
+    assert.match(card, /class="catalog-add-button"[^>]*disabled/);
+  });
 
-  assert.equal(added, false);
-  assert.deepEqual(getGuestCart(), []);
-});
+  test("preview records cannot change the guest cart, even through the cart handler", () => {
+    const added = addCatalogProductToCart(product, true);
 
-test("real API products retain an enabled button and can be added to the guest cart", () => {
-  resetGuestCartForTests();
+    assert.equal(added, false);
+    assert.deepEqual(getGuestCart(), []);
+  });
 
-  const card = renderToStaticMarkup(
-    React.createElement(CatalogCard, {
-      product,
-      isPreview: false,
-    })
-  );
+  test("real API products retain an enabled button and can be added to the guest cart", () => {
+    const card = renderToStaticMarkup(
+      React.createElement(CatalogCard, { product, isPreview: false })
+    );
 
-  assert.match(
-    card,
-    /class="catalog-add-button"(?![^>]*disabled)/
-  );
+    assert.match(card, /class="catalog-add-button"(?![^>]*disabled)/);
 
-  const added = addCatalogProductToCart(product, false);
+    const added = addCatalogProductToCart(product, false);
 
-  assert.equal(added, true);
-  assert.deepEqual(getGuestCart(), [
-    { productId: 17, quantity: 1 },
-  ]);
+    assert.equal(added, true);
+    assert.deepEqual(getGuestCart(), [{ productId: 17, quantity: 1 }]);
+  });
 });
