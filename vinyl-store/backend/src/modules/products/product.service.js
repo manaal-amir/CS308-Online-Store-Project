@@ -1,12 +1,32 @@
 const prisma = require('../../config/prisma');
 
 //Returns the public catalog fields needed by the storefront.
-async function getProducts({ genre } = {}) {
+async function getProducts({ genre, search, sort } = {}) {
+    const conditions = [];
+
+  if (genre) {
+    conditions.push({ genre: { name: { equals: genre, mode: 'insensitive' } } });
+  }
+
+  if (search) {
+    conditions.push({
+      OR: [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ],
+    });
+  }
+
+  let orderBy = { createdAt: 'desc' };
+  if (sort === 'price_asc') {
+    orderBy = { price: 'asc' };
+  } else if (sort === 'price_desc') {
+    orderBy = { price: 'desc' };
+  }
+
   const products = await prisma.product.findMany({
-    where: genre
-      ? { genre: { name: { equals: genre, mode: 'insensitive' } } }
-      : undefined,
-    orderBy: { createdAt: 'desc' },
+    where: conditions.length ? { AND: conditions } : undefined,
+    orderBy,
     select: {
       id: true,
       name: true,
@@ -41,6 +61,7 @@ async function getProductById(id) {
       serialNumber: true,
       quantity: true,
       price: true,
+      warrantyStatus: true,
       distributor: true,
       description: true,
       imageUrl: true,
