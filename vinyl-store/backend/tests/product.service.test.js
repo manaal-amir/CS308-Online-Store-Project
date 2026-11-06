@@ -22,6 +22,7 @@ const SELECT = {
   description: true,
   imageUrl: true,
   createdAt: true,
+  warrantyStatus: true,   // ← added
   category: { select: { name: true } },
   artist: { select: { name: true } },
   genre: { select: { name: true } },
@@ -42,6 +43,7 @@ describe('product service', () => {
         description: 'A jazz record',
         imageUrl: null,
         createdAt,
+        warrantyStatus: 'Covered against manufacturing defects',
         category: { name: 'Vinyl' },
         artist: { name: 'Miles Davis' },
         genre: { name: 'Jazz' },
@@ -100,6 +102,7 @@ describe('product service', () => {
       description: 'A jazz record',
       imageUrl: null,
       createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      warrantyStatus: 'Covered against manufacturing defects',
       category: { name: 'Vinyl' },
       artist: { name: 'Miles Davis' },
       genre: { name: 'Jazz' },
