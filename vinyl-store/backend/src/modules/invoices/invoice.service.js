@@ -5,7 +5,7 @@ function generateInvoiceNumber(orderId) {
   return `INV-${date}-${String(orderId).padStart(5, '0')}`;
 }
 
-async function buildInvoice(orderId) {
+async function buildInvoice(orderId, user) {
   const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: {
@@ -20,6 +20,15 @@ async function buildInvoice(orderId) {
 
   if (!order) {
     const err = new Error('Order not found');
+    err.status = 404;
+    throw err;
+  }
+
+  // Ownership check: customer can only see own orders; staff roles allowed
+  const isOwner = order.userId === user.id;
+  const isStaff = ['SALES_MANAGER', 'PRODUCT_MANAGER', 'SUPPORT_AGENT'].includes(user.role);
+  if (!isOwner && !isStaff) {
+    const err = new Error('Order not found');  // 404, not 403 — don't leak existence
     err.status = 404;
     throw err;
   }

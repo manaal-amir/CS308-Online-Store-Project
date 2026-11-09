@@ -5,15 +5,10 @@ const prisma = require('../../config/prisma');
 
 async function getInvoice(req, res, next) {
   try {
-    const orderId = Number(req.params.orderId);
-    if (!Number.isInteger(orderId) || orderId < 1) {
-      return res.status(400).json({ error: 'Invalid order id' });
-    }
-
-    const invoice = await buildInvoice(orderId);
+    const orderId = req.params.orderId;  // already validated + converted to integer
+    const invoice = await buildInvoice(orderId, req.user);
     const pdfBuffer = await generatePdf(invoice);
 
-    // Send email only once — if not already sent
     if (!invoice.emailedAt) {
       await sendInvoiceEmail(invoice, pdfBuffer);
       await prisma.invoice.update({
