@@ -5,6 +5,9 @@ const cartRoutes = require('./modules/cart/cart.routes');
 const productRoutes = require('./modules/products/product.routes');
 const errorHandler = require('./middlewares/errorHandler');
 const notFound = require('./middlewares/notFound');
+const invoiceRoutes = require('./modules/invoices/invoice.routes');
+
+
 
 const app = express();
 
@@ -14,6 +17,8 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+app.use('/api/invoices', invoiceRoutes);
 
 // Health check
 app.get('/', (req, res) => {
