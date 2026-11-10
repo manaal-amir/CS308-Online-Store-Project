@@ -6,6 +6,7 @@ const productRoutes = require('./modules/products/product.routes');
 const errorHandler = require('./middlewares/errorHandler');
 const notFound = require('./middlewares/notFound');
 const invoiceRoutes = require('./modules/invoices/invoice.routes');
+const orderRoutes = require('./modules/orders/orders.routes');
 
 
 
@@ -30,6 +31,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 //cart routes, only for logged in customers
 app.use('/api/cart', cartRoutes);
+//order routes: checkout, cancel, history and status updates
+app.use('/api/orders', orderRoutes);
 
 //any request that didn't match a route above becomes a 404
 app.use(notFound);
