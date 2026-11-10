@@ -1,5 +1,5 @@
 const { buildInvoice } = require('./invoice.service');
-const prisma = require('../../config/prisma');
+
 
 async function getInvoice(req, res, next) {
   try {
