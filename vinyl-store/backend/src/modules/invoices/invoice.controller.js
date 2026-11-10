@@ -3,9 +3,10 @@ const { generatePdf } = require('./invoice.pdf');
 
 async function getInvoice(req, res, next) {
   try {
+    const orderId = req.params.orderId;
     const invoice = await buildInvoice(orderId, req.user);
-  const pdfBuffer = await generatePdf(invoice);  // still generate — for potential download later
-// Email is sent by checkout (Ayesha), not here. GET must be side-effect-free.
+    const pdfBuffer = await generatePdf(invoice);
+    // Email is sent by checkout (Ayesha), not here. GET must be side-effect-free.
 
     res.status(200).json({
       invoiceNumber: invoice.invoiceNumber,
