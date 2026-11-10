@@ -1,21 +1,11 @@
 const { buildInvoice } = require('./invoice.service');
-const { generatePdf } = require('./invoice.pdf');
-const { sendInvoiceEmail } = require('./invoice.email');
-const prisma = require('../../config/prisma');
+const { generatePdf } = require('./invoice.pdf'); 
 
 async function getInvoice(req, res, next) {
   try {
-    const orderId = req.params.orderId;  // already validated + converted to integer
     const invoice = await buildInvoice(orderId, req.user);
-    const pdfBuffer = await generatePdf(invoice);
-
-    if (!invoice.emailedAt) {
-      await sendInvoiceEmail(invoice, pdfBuffer);
-      await prisma.invoice.update({
-        where: { id: invoice.id },
-        data: { emailedAt: new Date() },
-      });
-    }
+  const pdfBuffer = await generatePdf(invoice);  // still generate — for potential download later
+// Email is sent by checkout (Ayesha), not here. GET must be side-effect-free.
 
     res.status(200).json({
       invoiceNumber: invoice.invoiceNumber,
