@@ -117,7 +117,25 @@ describe('errorHandler', () => {
     expect(res.json).toHaveBeenCalledWith({ error: 'Internal server error' });
   });
 
-  //test 12: broken json in the request body gives a clean message instead of the parser's text
+  //test 12: two transactions changing the same rows at once (P2034) asks the user to try again
+  it('turns a prisma write conflict into 409', () => {
+    const err = Object.assign(new Error('Transaction failed due to a write conflict'), { code: 'P2034' });
+    const res = mockRes();
+    errorHandler(err, {}, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Too many changes at the same time, please try again' });
+  });
+
+  //test 13: a transaction that took too long (P2028) becomes 503 with a clear message
+  it('turns a prisma transaction timeout into 503', () => {
+    const err = Object.assign(new Error('Transaction already closed: timeout'), { code: 'P2028' });
+    const res = mockRes();
+    errorHandler(err, {}, res, jest.fn());
+    expect(res.status).toHaveBeenCalledWith(503);
+    expect(res.json).toHaveBeenCalledWith({ error: 'The server is busy, please try again' });
+  });
+
+  //test 14: broken json in the request body gives a clean message instead of the parser's text
   it('gives a clean message for invalid json', () => {
     const err = Object.assign(new SyntaxError('Expected double-quoted property name in JSON at position 20'), {
       type: 'entity.parse.failed',
