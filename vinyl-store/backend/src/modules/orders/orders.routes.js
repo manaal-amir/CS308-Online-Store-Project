@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const checkoutController = require('./checkout.controller');
+const cancelController = require('./cancel.controller');
 const { authenticate, authorize } = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
 
@@ -13,6 +14,12 @@ router.use(authenticate);
 
 //roles are checked per route, not here, because customers and product managers use different routes
 const customerOnly = authorize('CUSTOMER');
+
+//largest number a postgres Int column can hold, bigger ids would crash the query
+const MAX_INT = 2147483647;
+
+//an order id in the url, e.g. /api/orders/42/cancel
+const orderIdParam = { params: { id: { required: true, type: 'integer', min: 1, max: MAX_INT } } };
 
 //the customer enters card details to buy (requirement 15)
 //they are checked here so the service only gets clean values
@@ -42,5 +49,8 @@ const checkoutRules = {
 
 //checkout: turns the customer's cart into a paid order
 router.post('/', customerOnly, validate(checkoutRules), checkoutController.checkout);
+
+//cancel: only while the order is processing, gives the stock back (requirement 14)
+router.post('/:id/cancel', customerOnly, validate(orderIdParam), cancelController.cancel);
 
 module.exports = router;
