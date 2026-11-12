@@ -27,6 +27,7 @@ enum PaymentStatus {
   PENDING
   SUCCESSFUL
   FAILED
+  REFUNDED //money given back after the customer cancels the order
 }
 
 enum RefundStatus {
