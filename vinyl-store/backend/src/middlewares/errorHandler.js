@@ -1,9 +1,13 @@
-//prisma error codes that are the user's fault, not a server problem
+//prisma error codes that have a clear meaning for the user, not a hidden server problem
 //P2002: a unique field already exists (e.g. two sign ups with the same email at the same moment)
 //P2025: the record to update or delete was not found
+//P2034: two transactions changed the same rows at once and one was stopped (e.g. busy checkout)
+//P2028: a transaction took too long and was cancelled, nothing was saved
 const PRISMA_CLIENT_ERRORS = {
   P2002: { status: 409, message: 'This record already exists' },
   P2025: { status: 404, message: 'Record not found' },
+  P2034: { status: 409, message: 'Too many changes at the same time, please try again' },
+  P2028: { status: 503, message: 'The server is busy, please try again' },
 };
 
 //turns known library errors into a clear status and message, returns null for anything else

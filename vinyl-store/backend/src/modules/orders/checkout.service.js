@@ -55,20 +55,31 @@ function formatOrder(order, invoiceNumber) {
   };
 }
 
-//creates the invoice and emails it once (requirement 4)
-//the order is already paid at this point, so a failed email is only logged instead of undoing the order
-//emailedAt then stays empty, and the email is sent the first time the customer opens the invoice
+//creates the invoice and emails it as a pdf once (requirement 4)
+//the order is already paid at this point, so a problem here is only logged instead of undoing the order
 async function issueInvoice(order, userId) {
+  let invoice;
   try {
-    const invoice = await buildInvoice(order.id, { id: userId, role: 'CUSTOMER' });
-    const pdf = await generatePdf(invoice);
-    await sendInvoiceEmail(invoice, pdf);
-    await prisma.invoice.update({ where: { id: invoice.id }, data: { emailedAt: new Date() } });
-    return invoice.invoiceNumber;
+    invoice = await buildInvoice(order.id, { id: userId, role: 'CUSTOMER' });
   } catch (err) {
     console.error(`[checkout] invoice for order ${order.id} failed: ${err.message}`);
     return null;
   }
+
+  //the invoice exists now, so the customer can still see it on screen even if the email fails
+  try {
+    const pdf = await generatePdf(invoice);
+    const email = await sendInvoiceEmail(invoice, pdf);
+    //sendInvoiceEmail returns sent: false when smtp is not set up in .env
+    //emailedAt is only saved when the email really went out, so it never claims a false send
+    if (email && email.sent) {
+      await prisma.invoice.update({ where: { id: invoice.id }, data: { emailedAt: new Date() } });
+    }
+  } catch (err) {
+    //emailedAt stays empty, so the team can see which invoices were never emailed
+    console.error(`[checkout] invoice email for order ${order.id} failed: ${err.message}`);
+  }
+  return invoice.invoiceNumber;
 }
 
 //removes the customer's cart items and returns exactly what was removed, in one step

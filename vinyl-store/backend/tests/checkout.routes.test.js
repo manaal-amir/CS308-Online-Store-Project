@@ -4,8 +4,9 @@ const express = require('express');
 const request = require('supertest');
 const jwt = require('jsonwebtoken');
 
-//replace the service with a fake function, so no database is needed
+//replace both order services with fake functions, so no database is needed
 jest.mock('../src/modules/orders/checkout.service', () => ({ checkout: jest.fn() }));
+jest.mock('../src/modules/orders/cancel.service', () => ({ cancelOrder: jest.fn() }));
 const checkoutService = require('../src/modules/orders/checkout.service');
 const orderRoutes = require('../src/modules/orders/orders.routes');
 const errorHandler = require('../src/middlewares/errorHandler');

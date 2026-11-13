@@ -229,24 +229,41 @@ describe('checkout service', () => {
     });
   });
 
-  //test 15: a failed email does not undo a paid order
-  it('still returns the order if the invoice email fails', async () => {
+  //test 15: a failed email does not undo a paid order, and the invoice can still be shown
+  it('still returns the order and invoice number if the email fails', async () => {
     sendInvoiceEmail.mockRejectedValue(new Error('smtp down'));
     const order = await checkout(7, card);
     expect(order.id).toBe(42);
-    expect(order.invoiceNumber).toBeNull();
+    expect(order.invoiceNumber).toBe('INV-20261110-00042');
     expect(prisma.invoice.update).not.toHaveBeenCalled();
+  });
+
+  //test 16: without smtp the email is not really sent, so emailedAt is not saved
+  it('does not save emailedAt when the email was not sent', async () => {
+    sendInvoiceEmail.mockResolvedValue({ sent: false });
+    const order = await checkout(7, card);
+    expect(order.invoiceNumber).toBe('INV-20261110-00042');
+    expect(prisma.invoice.update).not.toHaveBeenCalled();
+  });
+
+  //test 17: if the invoice itself cannot be created, the paid order is still returned
+  it('still returns the order if the invoice cannot be created', async () => {
+    buildInvoice.mockRejectedValue(new Error('db down'));
+    const order = await checkout(7, card);
+    expect(order.id).toBe(42);
+    expect(order.invoiceNumber).toBeNull();
+    expect(sendInvoiceEmail).not.toHaveBeenCalled();
   });
 });
 
 describe('checkout money helpers', () => {
-  //test 16: cents are turned into exact 2 decimal text
+  //test 18: cents are turned into exact 2 decimal text
   it('formats cents as money text', () => {
     expect(toMoney(750099)).toBe('7500.99');
     expect(toMoney(5)).toBe('0.05');
   });
 
-  //test 17: missing cost means half the price, rounded to the nearest cent
+  //test 19: missing cost means half the price, rounded to the nearest cent
   it('uses half the price when there is no cost', () => {
     expect(unitCostCents({ price: '10.01', cost: null })).toBe(501);
     expect(unitCostCents({ price: '10.00', cost: '3.25' })).toBe(325);
