@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const checkoutController = require('./checkout.controller');
 const cancelController = require('./cancel.controller');
+const statusController = require('./status.controller');
 const { authenticate, authorize } = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
 
@@ -14,6 +15,7 @@ router.use(authenticate);
 
 //roles are checked per route, not here, because customers and product managers use different routes
 const customerOnly = authorize('CUSTOMER');
+const productManagerOnly = authorize('PRODUCT_MANAGER');
 
 //largest number a postgres Int column can hold, bigger ids would crash the query
 const MAX_INT = 2147483647;
@@ -47,10 +49,30 @@ const checkoutRules = {
   },
 };
 
+// VS-35: product manager updates an order's status
+const statusBody = {
+  body: {
+    status: {
+      required: true,
+      type: 'string',
+      enum: ['PROCESSING', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED'],
+    },
+  },
+};
+
 //checkout: turns the customer's cart into a paid order
 router.post('/', customerOnly, validate(checkoutRules), checkoutController.checkout);
 
 //cancel: only while the order is processing, gives the stock back (requirement 14)
 router.post('/:id/cancel', customerOnly, validate(orderIdParam), cancelController.cancel);
+
+//status: product manager updates an order's status (VS-35)
+router.patch(
+  '/:id/status',
+  productManagerOnly,
+  validate(orderIdParam),
+  validate(statusBody),
+  statusController.updateStatus
+);
 
 module.exports = router;
