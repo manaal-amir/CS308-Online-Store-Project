@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authController = require('./auth.controller');
 const validate = require('../../middlewares/validate');
+const { authenticate } = require('../../middlewares/auth');
 
 //bcrypt only uses the first 72 bytes of a password, so longer ones are rejected
 //this is counted in bytes, not characters, because letters like "ğ" take 2 bytes
@@ -29,7 +30,7 @@ const loginRules = {
   },
 };
 
-router.post('/logout', authController.logout);
+router.post('/logout', authenticate, authController.logout);
 
 router.post('/register', validate(registerRules), authController.register);
 router.post('/login', validate(loginRules), authController.login);
