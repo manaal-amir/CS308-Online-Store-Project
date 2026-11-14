@@ -27,9 +27,7 @@ async function sendInvoiceEmail(invoice, pdfBuffer) {
     to: invoice.customer.email,
     subject: `Your Vinyl Store invoice ${invoice.invoiceNumber}`,
     text: `Hi ${invoice.customer.name},\n\nThank you for your order. Your invoice is attached.\n\nTotal: ${Number(invoice.totalAmount).toFixed(2)} TRY`,
-    attachments: [
-      { filename: `${invoice.invoiceNumber}.pdf`, content: pdfBuffer },
-    ],
+    attachments: [{ filename: `${invoice.invoiceNumber}.pdf`, content: pdfBuffer }],
   };
 
   const info = await transport.sendMail(mail);

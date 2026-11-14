@@ -16,7 +16,13 @@ const registerRules = {
     lastname: { required: true, type: 'string', maxLength: 100 },
     email: { required: true, type: 'email', maxLength: 254 },
     //trim is off because spaces in a password are on purpose
-    password: { required: true, type: 'string', minLength: 8, maxBytes: MAX_PASSWORD_BYTES, trim: false },
+    password: {
+      required: true,
+      type: 'string',
+      minLength: 8,
+      maxBytes: MAX_PASSWORD_BYTES,
+      trim: false,
+    },
     taxId: { required: true, type: 'string', maxLength: 20 },
     homeAddress: { required: true, type: 'string', maxLength: 300 },
   },

@@ -83,7 +83,7 @@ describe('product routes', () => {
 
     expect(productService.getProducts).toHaveBeenCalledWith({ genre: undefined, search: 'moon' });
   });
-  
+
   it('passes the sort query param through to the service', async () => {
     productService.getProducts.mockResolvedValue([]);
 

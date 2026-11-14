@@ -109,7 +109,11 @@ describe('checkout service', () => {
 
     //the payment row is saved with the bank's reference
     const { data } = tx.order.create.mock.calls[0][0];
-    expect(data.payment.create).toEqual({ amount: '7500.99', status: 'SUCCESSFUL', bankRef: 'MOCK-abc' });
+    expect(data.payment.create).toEqual({
+      amount: '7500.99',
+      status: 'SUCCESSFUL',
+      bankRef: 'MOCK-abc',
+    });
     expect(data.paymentRef).toBe('MOCK-abc');
   });
 
@@ -156,7 +160,10 @@ describe('checkout service', () => {
   //test 6: an empty cart cannot be checked out, also what a double click's second request sees
   it('rejects an empty cart', async () => {
     tx.$queryRaw.mockResolvedValue([]);
-    await expect(checkout(7, card)).rejects.toMatchObject({ status: 400, message: 'Your cart is empty' });
+    await expect(checkout(7, card)).rejects.toMatchObject({
+      status: 400,
+      message: 'Your cart is empty',
+    });
     expect(chargeCard).not.toHaveBeenCalled();
     expect(tx.order.create).not.toHaveBeenCalled();
   });
@@ -209,7 +216,11 @@ describe('checkout service', () => {
   //test 12: only the card fields the bank needs are passed on
   it('sends the bank only the card number and expiry', async () => {
     await checkout(7, card);
-    expect(chargeCard).toHaveBeenCalledWith({ cardNumber: card.cardNumber, expiryMonth: 12, expiryYear: 2030 });
+    expect(chargeCard).toHaveBeenCalledWith({
+      cardNumber: card.cardNumber,
+      expiryMonth: 12,
+      expiryYear: 2030,
+    });
   });
 
   //test 13: the transaction gets a longer timeout for busy moments

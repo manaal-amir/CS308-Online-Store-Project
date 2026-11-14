@@ -28,7 +28,10 @@ describe('buildInvoice', () => {
     prisma.order.findUnique.mockResolvedValue(order);
     prisma.invoice.findUnique.mockResolvedValue(null);
     prisma.invoice.create.mockResolvedValue({
-      id: 10, invoiceNumber: 'INV-X', totalAmount: 1650, issuedAt: new Date(),
+      id: 10,
+      invoiceNumber: 'INV-X',
+      totalAmount: 1650,
+      issuedAt: new Date(),
     });
 
     const invoice = await buildInvoice(1, { id: 2, role: 'CUSTOMER' });
@@ -45,7 +48,12 @@ describe('buildInvoice', () => {
 
   it('allows staff to view any order', async () => {
     prisma.order.findUnique.mockResolvedValue(order);
-    prisma.invoice.findUnique.mockResolvedValue({ id: 10, invoiceNumber: 'INV-X', totalAmount: 1650, issuedAt: new Date() });
+    prisma.invoice.findUnique.mockResolvedValue({
+      id: 10,
+      invoiceNumber: 'INV-X',
+      totalAmount: 1650,
+      issuedAt: new Date(),
+    });
 
     const invoice = await buildInvoice(1, { id: 99, role: 'SALES_MANAGER' });
     expect(invoice.invoiceNumber).toBe('INV-X');

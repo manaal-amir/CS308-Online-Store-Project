@@ -6,7 +6,12 @@ async function register(req, res, next) {
   try {
     const { name, lastname, email, password, taxId, homeAddress } = req.body;
     const user = await authService.register({
-      name, lastname, email, password, taxId, homeAddress,
+      name,
+      lastname,
+      email,
+      password,
+      taxId,
+      homeAddress,
     });
     res.status(201).json(user);
   } catch (err) {

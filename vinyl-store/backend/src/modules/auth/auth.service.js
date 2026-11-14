@@ -9,7 +9,6 @@ function normalizeEmail(email) {
 }
 
 async function register({ name, lastname, email, password, taxId, homeAddress }) {
-  
   email = normalizeEmail(email);
 
   const existing = await prisma.user.findUnique({ where: { email } });
@@ -19,8 +18,8 @@ async function register({ name, lastname, email, password, taxId, homeAddress })
     throw err;
   }
   const passwordHash = await bcrypt.hash(password, 10);
-  
-    try {
+
+  try {
     const user = await prisma.user.create({
       data: { name, lastname, email, passwordHash, taxId, homeAddress },
       select: { id: true, email: true, role: true },
@@ -39,9 +38,8 @@ async function register({ name, lastname, email, password, taxId, homeAddress })
 }
 
 async function login({ email, password }) {
-  
   email = normalizeEmail(email);
-  
+
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
     const err = new Error('Invalid credentials');
@@ -54,11 +52,9 @@ async function login({ email, password }) {
     err.status = 401;
     throw err;
   }
-  const token = jwt.sign(
-    { id: user.id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: '1d' }
-  );
+  const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, {
+    expiresIn: '1d',
+  });
   return { token, user: { id: user.id, email: user.email, role: user.role } };
 }
 

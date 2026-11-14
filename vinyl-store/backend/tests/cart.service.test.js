@@ -18,8 +18,22 @@ const prisma = require('../src/config/prisma');
 const cartService = require('../src/modules/cart/cart.service');
 
 //fake products, similar to the seed data
-const inStock = { id: 1, name: 'Discovery', price: 2390, quantity: 5, imageUrl: null, artist: { name: 'Daft Punk' } };
-const outOfStock = { id: 2, name: 'Surrender', price: 1790, quantity: 0, imageUrl: null, artist: null };
+const inStock = {
+  id: 1,
+  name: 'Discovery',
+  price: 2390,
+  quantity: 5,
+  imageUrl: null,
+  artist: { name: 'Daft Punk' },
+};
+const outOfStock = {
+  id: 2,
+  name: 'Surrender',
+  price: 1790,
+  quantity: 0,
+  imageUrl: null,
+  artist: null,
+};
 
 //sets what the cart looks like when it is reloaded at the end of each action
 function cartContains(items) {
@@ -46,7 +60,11 @@ describe('getCart', () => {
   it('calculates line totals and the cart total', async () => {
     cartContains([
       { productId: 1, quantity: 2, product: { ...inStock, price: { toString: () => '19.99' } } },
-      { productId: 3, quantity: 1, product: { id: 3, name: 'Post', price: 10.01, quantity: 4, imageUrl: null, artist: null } },
+      {
+        productId: 3,
+        quantity: 1,
+        product: { id: 3, name: 'Post', price: 10.01, quantity: 4, imageUrl: null, artist: null },
+      },
     ]);
     const cart = await cartService.getCart(7);
     expect(cart.items[0].lineTotal).toBe(39.98);
@@ -58,7 +76,9 @@ describe('getCart', () => {
 
   //test 3: two first requests at once both try to create the cart, the second loads it instead
   it('loads the cart if another request created it at the same moment', async () => {
-    prisma.cart.upsert.mockRejectedValue(Object.assign(new Error('Unique constraint failed'), { code: 'P2002' }));
+    prisma.cart.upsert.mockRejectedValue(
+      Object.assign(new Error('Unique constraint failed'), { code: 'P2002' })
+    );
     prisma.cart.findUnique
       .mockResolvedValueOnce({ id: 10, userId: 7 })
       .mockResolvedValueOnce({ id: 10, items: [] });
@@ -86,7 +106,9 @@ describe('addItem', () => {
     prisma.cartItem.updateMany.mockResolvedValue({ count: 0 });
     prisma.cartItem.findUnique.mockResolvedValue(null);
     await cartService.addItem(7, 1, 2);
-    expect(prisma.cartItem.create).toHaveBeenCalledWith({ data: { cartId: 10, productId: 1, quantity: 2 } });
+    expect(prisma.cartItem.create).toHaveBeenCalledWith({
+      data: { cartId: 10, productId: 1, quantity: 2 },
+    });
   });
 
   //test 6: unknown products give 404
@@ -108,7 +130,10 @@ describe('addItem', () => {
   //test 8: asking for more than the stock in one go is rejected without touching the cart
   it('rejects a single request above stock', async () => {
     prisma.product.findUnique.mockResolvedValue(inStock);
-    await expect(cartService.addItem(7, 1, 6)).rejects.toMatchObject({ status: 409, message: 'Only 5 in stock' });
+    await expect(cartService.addItem(7, 1, 6)).rejects.toMatchObject({
+      status: 409,
+      message: 'Only 5 in stock',
+    });
     expect(prisma.cartItem.updateMany).not.toHaveBeenCalled();
   });
 
@@ -117,16 +142,23 @@ describe('addItem', () => {
     prisma.product.findUnique.mockResolvedValue(inStock);
     prisma.cartItem.updateMany.mockResolvedValue({ count: 0 });
     prisma.cartItem.findUnique.mockResolvedValue({ id: 50, quantity: 4 });
-    await expect(cartService.addItem(7, 1, 2)).rejects.toMatchObject({ status: 409, message: 'Only 5 in stock' });
+    await expect(cartService.addItem(7, 1, 2)).rejects.toMatchObject({
+      status: 409,
+      message: 'Only 5 in stock',
+    });
     expect(prisma.cartItem.create).not.toHaveBeenCalled();
   });
 
   //test 10: two requests at once both try to create the item, the second one increases it instead
   it('handles a double click that creates the item at the same time', async () => {
     prisma.product.findUnique.mockResolvedValue(inStock);
-    prisma.cartItem.updateMany.mockResolvedValueOnce({ count: 0 }).mockResolvedValueOnce({ count: 1 });
+    prisma.cartItem.updateMany
+      .mockResolvedValueOnce({ count: 0 })
+      .mockResolvedValueOnce({ count: 1 });
     prisma.cartItem.findUnique.mockResolvedValue(null);
-    prisma.cartItem.create.mockRejectedValue(Object.assign(new Error('Unique constraint failed'), { code: 'P2002' }));
+    prisma.cartItem.create.mockRejectedValue(
+      Object.assign(new Error('Unique constraint failed'), { code: 'P2002' })
+    );
     await cartService.addItem(7, 1, 1);
     expect(prisma.cartItem.updateMany).toHaveBeenCalledTimes(2);
   });
@@ -146,7 +178,10 @@ describe('updateItem', () => {
   it('sets a new quantity', async () => {
     prisma.cartItem.findUnique.mockResolvedValue({ id: 50, quantity: 1, product: inStock });
     await cartService.updateItem(7, 1, 4);
-    expect(prisma.cartItem.update).toHaveBeenCalledWith({ where: { id: 50 }, data: { quantity: 4 } });
+    expect(prisma.cartItem.update).toHaveBeenCalledWith({
+      where: { id: 50 },
+      data: { quantity: 4 },
+    });
   });
 
   //test 13: updating a product that is not in the cart gives 404
@@ -168,7 +203,9 @@ describe('removeItem', () => {
   it('removes an item from the cart', async () => {
     prisma.cartItem.deleteMany.mockResolvedValue({ count: 1 });
     await cartService.removeItem(7, 1);
-    expect(prisma.cartItem.deleteMany).toHaveBeenCalledWith({ where: { cartId: 10, productId: 1 } });
+    expect(prisma.cartItem.deleteMany).toHaveBeenCalledWith({
+      where: { cartId: 10, productId: 1 },
+    });
   });
 
   //test 16: removing something that is not there gives 404
@@ -206,7 +243,10 @@ describe('mergeCart', () => {
   it('combines duplicate products from the browser cart', async () => {
     prisma.product.findMany.mockResolvedValue([inStock]);
     prisma.cartItem.findMany.mockResolvedValue([]);
-    await cartService.mergeCart(7, [{ productId: 1, quantity: 1 }, { productId: 1, quantity: 2 }]);
+    await cartService.mergeCart(7, [
+      { productId: 1, quantity: 1 },
+      { productId: 1, quantity: 2 },
+    ]);
     expect(prisma.cartItem.upsert).toHaveBeenCalledTimes(1);
     expect(prisma.cartItem.upsert).toHaveBeenCalledWith(
       expect.objectContaining({ create: { cartId: 10, productId: 1, quantity: 3 } })
@@ -217,7 +257,10 @@ describe('mergeCart', () => {
   it('skips missing and out of stock products', async () => {
     prisma.product.findMany.mockResolvedValue([outOfStock]);
     prisma.cartItem.findMany.mockResolvedValue([]);
-    const result = await cartService.mergeCart(7, [{ productId: 2, quantity: 1 }, { productId: 999, quantity: 1 }]);
+    const result = await cartService.mergeCart(7, [
+      { productId: 2, quantity: 1 },
+      { productId: 999, quantity: 1 },
+    ]);
     expect(prisma.cartItem.upsert).not.toHaveBeenCalled();
     expect(result.adjustments).toEqual([
       { productId: 2, reason: 'Product is out of stock' },
@@ -240,9 +283,15 @@ describe('mergeCart', () => {
 
   //test 23: each item needs a valid productId and quantity within database limits
   it('rejects invalid items', async () => {
-    await expect(cartService.mergeCart(7, [{ productId: 1, quantity: 0 }])).rejects.toMatchObject({ status: 400 });
-    await expect(cartService.mergeCart(7, [{ productId: '1', quantity: 1 }])).rejects.toMatchObject({ status: 400 });
-    await expect(cartService.mergeCart(7, [{ productId: 3000000000, quantity: 1 }])).rejects.toMatchObject({ status: 400 });
+    await expect(cartService.mergeCart(7, [{ productId: 1, quantity: 0 }])).rejects.toMatchObject({
+      status: 400,
+    });
+    await expect(cartService.mergeCart(7, [{ productId: '1', quantity: 1 }])).rejects.toMatchObject(
+      { status: 400 }
+    );
+    await expect(
+      cartService.mergeCart(7, [{ productId: 3000000000, quantity: 1 }])
+    ).rejects.toMatchObject({ status: 400 });
     await expect(cartService.mergeCart(7, [null])).rejects.toMatchObject({ status: 400 });
   });
 

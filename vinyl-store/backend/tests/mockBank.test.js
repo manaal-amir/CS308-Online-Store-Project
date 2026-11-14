@@ -48,13 +48,19 @@ describe('mock bank', () => {
 
   //test 6: a card that expired last month is declined
   it('declines an expired card', () => {
-    const result = chargeCard({ cardNumber: TEST_CARDS.APPROVED, expiryMonth: 5, expiryYear: 2027 }, now);
+    const result = chargeCard(
+      { cardNumber: TEST_CARDS.APPROVED, expiryMonth: 5, expiryYear: 2027 },
+      now
+    );
     expect(result).toEqual({ approved: false, reason: 'Card expired' });
   });
 
   //test 7: a card expiring this month still works until the month ends
   it('accepts a card that expires this month', () => {
-    const result = chargeCard({ cardNumber: TEST_CARDS.APPROVED, expiryMonth: 6, expiryYear: 2027 }, now);
+    const result = chargeCard(
+      { cardNumber: TEST_CARDS.APPROVED, expiryMonth: 6, expiryYear: 2027 },
+      now
+    );
     expect(result.approved).toBe(true);
   });
 });

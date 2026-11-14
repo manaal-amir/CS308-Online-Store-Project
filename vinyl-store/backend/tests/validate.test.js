@@ -72,13 +72,19 @@ describe('validate middleware', () => {
 
   //test 9: text that is not a number is rejected
   it('rejects non numeric params', () => {
-    const err = run({ params: { id: { required: true, type: 'integer' } } }, { params: { id: 'abc' } });
+    const err = run(
+      { params: { id: { required: true, type: 'integer' } } },
+      { params: { id: 'abc' } }
+    );
     expect(err.message).toBe('id must be an integer');
   });
 
   //test 10: emails must have a valid format
   it('rejects an invalid email', () => {
-    const err = run({ body: { email: { required: true, type: 'email' } } }, { body: { email: 'not-an-email' } });
+    const err = run(
+      { body: { email: { required: true, type: 'email' } } },
+      { body: { email: 'not-an-email' } }
+    );
     expect(err.message).toBe('email must be a valid email');
   });
 
@@ -128,7 +134,14 @@ describe('validate middleware', () => {
   //test 17: values must match a custom pattern
   it('rejects a value that does not match pattern', () => {
     const schema = {
-      body: { taxId: { required: true, type: 'string', pattern: /^\d{10,11}$/, patternMessage: 'taxId must be 10 or 11 digits' } },
+      body: {
+        taxId: {
+          required: true,
+          type: 'string',
+          pattern: /^\d{10,11}$/,
+          patternMessage: 'taxId must be 10 or 11 digits',
+        },
+      },
     };
     const err = run(schema, { body: { taxId: '12ab' } });
     expect(err.message).toBe('taxId must be 10 or 11 digits');
@@ -136,7 +149,10 @@ describe('validate middleware', () => {
 
   //test 18: hex or scientific notation is not accepted as a number
   it('rejects unusual number formats like hex', () => {
-    const err = run({ params: { id: { required: true, type: 'integer' } } }, { params: { id: '0x10' } });
+    const err = run(
+      { params: { id: { required: true, type: 'integer' } } },
+      { params: { id: '0x10' } }
+    );
     expect(err.message).toBe('id must be an integer');
   });
 
@@ -151,7 +167,9 @@ describe('validate middleware', () => {
   //test 20: maxBytes counts bytes, so 40 letters like "ğ" (80 bytes) are too long for 72 bytes
   it('rejects text that is too long in bytes', () => {
     const schema = { body: { password: { type: 'string', maxBytes: 72, trim: false } } };
-    expect(run(schema, { body: { password: 'ğ'.repeat(40) } }).message).toBe('password is too long');
+    expect(run(schema, { body: { password: 'ğ'.repeat(40) } }).message).toBe(
+      'password is too long'
+    );
     expect(run(schema, { body: { password: 'a'.repeat(72) } })).toBeUndefined();
   });
 });

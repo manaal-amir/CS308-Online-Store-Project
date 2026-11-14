@@ -25,7 +25,12 @@ describeIfDb('cart service with the real database', () => {
 
     //a throwaway customer so the seeded test accounts are not touched
     const user = await prisma.user.create({
-      data: { name: 'Cart', lastname: 'Test', email: `cart-test-${Date.now()}@x.com`, passwordHash: 'not-a-real-hash' },
+      data: {
+        name: 'Cart',
+        lastname: 'Test',
+        email: `cart-test-${Date.now()}@x.com`,
+        passwordHash: 'not-a-real-hash',
+      },
     });
     userId = user.id;
 
@@ -56,18 +61,24 @@ describeIfDb('cart service with the real database', () => {
 
   //test 2: out of stock products are rejected
   it('rejects an out of stock product', async () => {
-    await expect(cartService.addItem(userId, outOfStock.id, 1)).rejects.toMatchObject({ status: 409 });
+    await expect(cartService.addItem(userId, outOfStock.id, 1)).rejects.toMatchObject({
+      status: 409,
+    });
   });
 
   //test 3: many add requests at the same moment never push the cart above stock (requirement 18)
   it('never goes above stock when many requests arrive at once', async () => {
     const stock = lowStock.quantity;
-    const requests = Array.from({ length: stock + 5 }, () => cartService.addItem(userId, lowStock.id, 1));
+    const requests = Array.from({ length: stock + 5 }, () =>
+      cartService.addItem(userId, lowStock.id, 1)
+    );
     const results = await Promise.allSettled(requests);
 
     //exactly "stock" requests succeed, the rest are rejected with 409
     expect(results.filter((r) => r.status === 'fulfilled')).toHaveLength(stock);
-    expect(results.filter((r) => r.status === 'rejected').every((r) => r.reason.status === 409)).toBe(true);
+    expect(
+      results.filter((r) => r.status === 'rejected').every((r) => r.reason.status === 409)
+    ).toBe(true);
 
     const cart = await cartService.getCart(userId);
     expect(cart.items[0].quantity).toBe(stock);

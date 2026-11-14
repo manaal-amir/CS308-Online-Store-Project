@@ -22,7 +22,7 @@ const SELECT = {
   description: true,
   imageUrl: true,
   createdAt: true,
-  warrantyStatus: true,   // ← added
+  warrantyStatus: true, // ← added
   category: { select: { name: true } },
   artist: { select: { name: true } },
   genre: { select: { name: true } },
@@ -69,9 +69,7 @@ describe('product service', () => {
 
     expect(prisma.product.findMany).toHaveBeenCalledWith({
       where: {
-        AND: [
-          { genre: { name: { equals: 'rock', mode: 'insensitive' } } },
-        ],
+        AND: [{ genre: { name: { equals: 'rock', mode: 'insensitive' } } }],
       },
       orderBy: { createdAt: 'desc' },
       select: SELECT,
