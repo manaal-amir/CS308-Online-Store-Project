@@ -27,10 +27,15 @@ describe('GET /api/invoices/:orderId', () => {
       totalPrice: 1650,
       deliveryAddress: 'Test St',
       user: { name: 'T', lastname: 'U', email: 't@x.com', homeAddress: 'H' },
-      items: [{ quantity: 1, unitPrice: 1650, product: { name: 'P', model: 'M', serialNumber: 'S' } }],
+      items: [
+        { quantity: 1, unitPrice: 1650, product: { name: 'P', model: 'M', serialNumber: 'S' } },
+      ],
     });
     prisma.invoice.findUnique.mockResolvedValue({
-      id: 10, invoiceNumber: 'INV-X', totalAmount: 1650, issuedAt: new Date(),
+      id: 10,
+      invoiceNumber: 'INV-X',
+      totalAmount: 1650,
+      issuedAt: new Date(),
     });
 
     const res = await request(app)
@@ -44,7 +49,10 @@ describe('GET /api/invoices/:orderId', () => {
 
   it("returns 404 for another user's order", async () => {
     prisma.order.findUnique.mockResolvedValue({
-      id: 1, userId: 999, totalPrice: 1650, deliveryAddress: 'X',
+      id: 1,
+      userId: 999,
+      totalPrice: 1650,
+      deliveryAddress: 'X',
       user: { name: 'T', lastname: 'U', email: 't@x.com', homeAddress: 'H' },
       items: [],
     });

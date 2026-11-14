@@ -11,7 +11,8 @@ function generatePdf(invoice) {
       doc.on('error', reject);
 
       const customer = invoice.customer || {};
-      const customerName = [customer.name, customer.lastname].filter(Boolean).join(' ') || 'Customer';
+      const customerName =
+        [customer.name, customer.lastname].filter(Boolean).join(' ') || 'Customer';
       const customerEmail = customer.email || '';
 
       doc.fontSize(20).text('VINYL STORE', { align: 'center' });
@@ -34,9 +35,11 @@ function generatePdf(invoice) {
         doc.fontSize(10).text('(no items)');
       } else {
         items.forEach((item) => {
-          doc.fontSize(10).text(
-            `${item.productName || 'Product'} (${item.model || ''}) x${item.quantity} — ${Number(item.lineTotal || 0).toFixed(2)} TRY`
-          );
+          doc
+            .fontSize(10)
+            .text(
+              `${item.productName || 'Product'} (${item.model || ''}) x${item.quantity} — ${Number(item.lineTotal || 0).toFixed(2)} TRY`
+            );
         });
       }
 

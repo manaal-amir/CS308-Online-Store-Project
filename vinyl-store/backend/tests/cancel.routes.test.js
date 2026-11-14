@@ -58,7 +58,9 @@ describe('cancel order route', () => {
   //test 4: order ids that are not positive whole numbers, or too big for the database, give 400
   it('rejects a bad order id', async () => {
     for (const id of ['abc', '0', '-1', '1.5', '99999999999']) {
-      const res = await request(app).post(`/api/orders/${id}/cancel`).set('Authorization', customer);
+      const res = await request(app)
+        .post(`/api/orders/${id}/cancel`)
+        .set('Authorization', customer);
       expect(res.status).toBe(400);
     }
     expect(cancelService.cancelOrder).not.toHaveBeenCalled();
@@ -66,7 +68,9 @@ describe('cancel order route', () => {
 
   //test 5: errors from the service keep their status, e.g. an order already in transit
   it('returns the service error status', async () => {
-    const err = new Error('Only orders that are processing can be cancelled, this order is IN_TRANSIT');
+    const err = new Error(
+      'Only orders that are processing can be cancelled, this order is IN_TRANSIT'
+    );
     err.status = 409;
     cancelService.cancelOrder.mockRejectedValue(err);
     const res = await request(app).post('/api/orders/42/cancel').set('Authorization', customer);

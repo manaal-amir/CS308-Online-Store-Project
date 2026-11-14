@@ -1,6 +1,5 @@
 const { buildInvoice } = require('./invoice.service');
 
-
 async function getInvoice(req, res, next) {
   try {
     const orderId = req.params.orderId;

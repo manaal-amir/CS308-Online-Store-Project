@@ -112,78 +112,81 @@ async function findDeliveryAddress(tx, userId, deliveryAddress) {
 //everything inside the transaction happens together or not at all:
 //if stock runs out or the bank declines, the stock and the cart go back to how they were
 async function checkout(userId, { cardNumber, expiryMonth, expiryYear, deliveryAddress }) {
-  const order = await prisma.$transaction(async (tx) => {
-    const cartItems = await takeCartItems(tx, userId);
-    if (cartItems.length === 0) {
-      throw httpError(400, 'Your cart is empty');
-    }
-
-    const address = await findDeliveryAddress(tx, userId, deliveryAddress);
-
-    //load the products in the cart, keyed by id for quick lookup
-    const products = await tx.product.findMany({
-      where: { id: { in: cartItems.map((item) => item.productId) } },
-    });
-    const productsById = new Map(products.map((product) => [product.id, product]));
-
-    //update products in id order, so two orders with the same products
-    //always lock them in the same order and cannot block each other forever
-    const items = [...cartItems].sort((a, b) => a.productId - b.productId);
-
-    let totalCents = 0;
-    const orderItems = [];
-    for (const item of items) {
-      const product = productsById.get(item.productId);
-      //a product removed from the shop while it was in the cart
-      if (!product) {
-        throw httpError(409, 'A product in your cart is no longer available');
+  const order = await prisma.$transaction(
+    async (tx) => {
+      const cartItems = await takeCartItems(tx, userId);
+      if (cartItems.length === 0) {
+        throw httpError(400, 'Your cart is empty');
       }
 
-      //decrease stock only if enough is left, the database checks and updates in one step
-      //so two customers can never both buy the last copy (requirements 3 and 18)
-      const updated = await tx.product.updateMany({
-        where: { id: product.id, quantity: { gte: item.quantity } },
-        data: { quantity: { decrement: item.quantity } },
+      const address = await findDeliveryAddress(tx, userId, deliveryAddress);
+
+      //load the products in the cart, keyed by id for quick lookup
+      const products = await tx.product.findMany({
+        where: { id: { in: cartItems.map((item) => item.productId) } },
       });
-      if (updated.count === 0) {
-        throw httpError(409, `Not enough stock for "${product.name}"`);
+      const productsById = new Map(products.map((product) => [product.id, product]));
+
+      //update products in id order, so two orders with the same products
+      //always lock them in the same order and cannot block each other forever
+      const items = [...cartItems].sort((a, b) => a.productId - b.productId);
+
+      let totalCents = 0;
+      const orderItems = [];
+      for (const item of items) {
+        const product = productsById.get(item.productId);
+        //a product removed from the shop while it was in the cart
+        if (!product) {
+          throw httpError(409, 'A product in your cart is no longer available');
+        }
+
+        //decrease stock only if enough is left, the database checks and updates in one step
+        //so two customers can never both buy the last copy (requirements 3 and 18)
+        const updated = await tx.product.updateMany({
+          where: { id: product.id, quantity: { gte: item.quantity } },
+          data: { quantity: { decrement: item.quantity } },
+        });
+        if (updated.count === 0) {
+          throw httpError(409, `Not enough stock for "${product.name}"`);
+        }
+
+        //price and cost are copied now, so later price changes or discounts do not change this order
+        const unitPriceCents = toCents(product.price);
+        totalCents += unitPriceCents * item.quantity;
+        orderItems.push({
+          productId: product.id,
+          quantity: item.quantity,
+          unitPrice: toMoney(unitPriceCents),
+          unitCost: toMoney(unitCostCents(product)),
+        });
       }
 
-      //price and cost are copied now, so later price changes or discounts do not change this order
-      const unitPriceCents = toCents(product.price);
-      totalCents += unitPriceCents * item.quantity;
-      orderItems.push({
-        productId: product.id,
-        quantity: item.quantity,
-        unitPrice: toMoney(unitPriceCents),
-        unitCost: toMoney(unitCostCents(product)),
-      });
-    }
+      //ask the mock bank last, if it declines everything above is rolled back (requirement 4)
+      const payment = chargeCard({ cardNumber, expiryMonth, expiryYear });
+      if (!payment.approved) {
+        throw httpError(402, `Payment declined: ${payment.reason}`);
+      }
 
-    //ask the mock bank last, if it declines everything above is rolled back (requirement 4)
-    const payment = chargeCard({ cardNumber, expiryMonth, expiryYear });
-    if (!payment.approved) {
-      throw httpError(402, `Payment declined: ${payment.reason}`);
-    }
-
-    //save the order as PROCESSING, which puts it on the delivery list (requirement 3)
-    //only the last 4 digits are kept, never the full number or cvv (requirement 17)
-    return tx.order.create({
-      data: {
-        userId,
-        status: 'PROCESSING',
-        totalPrice: toMoney(totalCents),
-        deliveryAddress: address,
-        cardLast4: cardNumber.slice(-4),
-        paymentRef: payment.bankRef,
-        items: { create: orderItems },
-        payment: {
-          create: { amount: toMoney(totalCents), status: 'SUCCESSFUL', bankRef: payment.bankRef },
+      //save the order as PROCESSING, which puts it on the delivery list (requirement 3)
+      //only the last 4 digits are kept, never the full number or cvv (requirement 17)
+      return tx.order.create({
+        data: {
+          userId,
+          status: 'PROCESSING',
+          totalPrice: toMoney(totalCents),
+          deliveryAddress: address,
+          cardLast4: cardNumber.slice(-4),
+          paymentRef: payment.bankRef,
+          items: { create: orderItems },
+          payment: {
+            create: { amount: toMoney(totalCents), status: 'SUCCESSFUL', bankRef: payment.bankRef },
+          },
         },
-      },
-      include: { items: { include: { product: { select: { name: true } } } } },
-    });
-  }, { timeout: TRANSACTION_TIMEOUT_MS });
+        include: { items: { include: { product: { select: { name: true } } } } },
+      });
+    },
+    { timeout: TRANSACTION_TIMEOUT_MS }
+  );
 
   const invoiceNumber = await issueInvoice(order, userId);
   return formatOrder(order, invoiceNumber);

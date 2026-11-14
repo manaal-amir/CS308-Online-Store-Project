@@ -25,11 +25,17 @@ function formatCancelledOrder(order, items) {
 //explains why an order could not be cancelled
 //another customer's order looks the same as a missing one (404), so order ids of others are not revealed
 async function cancelError(tx, userId, orderId) {
-  const order = await tx.order.findUnique({ where: { id: orderId }, select: { userId: true, status: true } });
+  const order = await tx.order.findUnique({
+    where: { id: orderId },
+    select: { userId: true, status: true },
+  });
   if (!order || order.userId !== userId) {
     return httpError(404, 'Order not found');
   }
-  return httpError(409, `Only orders that are processing can be cancelled, this order is ${order.status}`);
+  return httpError(
+    409,
+    `Only orders that are processing can be cancelled, this order is ${order.status}`
+  );
 }
 
 //cancels the customer's order while it is still processing (requirement 14)

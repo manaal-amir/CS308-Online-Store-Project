@@ -84,7 +84,10 @@ describe('cancel order service', () => {
   it('rejects an order that does not exist', async () => {
     tx.order.updateMany.mockResolvedValue({ count: 0 });
     tx.order.findUnique.mockResolvedValue(null);
-    await expect(cancelOrder(7, 42)).rejects.toMatchObject({ status: 404, message: 'Order not found' });
+    await expect(cancelOrder(7, 42)).rejects.toMatchObject({
+      status: 404,
+      message: 'Order not found',
+    });
     expect(tx.product.update).not.toHaveBeenCalled();
   });
 

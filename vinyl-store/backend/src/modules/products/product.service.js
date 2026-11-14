@@ -2,7 +2,7 @@ const prisma = require('../../config/prisma');
 
 //Returns the public catalog fields needed by the storefront.
 async function getProducts({ genre, search, sort } = {}) {
-    const conditions = [];
+  const conditions = [];
 
   if (genre) {
     conditions.push({ genre: { name: { equals: genre, mode: 'insensitive' } } });
@@ -78,4 +78,4 @@ async function getProductById(id) {
   return { ...product, price: Number(product.price) };
 }
 
-module.exports = { getProducts , getProductById};
+module.exports = { getProducts, getProductById };

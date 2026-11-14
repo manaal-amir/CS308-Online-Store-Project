@@ -19,10 +19,19 @@ describe('email normalization', () => {
   //test 1: a new account is saved with a lowercase email
   it('saves the email in lowercase when registering', async () => {
     prisma.user.findUnique.mockResolvedValue(null);
-    prisma.user.create.mockImplementation(async ({ data }) => ({ id: 1, email: data.email, role: 'CUSTOMER' }));
+    prisma.user.create.mockImplementation(async ({ data }) => ({
+      id: 1,
+      email: data.email,
+      role: 'CUSTOMER',
+    }));
 
     await authService.register({
-      name: 'A', lastname: 'B', email: 'Ayesha@Example.COM', password: 'Vinyl1234!', taxId: '1', homeAddress: 'x',
+      name: 'A',
+      lastname: 'B',
+      email: 'Ayesha@Example.COM',
+      password: 'Vinyl1234!',
+      taxId: '1',
+      homeAddress: 'x',
     });
 
     expect(prisma.user.create.mock.calls[0][0].data.email).toBe('ayesha@example.com');
@@ -34,7 +43,12 @@ describe('email normalization', () => {
 
     await expect(
       authService.register({
-        name: 'A', lastname: 'B', email: 'AYESHA@example.com', password: 'Vinyl1234!', taxId: '1', homeAddress: 'x',
+        name: 'A',
+        lastname: 'B',
+        email: 'AYESHA@example.com',
+        password: 'Vinyl1234!',
+        taxId: '1',
+        homeAddress: 'x',
       })
     ).rejects.toMatchObject({ status: 409 });
 
@@ -45,7 +59,12 @@ describe('email normalization', () => {
   //test 3: logging in with different capitals finds the same account
   it('logs in with an email typed in different capitals', async () => {
     const passwordHash = await bcrypt.hash('Vinyl1234!', 4);
-    prisma.user.findUnique.mockResolvedValue({ id: 1, email: 'ayesha@example.com', role: 'CUSTOMER', passwordHash });
+    prisma.user.findUnique.mockResolvedValue({
+      id: 1,
+      email: 'ayesha@example.com',
+      role: 'CUSTOMER',
+      passwordHash,
+    });
 
     const result = await authService.login({ email: 'Ayesha@Example.com', password: 'Vinyl1234!' });
 
@@ -57,11 +76,18 @@ describe('email normalization', () => {
   //it must get the same 409 as a normal duplicate, not a 500
   it('gives 409 when the same email is registered twice at the same moment', async () => {
     prisma.user.findUnique.mockResolvedValue(null);
-    prisma.user.create.mockRejectedValue(Object.assign(new Error('Unique constraint failed'), { code: 'P2002' }));
+    prisma.user.create.mockRejectedValue(
+      Object.assign(new Error('Unique constraint failed'), { code: 'P2002' })
+    );
 
     await expect(
       authService.register({
-        name: 'A', lastname: 'B', email: 'a@b.com', password: 'Vinyl1234!', taxId: '1', homeAddress: 'x',
+        name: 'A',
+        lastname: 'B',
+        email: 'a@b.com',
+        password: 'Vinyl1234!',
+        taxId: '1',
+        homeAddress: 'x',
       })
     ).rejects.toMatchObject({ status: 409, message: 'Email already registered' });
   });
@@ -73,7 +99,12 @@ describe('email normalization', () => {
 
     await expect(
       authService.register({
-        name: 'A', lastname: 'B', email: 'a@b.com', password: 'Vinyl1234!', taxId: '1', homeAddress: 'x',
+        name: 'A',
+        lastname: 'B',
+        email: 'a@b.com',
+        password: 'Vinyl1234!',
+        taxId: '1',
+        homeAddress: 'x',
       })
     ).rejects.toThrow('connection lost');
   });

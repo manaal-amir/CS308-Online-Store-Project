@@ -91,7 +91,9 @@ describe('errorHandler', () => {
 
   //test 9: a prisma duplicate error (P2002) becomes 409 and is not logged
   it('turns a prisma duplicate error into 409', () => {
-    const err = Object.assign(new Error('Unique constraint failed on the fields: (`email`)'), { code: 'P2002' });
+    const err = Object.assign(new Error('Unique constraint failed on the fields: (`email`)'), {
+      code: 'P2002',
+    });
     const res = mockRes();
     errorHandler(err, {}, res, jest.fn());
     expect(res.status).toHaveBeenCalledWith(409);
@@ -119,11 +121,15 @@ describe('errorHandler', () => {
 
   //test 12: two transactions changing the same rows at once (P2034) asks the user to try again
   it('turns a prisma write conflict into 409', () => {
-    const err = Object.assign(new Error('Transaction failed due to a write conflict'), { code: 'P2034' });
+    const err = Object.assign(new Error('Transaction failed due to a write conflict'), {
+      code: 'P2034',
+    });
     const res = mockRes();
     errorHandler(err, {}, res, jest.fn());
     expect(res.status).toHaveBeenCalledWith(409);
-    expect(res.json).toHaveBeenCalledWith({ error: 'Too many changes at the same time, please try again' });
+    expect(res.json).toHaveBeenCalledWith({
+      error: 'Too many changes at the same time, please try again',
+    });
   });
 
   //test 13: a transaction that took too long (P2028) becomes 503 with a clear message
@@ -137,10 +143,13 @@ describe('errorHandler', () => {
 
   //test 14: broken json in the request body gives a clean message instead of the parser's text
   it('gives a clean message for invalid json', () => {
-    const err = Object.assign(new SyntaxError('Expected double-quoted property name in JSON at position 20'), {
-      type: 'entity.parse.failed',
-      status: 400,
-    });
+    const err = Object.assign(
+      new SyntaxError('Expected double-quoted property name in JSON at position 20'),
+      {
+        type: 'entity.parse.failed',
+        status: 400,
+      }
+    );
     const res = mockRes();
     errorHandler(err, {}, res, jest.fn());
     expect(res.status).toHaveBeenCalledWith(400);

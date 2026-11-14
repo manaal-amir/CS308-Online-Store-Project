@@ -30,7 +30,9 @@ const validUser = {
 
 //sends a registration with some fields replaced
 function register(changes) {
-  return request(app).post('/api/auth/register').send({ ...validUser, ...changes });
+  return request(app)
+    .post('/api/auth/register')
+    .send({ ...validUser, ...changes });
 }
 
 beforeEach(() => {
@@ -104,21 +106,27 @@ describe('POST /api/auth/register', () => {
 describe('POST /api/auth/login', () => {
   //test 9: a valid login reaches the service
   it('accepts a valid login', async () => {
-    const res = await request(app).post('/api/auth/login').send({ email: 'a@b.com', password: 'whatever1' });
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'a@b.com', password: 'whatever1' });
     expect(res.status).toBe(200);
     expect(authService.login).toHaveBeenCalledWith({ email: 'a@b.com', password: 'whatever1' });
   });
 
   //test 10: a number as the password gives 400, not a 500 crash (SCRUM-97)
   it('rejects a number as the password', async () => {
-    const res = await request(app).post('/api/auth/login').send({ email: 'a@b.com', password: 123 });
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'a@b.com', password: 123 });
     expect(res.status).toBe(400);
     expect(authService.login).not.toHaveBeenCalled();
   });
 
   //test 11: an object instead of an email is rejected before reaching the database
   it('rejects an email that is not text', async () => {
-    const res = await request(app).post('/api/auth/login').send({ email: { contains: '@' }, password: 'x' });
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ email: { contains: '@' }, password: 'x' });
     expect(res.status).toBe(400);
     expect(authService.login).not.toHaveBeenCalled();
   });

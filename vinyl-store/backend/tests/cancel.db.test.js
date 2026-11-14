@@ -15,7 +15,12 @@ jest.mock('../src/modules/invoices/invoice.email', () => ({
   sendInvoiceEmail: jest.fn().mockResolvedValue({ sent: false }),
 }));
 
-const card = { cardNumber: '4242424242424242', expiryMonth: 12, expiryYear: 2099, deliveryAddress: 'Test St 1' };
+const card = {
+  cardNumber: '4242424242424242',
+  expiryMonth: 12,
+  expiryYear: 2099,
+  deliveryAddress: 'Test St 1',
+};
 
 //turns the results of several requests into short text, e.g. ["ok", "409 ..."]
 //so a failing test shows the real error message instead of only a count
@@ -95,7 +100,10 @@ describeIfDb('cancel order with the real database', () => {
 
     expect(result).toMatchObject({ id: orderId, status: 'CANCELLED', refundedAmount: 300 });
     expect(await stockNow()).toBe(before);
-    const saved = await prisma.order.findUnique({ where: { id: orderId }, include: { payment: true } });
+    const saved = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { payment: true },
+    });
     expect(saved.status).toBe('CANCELLED');
     expect(saved.payment.status).toBe('REFUNDED');
   });
@@ -126,7 +134,10 @@ describeIfDb('cancel order with the real database', () => {
     await expect(cancelService.cancelOrder(userId, orderId)).rejects.toMatchObject({ status: 409 });
 
     expect(await stockNow()).toBe(before);
-    const saved = await prisma.order.findUnique({ where: { id: orderId }, include: { payment: true } });
+    const saved = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { payment: true },
+    });
     expect(saved.status).toBe('IN_TRANSIT');
     expect(saved.payment.status).toBe('SUCCESSFUL');
   });
@@ -136,7 +147,9 @@ describeIfDb('cancel order with the real database', () => {
     const owner = await customerWithOrder(1);
     const other = await customerWithOrder(1);
 
-    await expect(cancelService.cancelOrder(other.userId, owner.orderId)).rejects.toMatchObject({ status: 404 });
+    await expect(cancelService.cancelOrder(other.userId, owner.orderId)).rejects.toMatchObject({
+      status: 404,
+    });
 
     const saved = await prisma.order.findUnique({ where: { id: owner.orderId } });
     expect(saved.status).toBe('PROCESSING');

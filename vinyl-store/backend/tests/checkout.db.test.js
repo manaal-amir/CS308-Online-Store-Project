@@ -15,7 +15,12 @@ jest.mock('../src/modules/invoices/invoice.email', () => ({
   sendInvoiceEmail: jest.fn().mockResolvedValue({ sent: true }),
 }));
 
-const card = { cardNumber: '4242424242424242', expiryMonth: 12, expiryYear: 2099, deliveryAddress: 'Test St 1' };
+const card = {
+  cardNumber: '4242424242424242',
+  expiryMonth: 12,
+  expiryYear: 2099,
+  deliveryAddress: 'Test St 1',
+};
 
 //turns the results of several checkouts into short text, e.g. ["ok", "409 Not enough stock ..."]
 //so a failing test shows the real error message instead of only a count
@@ -96,7 +101,10 @@ describeIfDb('checkout with the real database', () => {
 
     expect(order).toMatchObject({ status: 'PROCESSING', totalPrice: 200, cardLast4: '4242' });
     expect(await stockNow()).toBe(3);
-    const saved = await prisma.order.findUnique({ where: { id: order.id }, include: { payment: true, items: true } });
+    const saved = await prisma.order.findUnique({
+      where: { id: order.id },
+      include: { payment: true, items: true },
+    });
     expect(saved.payment.status).toBe('SUCCESSFUL');
     expect(saved.items).toHaveLength(1);
     const cartLeft = await prisma.cartItem.findMany({ where: { cart: { userId } } });

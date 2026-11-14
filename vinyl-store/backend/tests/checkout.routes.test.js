@@ -74,7 +74,10 @@ describe('checkout route', () => {
       .set('Authorization', customer)
       .send({ ...body, expiryMonth: '12', expiryYear: '2030' });
     expect(res.status).toBe(201);
-    expect(checkoutService.checkout.mock.calls[0][1]).toMatchObject({ expiryMonth: 12, expiryYear: 2030 });
+    expect(checkoutService.checkout.mock.calls[0][1]).toMatchObject({
+      expiryMonth: 12,
+      expiryYear: 2030,
+    });
   });
 
   //test 5: missing card fields are all listed in one 400
@@ -99,7 +102,10 @@ describe('checkout route', () => {
 
   //test 7: cvv must be 3 or 4 digits and month must be 1 to 12
   it('rejects a bad cvv or expiry month', async () => {
-    const badCvv = await request(app).post('/api/orders').set('Authorization', customer).send({ ...body, cvv: '12' });
+    const badCvv = await request(app)
+      .post('/api/orders')
+      .set('Authorization', customer)
+      .send({ ...body, cvv: '12' });
     expect(badCvv.status).toBe(400);
     expect(badCvv.body.error).toBe('cvv must be 3 or 4 digits');
 

@@ -46,7 +46,9 @@ describe('cart routes', () => {
 
   //test 2: managers and agents cannot use the cart
   it('rejects users who are not customers', async () => {
-    const res = await request(app).get('/api/cart').set('Authorization', `Bearer ${tokenFor('SALES_MANAGER')}`);
+    const res = await request(app)
+      .get('/api/cart')
+      .set('Authorization', `Bearer ${tokenFor('SALES_MANAGER')}`);
     expect(res.status).toBe(403);
   });
 
@@ -62,14 +64,20 @@ describe('cart routes', () => {
   //test 4: quantity defaults to 1 when adding
   it('adds an item with quantity 1 by default', async () => {
     cartService.addItem.mockResolvedValue(emptyCart);
-    const res = await request(app).post('/api/cart/items').set('Authorization', customer).send({ productId: 3 });
+    const res = await request(app)
+      .post('/api/cart/items')
+      .set('Authorization', customer)
+      .send({ productId: 3 });
     expect(res.status).toBe(200);
     expect(cartService.addItem).toHaveBeenCalledWith(7, 3, 1);
   });
 
   //test 5: invalid input is stopped by validation before reaching the service
   it('rejects invalid add requests with 400', async () => {
-    const res = await request(app).post('/api/cart/items').set('Authorization', customer).send({ productId: 'abc', quantity: 0 });
+    const res = await request(app)
+      .post('/api/cart/items')
+      .set('Authorization', customer)
+      .send({ productId: 'abc', quantity: 0 });
     expect(res.status).toBe(400);
     expect(cartService.addItem).not.toHaveBeenCalled();
   });
@@ -77,7 +85,10 @@ describe('cart routes', () => {
   //test 6: the product id in the url is converted to a number
   it('updates an item using the id from the url', async () => {
     cartService.updateItem.mockResolvedValue(emptyCart);
-    const res = await request(app).patch('/api/cart/items/3').set('Authorization', customer).send({ quantity: 2 });
+    const res = await request(app)
+      .patch('/api/cart/items/3')
+      .set('Authorization', customer)
+      .send({ quantity: 2 });
     expect(res.status).toBe(200);
     expect(cartService.updateItem).toHaveBeenCalledWith(7, 3, 2);
   });
@@ -96,21 +107,29 @@ describe('cart routes', () => {
   it('merges the browser cart', async () => {
     cartService.mergeCart.mockResolvedValue({ ...emptyCart, adjustments: [] });
     const items = [{ productId: 3, quantity: 2 }];
-    const res = await request(app).post('/api/cart/merge').set('Authorization', customer).send({ items });
+    const res = await request(app)
+      .post('/api/cart/merge')
+      .set('Authorization', customer)
+      .send({ items });
     expect(res.status).toBe(200);
     expect(cartService.mergeCart).toHaveBeenCalledWith(7, items);
   });
 
   //test 9: ids too big for the database are rejected with 400 instead of crashing
   it('rejects a product id larger than the database allows', async () => {
-    const res = await request(app).delete('/api/cart/items/3000000000').set('Authorization', customer);
+    const res = await request(app)
+      .delete('/api/cart/items/3000000000')
+      .set('Authorization', customer);
     expect(res.status).toBe(400);
     expect(cartService.removeItem).not.toHaveBeenCalled();
   });
 
   //test 10: a quantity is required when changing an item
   it('rejects an update without a quantity', async () => {
-    const res = await request(app).patch('/api/cart/items/3').set('Authorization', customer).send({});
+    const res = await request(app)
+      .patch('/api/cart/items/3')
+      .set('Authorization', customer)
+      .send({});
     expect(res.status).toBe(400);
     expect(res.body).toEqual({ error: 'quantity is required' });
   });

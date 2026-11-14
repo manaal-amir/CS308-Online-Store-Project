@@ -28,7 +28,7 @@ async function buildInvoice(orderId, user) {
   const isOwner = order.userId === user.id;
   const isStaff = ['SALES_MANAGER', 'PRODUCT_MANAGER', 'SUPPORT_AGENT'].includes(user.role);
   if (!isOwner && !isStaff) {
-    const err = new Error('Order not found');  // 404, not 403 — don't leak existence
+    const err = new Error('Order not found'); // 404, not 403 — don't leak existence
     err.status = 404;
     throw err;
   }
