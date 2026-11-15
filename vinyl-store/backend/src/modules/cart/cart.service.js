@@ -120,6 +120,12 @@ async function addItem(userId, productId, quantity) {
     where: { cartId_productId: { cartId: cart.id, productId } },
   });
   if (existing) {
+    //the item can exist now even if it was missing a moment ago:
+    //another request (e.g. a fast double click) may have created it in between
+    //so try the stock-checked increase once more before saying there is not enough stock
+    if (await increaseWithinStock(cart.id, productId, quantity, product.quantity)) {
+      return loadCart(cart.id);
+    }
     throw tooMany;
   }
 

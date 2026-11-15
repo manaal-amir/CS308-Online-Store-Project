@@ -163,7 +163,20 @@ describe('addItem', () => {
     expect(prisma.cartItem.updateMany).toHaveBeenCalledTimes(2);
   });
 
-  //test 11: database errors other than the duplicate case are not hidden
+  //test 11: the item was created by another request between the first check and the lookup
+  //(found by cart.db.test.js on ci): there is still room, so the request must succeed, not get 409
+  it('retries the increase when another request created the item in between', async () => {
+    prisma.product.findUnique.mockResolvedValue(inStock);
+    prisma.cartItem.updateMany
+      .mockResolvedValueOnce({ count: 0 })
+      .mockResolvedValueOnce({ count: 1 });
+    prisma.cartItem.findUnique.mockResolvedValue({ id: 50, quantity: 1 });
+    await cartService.addItem(7, 1, 1);
+    expect(prisma.cartItem.updateMany).toHaveBeenCalledTimes(2);
+    expect(prisma.cartItem.create).not.toHaveBeenCalled();
+  });
+
+  //test 12: database errors other than the duplicate case are not hidden
   it('passes on other database errors', async () => {
     prisma.product.findUnique.mockResolvedValue(inStock);
     prisma.cartItem.updateMany.mockResolvedValue({ count: 0 });
@@ -174,7 +187,7 @@ describe('addItem', () => {
 });
 
 describe('updateItem', () => {
-  //test 12: the quantity is set to the exact new number
+  //test 13: the quantity is set to the exact new number
   it('sets a new quantity', async () => {
     prisma.cartItem.findUnique.mockResolvedValue({ id: 50, quantity: 1, product: inStock });
     await cartService.updateItem(7, 1, 4);
@@ -184,13 +197,13 @@ describe('updateItem', () => {
     });
   });
 
-  //test 13: updating a product that is not in the cart gives 404
+  //test 14: updating a product that is not in the cart gives 404
   it('rejects updating an item that is not in the cart', async () => {
     prisma.cartItem.findUnique.mockResolvedValue(null);
     await expect(cartService.updateItem(7, 1, 2)).rejects.toMatchObject({ status: 404 });
   });
 
-  //test 14: the new quantity cannot go above stock
+  //test 15: the new quantity cannot go above stock
   it('rejects a quantity above stock', async () => {
     prisma.cartItem.findUnique.mockResolvedValue({ id: 50, quantity: 1, product: inStock });
     await expect(cartService.updateItem(7, 1, 6)).rejects.toMatchObject({ status: 409 });
@@ -199,7 +212,7 @@ describe('updateItem', () => {
 });
 
 describe('removeItem', () => {
-  //test 15: removing an item deletes it from this user's cart only
+  //test 16: removing an item deletes it from this user's cart only
   it('removes an item from the cart', async () => {
     prisma.cartItem.deleteMany.mockResolvedValue({ count: 1 });
     await cartService.removeItem(7, 1);
@@ -208,7 +221,7 @@ describe('removeItem', () => {
     });
   });
 
-  //test 16: removing something that is not there gives 404
+  //test 17: removing something that is not there gives 404
   it('rejects removing an item that is not in the cart', async () => {
     prisma.cartItem.deleteMany.mockResolvedValue({ count: 0 });
     await expect(cartService.removeItem(7, 1)).rejects.toMatchObject({ status: 404 });
@@ -216,7 +229,7 @@ describe('removeItem', () => {
 });
 
 describe('mergeCart', () => {
-  //test 17: browser items are saved to the database cart in one transaction
+  //test 18: browser items are saved to the database cart in one transaction
   it('adds browser cart items in a single transaction', async () => {
     prisma.product.findMany.mockResolvedValue([inStock]);
     prisma.cartItem.findMany.mockResolvedValue([]);
@@ -228,7 +241,7 @@ describe('mergeCart', () => {
     expect(result.adjustments).toEqual([]);
   });
 
-  //test 18: browser and database quantities are added together but capped at stock
+  //test 19: browser and database quantities are added together but capped at stock
   it('caps merged quantities at stock and reports it', async () => {
     prisma.product.findMany.mockResolvedValue([inStock]);
     prisma.cartItem.findMany.mockResolvedValue([{ productId: 1, quantity: 3 }]);
@@ -239,7 +252,7 @@ describe('mergeCart', () => {
     expect(result.adjustments).toEqual([{ productId: 1, reason: 'Only 5 in stock' }]);
   });
 
-  //test 19: the same product twice in the browser cart is combined
+  //test 20: the same product twice in the browser cart is combined
   it('combines duplicate products from the browser cart', async () => {
     prisma.product.findMany.mockResolvedValue([inStock]);
     prisma.cartItem.findMany.mockResolvedValue([]);
@@ -253,7 +266,7 @@ describe('mergeCart', () => {
     );
   });
 
-  //test 20: missing and out of stock products are skipped and reported
+  //test 21: missing and out of stock products are skipped and reported
   it('skips missing and out of stock products', async () => {
     prisma.product.findMany.mockResolvedValue([outOfStock]);
     prisma.cartItem.findMany.mockResolvedValue([]);
@@ -268,7 +281,7 @@ describe('mergeCart', () => {
     ]);
   });
 
-  //test 21: an empty browser cart just returns the current cart
+  //test 22: an empty browser cart just returns the current cart
   it('accepts an empty list', async () => {
     prisma.product.findMany.mockResolvedValue([]);
     prisma.cartItem.findMany.mockResolvedValue([]);
@@ -276,12 +289,12 @@ describe('mergeCart', () => {
     expect(result.items).toEqual([]);
   });
 
-  //test 22: anything that is not a list is rejected
+  //test 23: anything that is not a list is rejected
   it('rejects items that are not a list', async () => {
     await expect(cartService.mergeCart(7, 'abc')).rejects.toMatchObject({ status: 400 });
   });
 
-  //test 23: each item needs a valid productId and quantity within database limits
+  //test 24: each item needs a valid productId and quantity within database limits
   it('rejects invalid items', async () => {
     await expect(cartService.mergeCart(7, [{ productId: 1, quantity: 0 }])).rejects.toMatchObject({
       status: 400,
@@ -295,7 +308,7 @@ describe('mergeCart', () => {
     await expect(cartService.mergeCart(7, [null])).rejects.toMatchObject({ status: 400 });
   });
 
-  //test 24: very long lists are rejected
+  //test 25: very long lists are rejected
   it('rejects more than 100 items', async () => {
     const items = Array.from({ length: 101 }, (_, i) => ({ productId: i + 1, quantity: 1 }));
     await expect(cartService.mergeCart(7, items)).rejects.toMatchObject({ status: 400 });
