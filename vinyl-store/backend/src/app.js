@@ -7,6 +7,7 @@ const errorHandler = require('./middlewares/errorHandler');
 const notFound = require('./middlewares/notFound');
 const invoiceRoutes = require('./modules/invoices/invoice.routes');
 const orderRoutes = require('./modules/orders/orders.routes');
+const deliveryRoutes = require('./modules/deliveries/delivery.routes');
 
 const app = express();
 
@@ -33,6 +34,8 @@ app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 //order routes: checkout, cancel, history and status updates
 app.use('/api/orders', orderRoutes);
+//delivery list, only for product managers
+app.use('/api/deliveries', deliveryRoutes);
 
 //any request that didn't match a route above becomes a 404
 app.use(notFound);
