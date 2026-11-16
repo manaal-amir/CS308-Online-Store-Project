@@ -74,6 +74,8 @@ describe('guest cart', () => {
   //test 3: out of stock products cannot be added
   it('rejects out of stock products', () => {
     expect(() => addToGuestCart(3, 1, 0)).toThrow('Product is out of stock');
+    expect(() => addToGuestCart(3, 1, -1)).toThrow('Product is out of stock');
+    expect(getGuestCart()).toEqual([]);
   });
 
   //test 4: the cart can never hold more than the stock

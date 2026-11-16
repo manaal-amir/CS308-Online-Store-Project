@@ -74,10 +74,11 @@ export default function CatalogRecords({
         return productGenre === normalized || productGenre.startsWith(`${normalized}/`);
       });
       const categoryMatches = !categories.length || categories.includes(category);
+      const stock = Number(product.quantity);
       const stockMatches =
         stockStatus === "all" ||
-        (stockStatus === "in-stock" && product.quantity > 0) ||
-        (stockStatus === "out-of-stock" && product.quantity === 0);
+        (stockStatus === "in-stock" && stock > 0) ||
+        (stockStatus === "out-of-stock" && stock <= 0);
       return searchMatches && genreMatches && categoryMatches && stockMatches && Number(product.price) <= maxPrice;
     });
 
@@ -162,6 +163,7 @@ export function CatalogCard({ product, isPreview = false }) {
   const artist = getRelationName(product.artist) || product.distributor || "Various Artists";
   const category = getRelationName(product.category);
   const isVinyl = category?.toLowerCase() === "vinyl";
+  const isOutOfStock = Number(product.quantity) <= 0;
 
   return (
     <article className="catalog-record">
@@ -196,16 +198,16 @@ export function CatalogCard({ product, isPreview = false }) {
         <h2>{artist}</h2>
         <p>{product.name}</p>
         <span className="catalog-record-price">{formatPrice(product.price)}</span>
-        {product.quantity === 0 && <span className="catalog-stock">Out of stock</span>}
+        {isOutOfStock && <span className="catalog-stock">Out of stock</span>}
       </a>
       
        <button
         type="button"
         className="catalog-add-button"
         onClick={handleAddToCart}
-        disabled={isPreview || Number(product.quantity) <= 0}
+        disabled={isPreview || isOutOfStock}
        >
-       {Number(product.quantity) <= 0 ? "Out of Stock" : "Add to Cart"}
+       {isOutOfStock ? "Out of Stock" : "Add to Cart"}
        </button>
 
       {cartMessage && (
