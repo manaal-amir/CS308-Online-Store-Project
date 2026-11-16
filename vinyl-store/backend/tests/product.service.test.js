@@ -202,4 +202,26 @@ describe('product service', () => {
       select: SELECT,
     });
   });
+
+  //VS-15 (requirement 7): out of stock records must still show up in the catalog and in search
+  it('returns out of stock products from search with quantity 0', async () => {
+    prisma.product.findMany.mockResolvedValue([
+      { id: 4, name: 'Hello, Dolly!', quantity: 0, price: '1150.00' },
+    ]);
+
+    const products = await productService.getProducts({ search: 'dolly' });
+
+    expect(products).toEqual([{ id: 4, name: 'Hello, Dolly!', quantity: 0, price: 1150 }]);
+  });
+
+  it('never filters on stock, so search and the catalog keep quantity 0 records', async () => {
+    prisma.product.findMany.mockResolvedValue([]);
+
+    await productService.getProducts({ genre: 'Jazz', search: 'dolly' });
+    await productService.getProducts();
+
+    for (const [query] of prisma.product.findMany.mock.calls) {
+      expect(JSON.stringify(query.where ?? {})).not.toContain('quantity');
+    }
+  });
 });
