@@ -49,8 +49,8 @@ describe("ProductDetails", () => {
     expect(render({ ...product, quantity: 3 })).toContain("Only 3 left in stock");
   });
 
-  test("out of stock disables the add button", () => {
-    const html = render({ ...product, quantity: 0 });
+  test.each([0, -2])("out-of-stock quantity %s disables the add button", (quantity) => {
+    const html = render({ ...product, quantity });
     expect(html).toContain("Out of stock");
     expect(html).toMatch(/<button[^>]*disabled[^>]*>Out of Stock/);
   });
