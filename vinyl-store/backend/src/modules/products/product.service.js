@@ -1,5 +1,16 @@
 const prisma = require('../../config/prisma');
 
+//Total units sold per product, as a Map of productId -> units (requirement 7: sort by popularity).
+//Cancelled orders do not count, because cancelling gives the stock back and refunds the customer.
+async function getUnitsSold() {
+  const rows = await prisma.orderItem.groupBy({
+    by: ['productId'],
+    where: { order: { status: { not: 'CANCELLED' } } },
+    _sum: { quantity: true },
+  });
+  return new Map(rows.map((row) => [row.productId, row._sum.quantity ?? 0]));
+}
+
 //Returns the public catalog fields needed by the storefront.
 async function getProducts({ genre, search, sort } = {}) {
   const conditions = [];
@@ -45,10 +56,19 @@ async function getProducts({ genre, search, sort } = {}) {
     },
   });
 
-  return products.map((product) => ({
+  const result = products.map((product) => ({
     ...product,
     price: Number(product.price),
   }));
+
+  if (sort === 'popularity') {
+    //best sellers first. The list is already newest first, and sort() keeps that order
+    //for ties, so products with the same units sold (or none sold) stay newest first
+    const sold = await getUnitsSold();
+    result.sort((a, b) => (sold.get(b.id) || 0) - (sold.get(a.id) || 0));
+  }
+
+  return result;
 }
 
 //Returns the full detail for one product, or null if it doesn't exist / isn't a valid id.

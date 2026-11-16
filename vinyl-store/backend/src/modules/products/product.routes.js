@@ -16,7 +16,7 @@ const listRules = {
     search: { type: 'string' },
     sort: {
       type: 'string',
-      enum: ['price_asc', 'price_desc', 'newest', 'featured'],
+      enum: ['price_asc', 'price_desc', 'newest', 'featured', 'popularity'],
     },
   },
 };
