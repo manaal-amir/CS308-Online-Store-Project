@@ -4,9 +4,10 @@ const API_BASE = (
   import.meta.env.VITE_API_BASE_URL || ""
 ).replace(/\/+$/, "");
 
-export async function getProducts(signal) {
+export async function getProducts(signal, sort) {
+  const sortQuery = sort ? `?sort=${encodeURIComponent(sort)}` : "";
   const response = await fetch(
-    `${API_BASE}/api/products`,
+    `${API_BASE}/api/products${sortQuery}`,
     { signal }
   );
 
@@ -44,10 +45,10 @@ export async function getProductById(id, signal) {
   return response.json();
 }
 
-export async function getCatalogProducts(signal) {
+export async function getCatalogProducts(signal, sort) {
   try {
     return {
-      products: await getProducts(signal),
+      products: await getProducts(signal, sort),
       source: "api",
       apiError: "",
     };
