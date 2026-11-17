@@ -4,6 +4,9 @@ import NavBar from "../components/layout/navBar.jsx";
 import Footer from "../components/layout/footer.jsx";
 import { getProductById } from "../services/api.js";
 import { addToGuestCart } from "../utils/guestCart.js";
+import CartIcon from "../components/icons/cartIcon.jsx";
+import CartToast from "../components/feedback/cartToast.jsx";
+import useCartToast from "../hooks/useCartToast.js";
 import {
   displayValue,
   formatPrice,
@@ -15,8 +18,8 @@ import "../styles/catalog.css";
 import "../styles/product.css";
 
 export function ProductDetails({ product }) {
-  const [cartMessage, setCartMessage] = useState("");
   const [cartError, setCartError] = useState("");
+  const { notification, showCartToast, dismissCartToast } = useCartToast();
 
   const artist = relationName(product.artist);
   const genre = relationName(product.genre);
@@ -40,12 +43,14 @@ export function ProductDetails({ product }) {
 
   function handleAddToCart() {
     try {
-      addToGuestCart(Number(product.id), 1, stock);
-      setCartMessage("Added to cart!");
+      const cart = addToGuestCart(Number(product.id), 1, stock);
+      const cartItem = cart.find(
+        (entry) => String(entry.productId) === String(product.id),
+      );
+      showCartToast(product.name, cartItem?.quantity);
       setCartError("");
     } catch (error) {
       setCartError(error.message);
-      setCartMessage("");
     }
   }
 
@@ -86,13 +91,9 @@ export function ProductDetails({ product }) {
           onClick={handleAddToCart}
           disabled={!inStock}
         >
+          {inStock && <CartIcon />}
           {inStock ? "Add to Cart" : "Out of Stock"}
         </button>
-        {cartMessage && (
-          <p className="product-feedback" role="status">
-            {cartMessage} <a href="/cart">View cart</a>
-          </p>
-        )}
         {cartError && (
           <p className="product-feedback is-error" role="alert">{cartError}</p>
         )}
@@ -112,6 +113,7 @@ export function ProductDetails({ product }) {
             ))}
         </dl>
       </div>
+      <CartToast notification={notification} onDismiss={dismissCartToast} />
     </article>
   );
 }

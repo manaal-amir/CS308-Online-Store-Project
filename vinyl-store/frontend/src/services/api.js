@@ -4,6 +4,8 @@ const API_BASE = (
   import.meta.env.VITE_API_BASE_URL || ""
 ).replace(/\/+$/, "");
 
+export const API_BASE_URL = API_BASE;
+
 export async function getProducts(signal, sort) {
   const sortQuery = sort ? `?sort=${encodeURIComponent(sort)}` : "";
   const response = await fetch(
@@ -95,6 +97,40 @@ export async function registerUser(userData) {
     throw new Error(
       data?.error || data?.message || "Registration failed."
     );
+  }
+
+  return data;
+}
+
+export async function loginUser(credentials) {
+  let response;
+
+  try {
+    response = await fetch(`${API_BASE}/api/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(credentials),
+    });
+  } catch {
+    throw new Error("Could not reach the server. Please try again later.");
+  }
+
+  let data;
+
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error("The server returned an invalid response. Please try again.");
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.error || data?.message || "Sign in failed.");
+  }
+
+  if (!data?.token || !data?.user) {
+    throw new Error("The server returned an invalid sign-in response.");
   }
 
   return data;

@@ -1,0 +1,73 @@
+:focus-visible {
+  outline: 2px solid var(--vinyl-burgundy);
+  outline-offset: 3px;
+}
+
+.vinyl-nav :focus-visible,
+.cart-toast :focus-visible,
+.save-record:focus-visible,
+.wishlist-remove:focus-visible,
+.catalog-add-button:focus-visible,
+.product-add-button:focus-visible,
+.account-primary-button:focus-visible,
+.vinyl-button:focus-visible,
+.newsletter-form button:focus-visible,
+.cart-empty a:focus-visible {
+  outline-color: var(--vinyl-cream);
+  box-shadow: 0 0 0 1px var(--vinyl-burgundy);
+}
+
+.catalog-add-button,
+.product-add-button,
+.account-primary-button,
+.vinyl-button,
+.newsletter-form button,
+.cart-empty a {
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: var(--vinyl-burgundy);
+  color: var(--vinyl-cream);
+  cursor: pointer;
+  transition: background-color .18s ease, transform .18s ease;
+}
+
+.catalog-add-button:hover:not(:disabled),
+.product-add-button:hover:not(:disabled),
+.account-primary-button:hover:not(:disabled),
+.vinyl-button:hover,
+.newsletter-form button:hover,
+.cart-empty a:hover {
+  background: #5E091F;
+  transform: translateY(-1px);
+}
+
+.catalog-add-button:active:not(:disabled),
+.product-add-button:active:not(:disabled),
+.account-primary-button:active:not(:disabled),
+.vinyl-button:active,
+.newsletter-form button:active,
+.cart-empty a:active {
+  transform: translateY(0);
+}
+
+.catalog-add-button:disabled,
+.product-add-button:disabled,
+.account-primary-button:disabled {
+  border-color: var(--vinyl-border);
+  background: var(--vinyl-disabled);
+  color: var(--vinyl-disabled-text);
+  cursor: not-allowed;
+  opacity: .9;
+  transform: none;
+}
+
+.cart-action-icon {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}

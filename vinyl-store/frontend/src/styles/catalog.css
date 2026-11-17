@@ -18,14 +18,14 @@
 }
 
 .catalog-heading h1 {
-  color: #e1d9c1;
+  color: var(--vinyl-ink);
   font: 500 42px/1.1 "Cormorant Garamond", Georgia, serif;
   margin: 0;
 }
 
 .catalog-search-summary {
   margin-top: 5px;
-  color: #aba68f;
+  color: var(--vinyl-muted);
   font-size: 11px;
 }
 
@@ -33,17 +33,17 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #aba68f;
+  color: var(--vinyl-muted);
   font-size: 11px;
 }
 
 .catalog-tools select {
   min-height: 36px;
-  border: 1px solid #625a3e;
-  border-radius: 2px;
+  border: 1px solid var(--vinyl-border);
+  border-radius: 6px;
   padding: 0 11px;
-  background: #222206;
-  color: #e1d9c1;
+  background: var(--vinyl-surface);
+  color: var(--vinyl-ink);
   font-size: 11px;
 }
 
@@ -59,11 +59,13 @@
 }
 
 .catalog-sidebar {
-  padding-top: 1px;
+  padding: 14px;
+  border: 1px solid var(--vinyl-border);
+  background: var(--vinyl-surface);
 }
 
 .filter-group {
-  border-bottom: 1px solid #49472a;
+  border-bottom: 1px solid var(--vinyl-border);
   padding: 0 0 13px;
   margin-bottom: 12px;
 }
@@ -76,14 +78,14 @@
   padding: 0;
   border: 0;
   background: transparent;
-  color: #e1d9c1;
+  color: var(--vinyl-ink);
   font-size: 11px;
   text-align: left;
   cursor: pointer;
 }
 
 .filter-heading span {
-  color: #aba68f;
+  color: var(--vinyl-muted);
   font-size: 15px;
 }
 
@@ -101,7 +103,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  color: #bdb69e;
+  color: var(--vinyl-muted);
   font-size: 10px;
   line-height: 1.4;
   cursor: pointer;
@@ -111,7 +113,7 @@
   width: 11px;
   height: 11px;
   margin: 0;
-  accent-color: #9c0013;
+  accent-color: var(--vinyl-burgundy);
 }
 
 .price-filter {
@@ -121,13 +123,13 @@
 
 .price-filter input {
   width: 100%;
-  accent-color: #9c0013;
+  accent-color: var(--vinyl-burgundy);
 }
 
 .clear-filters {
-  border: 1px solid #625a3e;
+  border: 1px solid var(--vinyl-border);
   background: transparent;
-  color: #e1d9c1;
+  color: var(--vinyl-ink);
   padding: 8px 10px;
   font-size: 10px;
   cursor: pointer;
@@ -135,7 +137,7 @@
 
 .clear-filters:hover,
 .filter-toggle:hover {
-  border-color: #ba8247;
+  border-color: var(--vinyl-accent);
 }
 
 .catalog-records {
@@ -152,14 +154,17 @@
 .catalog-preview-note {
   margin: 0 0 16px;
   padding: 9px 12px;
-  border-left: 2px solid #ba8247;
-  background: #29280e;
-  color: #c8bea0;
+  border-left: 2px solid var(--vinyl-accent);
+  background: var(--vinyl-surface);
+  color: var(--vinyl-ink);
   font-size: 10px;
   line-height: 1.5;
 }
 
 .catalog-record {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
   min-width: 0;
 }
 
@@ -167,7 +172,7 @@
   position: relative;
   aspect-ratio: 1;
   overflow: hidden;
-  background: #34321d;
+  background: var(--vinyl-surface);
 }
 
 .catalog-cover > a {
@@ -190,7 +195,7 @@
 }
 
 .catalog-cover-missing {
-  color: #aba68f;
+  color: var(--vinyl-cream);
   font-size: 11px;
 }
 
@@ -201,13 +206,13 @@
   place-items: center;
   overflow: hidden;
   background:
-    radial-gradient(ellipse at 68% 28%, #ba8247 0 3%, transparent 3.5%),
+    radial-gradient(ellipse at 68% 28%, var(--vinyl-accent) 0 3%, transparent 3.5%),
     linear-gradient(135deg, #596d68, #192624 65%, #b07d42);
 }
 
 .catalog-cover-placeholder.is-vinyl {
   background:
-    radial-gradient(circle at 54% 46%, #ba8247 0 10%, #1b1813 10.5% 11%, transparent 11.5%),
+    radial-gradient(circle at 54% 46%, var(--vinyl-accent) 0 10%, #1b1813 10.5% 11%, transparent 11.5%),
     repeating-radial-gradient(circle at 54% 46%, #121211 0 2px, #302e27 3px 4px);
 }
 
@@ -225,7 +230,7 @@
   position: absolute;
   inset: 37%;
   border-radius: 50%;
-  background: #ba8247;
+  background: var(--vinyl-accent);
 }
 
 .placeholder-record-initial {
@@ -259,25 +264,28 @@
   height: 25px;
   border: 0;
   border-radius: 50%;
-  background: #17170dd9;
-  color: #e1d9c1;
+  background: rgba(56, 42, 28, .88);
+  color: var(--vinyl-cream);
   font-size: 20px;
   line-height: 1;
   cursor: pointer;
 }
 
 .save-record.is-saved {
-  color: #bd2330;
+  color: var(--vinyl-burgundy);
 }
 
 .catalog-record-info {
-  display: block;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 116px;
   margin: 9px 0 10px;
 }
 
 .catalog-record-info h2 {
   overflow: hidden;
-  color: #e1d9c1;
+  color: var(--vinyl-ink);
   font: 500 13px/1.3 "Cormorant Garamond", Georgia, serif;
   margin: 0 0 3px;
   text-overflow: ellipsis;
@@ -288,7 +296,7 @@
 .catalog-record-info span {
   display: block;
   overflow: hidden;
-  color: #aba68f;
+  color: var(--vinyl-muted);
   font-size: 10px;
   line-height: 1.4;
   margin: 0;
@@ -296,46 +304,53 @@
   white-space: nowrap;
 }
 
+.catalog-record-info p {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  min-height: 2.8em;
+  white-space: normal;
+}
+
 .catalog-record-info .catalog-record-category {
-  color: #ba8247;
+  color: var(--vinyl-burgundy);
   font-size: 9px;
   text-transform: uppercase;
 }
 
 .catalog-record-info .catalog-record-price {
-  color: #e1d9c1;
-  margin-top: 3px;
+  color: var(--vinyl-ink);
+  margin-top: auto;
 }
 
 .catalog-record-info .catalog-stock {
-  color: #c68e4a;
+  color: var(--vinyl-burgundy);
   font-size: 9px;
   margin-top: 3px;
+  min-height: 1.4em;
 }
 
 .catalog-record-info span {
-  color: #e1d9c1;
+  color: var(--vinyl-ink);
   margin-top: 3px;
 }
 
 .catalog-add-button {
-  display: block;
-  padding: 8px 6px;
-  background: #62000e;
-  color: #e1d9c1;
+  display: flex;
+  width: 100%;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 12px;
   font-size: 10px;
   text-align: center;
-  transition: background .15s ease;
-}
-
-.catalog-add-button:hover {
-  background: #820a1a;
 }
 
 .catalog-state {
   grid-column: 1 / -1;
   align-self: start;
-  color: #aba68f;
+  color: var(--vinyl-muted);
   padding: 36px 0;
   font-size: 13px;
 }
@@ -372,13 +387,13 @@
 }
 
 .genres-browse-heading h1 {
-  color: #e1d9c1;
+  color: var(--vinyl-ink);
   font: 500 44px/1.1 "Cormorant Garamond", Georgia, serif;
   margin: 0 0 7px;
 }
 
 .genres-browse-heading > p:last-child {
-  color: #aba68f;
+  color: var(--vinyl-muted);
   font-size: 12px;
 }
 
@@ -431,19 +446,19 @@
 }
 
 .genres-browse-copy small {
-  color: #e1d9c1;
+  color: var(--vinyl-cream);
   font-size: 10px;
 }
 
 .genres-all-records {
   display: inline-block;
   margin-top: 24px;
-  color: #ba8247;
+  color: var(--vinyl-burgundy);
   font-size: 11px;
 }
 
 .genres-all-records:hover {
-  color: #e1d9c1;
+  color: var(--vinyl-ink);
 }
 
 .genre-page {
@@ -505,12 +520,12 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #e1d9c1;
+  color: var(--vinyl-cream);
   font-size: 10px;
 }
 
 .back-to-shop:hover {
-  color: #d29a43;
+  color: var(--vinyl-accent);
 }
 
 .genre-collection-records {

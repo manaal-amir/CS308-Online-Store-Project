@@ -1,0 +1,141 @@
+import React from "react";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import Account from "./account.jsx";
+import { addToGuestCart, resetGuestCartForTests } from "../utils/guestCart.js";
+import { getAuthSession } from "../utils/authSession.js";
+
+const authenticated = {
+  token: "jwt-test-token",
+  user: { id: 8, email: "member@example.com", role: "CUSTOMER" },
+};
+
+function response(data, ok = true, status = 200) {
+  return {
+    ok,
+    status,
+    json: async () => data,
+  };
+}
+
+function openSignIn() {
+  window.history.pushState({}, "", "/sign-in");
+  return render(<Account />);
+}
+
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  localStorage.clear();
+  sessionStorage.clear();
+  resetGuestCartForTests();
+  window.history.pushState({}, "", "/");
+});
+
+describe("account sign-in", () => {
+  test("authenticates through the API, stores the session, and opens the profile", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(response(authenticated));
+    vi.stubGlobal("fetch", fetchMock);
+    openSignIn();
+
+    fireEvent.change(screen.getByLabelText("Email address"), {
+      target: { value: "  member@example.com " },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "correct horse battery" },
+    });
+    fireEvent.click(screen.getByLabelText("Remember me"));
+    fireEvent.click(screen.getByRole("button", { name: "Log in" }));
+
+    await screen.findByRole("heading", { name: "Profile overview" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "member@example.com",
+        password: "correct horse battery",
+      }),
+    });
+    expect(getAuthSession()).toEqual(authenticated);
+    expect(localStorage.getItem("vinyl-store-auth-session")).toBeTruthy();
+    expect(sessionStorage.getItem("vinyl-store-auth-session")).toBeNull();
+    expect(screen.getAllByText("member@example.com").length).toBeGreaterThan(0);
+    expect(window.location.pathname).toBe("/profile");
+  });
+
+  test("keeps a failed login on the form and does not create a session", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+      response({ error: "Invalid credentials" }, false, 401),
+    ));
+    openSignIn();
+
+    fireEvent.change(screen.getByLabelText("Email address"), {
+      target: { value: "member@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "wrong-password" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Log in" }));
+
+    expect(await screen.findByText("Invalid credentials")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Log in" })).toBeTruthy();
+    expect(getAuthSession()).toBeNull();
+  });
+
+  test("merges the guest cart with the authenticated user account", async () => {
+    addToGuestCart(3, 2, 5);
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(response(authenticated))
+      .mockResolvedValueOnce(response({ adjustments: [] }));
+    vi.stubGlobal("fetch", fetchMock);
+    openSignIn();
+
+    fireEvent.change(screen.getByLabelText("Email address"), {
+      target: { value: "member@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "correct-password" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Log in" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(fetchMock.mock.calls[1]).toEqual([
+      "/api/cart/merge",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer jwt-test-token",
+        },
+        body: JSON.stringify({ items: [{ productId: 3, quantity: 2 }] }),
+      },
+    ]);
+  });
+
+  test("logout clears the stored authentication session", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response(authenticated)));
+    openSignIn();
+
+    fireEvent.change(screen.getByLabelText("Email address"), {
+      target: { value: "member@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "correct-password" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Log in" }));
+    await screen.findByRole("heading", { name: "Profile overview" });
+
+    fireEvent.click(screen.getByRole("link", { name: /Log Out/ }));
+
+    expect(await screen.findByRole("button", { name: "Log in" })).toBeTruthy();
+    expect(getAuthSession()).toBeNull();
+    expect(window.location.pathname).toBe("/sign-in");
+  });
+});

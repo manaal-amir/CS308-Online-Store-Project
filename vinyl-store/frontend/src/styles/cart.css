@@ -22,18 +22,18 @@
   display: flex;
   gap: 24px;
   padding: 25px 0;
-  border-bottom: 1px solid rgba(230, 210, 170, 0.2);
+  border-bottom: 1px solid var(--vinyl-border);
 }
 
 .cart-artwork {
   width: 110px;
   height: 130px;
   flex-shrink: 0;
-  background: #292719;
+  background: var(--vinyl-surface);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(230, 210, 170, 0.2);
+  border: 1px solid var(--vinyl-border);
 }
 
 .cart-artwork img {
@@ -43,7 +43,7 @@
 }
 
 .cart-artwork span {
-  color: #c69a60;
+  color: var(--vinyl-burgundy);
   font-size: 3rem;
   font-family: Georgia, serif;
 }
@@ -72,18 +72,21 @@
 .cart-controls button {
   padding: 8px 13px;
   background: transparent;
-  border: 1px solid rgba(230, 210, 170, 0.4);
-  color: #eee2c9;
+  border: 1px solid var(--vinyl-border);
+  border-radius: 6px;
+  color: var(--vinyl-ink);
   cursor: pointer;
 }
 
 .cart-controls button:hover {
-  background: #650015;
+  background: var(--vinyl-burgundy);
+  color: var(--vinyl-cream);
 }
 
 .cart-summary {
   padding: 28px;
-  border: 1px solid rgba(230, 210, 170, 0.25);
+  border: 1px solid var(--vinyl-border);
+  background: var(--vinyl-surface);
 }
 
 .cart-summary h2 {
@@ -106,8 +109,8 @@
   display: inline-block;
   margin-top: 20px;
   padding: 13px 25px;
-  background: #650015;
-  color: #fff;
+  background: var(--vinyl-burgundy);
+  color: var(--vinyl-cream);
   text-decoration: none;
 }
 

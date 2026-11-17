@@ -1,6 +1,6 @@
 .account-site {
-  color: #e1d9c1;
-  background: #1d1d00;
+  color: var(--vinyl-ink);
+  background: var(--vinyl-background);
   min-height: 100vh;
 }
 
@@ -15,7 +15,7 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  color: #aba68f;
+  color: var(--vinyl-muted);
   font-size: 10px;
   margin: 0 0 26px;
 }
@@ -23,7 +23,7 @@
 .account-breadcrumb a:hover,
 .account-panel-heading > a:hover,
 .security-row a:hover {
-  color: #ba8247;
+  color: var(--vinyl-burgundy);
 }
 
 .account-layout {
@@ -43,21 +43,21 @@
   height: 48px;
   display: grid;
   place-items: center;
-  border: 1px solid #625a3e;
+  border: 1px solid var(--vinyl-border);
   border-radius: 50%;
-  background: #29280e;
-  color: #d7cba8;
+  background: var(--vinyl-surface);
+  color: var(--vinyl-ink);
   font: 14px "Cormorant Garamond", Georgia, serif;
 }
 
 .account-sidebar h2 {
   margin: 12px 0 2px;
-  color: #e1d9c1;
+  color: var(--vinyl-ink);
   font: 500 17px/1.2 "Cormorant Garamond", Georgia, serif;
 }
 
 .account-sidebar > p {
-  color: #aba68f;
+  color: var(--vinyl-muted);
   font-size: 9px;
 }
 
@@ -67,20 +67,20 @@
   width: 100%;
   margin: 15px 0 18px;
   padding: 8px;
-  border: 1px solid #625a3e;
+  border: 1px solid var(--vinyl-border);
 }
 
 .account-edit-link:hover,
 .account-secondary-button:hover {
-  border-color: #ba8247;
-  color: #e2b27a;
+  border-color: var(--vinyl-accent);
+  color: var(--vinyl-burgundy);
 }
 
 .account-sidebar nav {
   display: grid;
   gap: 2px;
   padding-top: 5px;
-  border-top: 1px solid #49472a;
+  border-top: 1px solid var(--vinyl-border);
 }
 
 .account-sidebar nav a {
@@ -90,28 +90,28 @@
   min-height: 31px;
   padding: 0 8px;
   border-left: 2px solid transparent;
-  color: #c6bea4;
+  color: var(--vinyl-muted);
   font-size: 10px;
 }
 
 .account-sidebar nav a span {
   width: 12px;
-  color: #ba8247;
+  color: var(--vinyl-burgundy);
   font-size: 12px;
   text-align: center;
 }
 
 .account-sidebar nav a:hover,
 .account-sidebar nav a.is-active {
-  color: #f0e5c7;
-  background: #29280e;
-  border-left-color: #ba8247;
+  color: var(--vinyl-ink);
+  background: var(--vinyl-surface);
+  border-left-color: var(--vinyl-burgundy);
 }
 
 .sidebar-help {
   margin-top: 35px;
   padding-top: 16px;
-  border-top: 1px solid #49472a;
+  border-top: 1px solid var(--vinyl-border);
 }
 
 .sidebar-help h3 {
@@ -121,7 +121,7 @@
 
 .sidebar-help p,
 .sidebar-help a {
-  color: #aba68f;
+  color: var(--vinyl-muted);
   font-size: 9px;
   line-height: 1.5;
 }
@@ -129,7 +129,7 @@
 .sidebar-help a {
   display: inline-block;
   margin-top: 8px;
-  color: #d6ad75;
+  color: var(--vinyl-burgundy);
 }
 
 .account-content {
@@ -142,7 +142,7 @@
 
 .account-eyebrow {
   display: block;
-  color: #ba8247;
+  color: var(--vinyl-burgundy);
   font-size: 9px;
   letter-spacing: .12em;
 }
@@ -150,14 +150,14 @@
 .account-heading h1,
 .auth-form-panel h1 {
   margin: 6px 0 3px;
-  color: #e8dfc7;
+  color: var(--vinyl-ink);
   font: 500 clamp(31px, 4vw, 40px)/1.05 "Cormorant Garamond", Georgia, serif;
   letter-spacing: 0;
 }
 
 .account-heading > p,
 .account-heading > div > p {
-  color: #aba68f;
+  color: var(--vinyl-muted);
   font-size: 10px;
 }
 
@@ -171,8 +171,8 @@
 .account-stat-card,
 .account-panel,
 .settings-panel {
-  border: 1px solid #49472a;
-  background: rgba(41, 40, 14, .42);
+  border: 1px solid var(--vinyl-border);
+  background: var(--vinyl-surface);
 }
 
 .account-stat-card {
@@ -183,19 +183,19 @@
 .account-stat-card span,
 .account-stat-card small {
   display: block;
-  color: #aba68f;
+  color: var(--vinyl-muted);
   font-size: 9px;
 }
 
 .account-stat-card strong {
   display: block;
   margin: 2px 0;
-  color: #e5dbc0;
+  color: var(--vinyl-ink);
   font: 500 25px/1.1 "Cormorant Garamond", Georgia, serif;
 }
 
 .account-stat-card small {
-  color: #8e8974;
+  color: var(--vinyl-muted);
 }
 
 .overview-columns {
@@ -218,13 +218,13 @@
 .account-panel-heading h2,
 .settings-panel h2 {
   margin: 4px 0 0;
-  color: #e1d9c1;
+  color: var(--vinyl-ink);
   font: 500 20px/1.15 "Cormorant Garamond", Georgia, serif;
 }
 
 .account-panel-heading > a {
   flex: 0 0 auto;
-  color: #c2a277;
+  color: var(--vinyl-burgundy);
   font-size: 9px;
 }
 
@@ -233,12 +233,12 @@
   justify-content: space-between;
   gap: 10px;
   margin: 14px 0;
-  color: #aba68f;
+  color: var(--vinyl-muted);
   font-size: 9px;
 }
 
 .order-status {
-  color: #b6a36c;
+  color: var(--vinyl-burgundy);
 }
 
 .order-record {
@@ -246,8 +246,8 @@
   align-items: center;
   gap: 12px;
   padding: 12px 0;
-  border-top: 1px solid #49472a;
-  border-bottom: 1px solid #49472a;
+  border-top: 1px solid var(--vinyl-border);
+  border-bottom: 1px solid var(--vinyl-border);
 }
 
 .order-record .record-artwork {
@@ -263,14 +263,14 @@
 
 .order-record h3 {
   margin: 0 0 3px;
-  color: #e1d9c1;
+  color: var(--vinyl-ink);
   font: 500 14px "Cormorant Garamond", Georgia, serif;
 }
 
 .order-record p,
 .order-record span {
   display: block;
-  color: #aba68f;
+  color: var(--vinyl-muted);
   font-size: 9px;
 }
 
@@ -280,7 +280,7 @@
 
 .order-record b {
   margin-left: 14px;
-  color: #e1d9c1;
+  color: var(--vinyl-ink);
   font-weight: 500;
 }
 
@@ -303,13 +303,13 @@
 }
 
 .account-details dt {
-  color: #928c76;
+  color: var(--vinyl-muted);
   font-size: 9px;
 }
 
 .account-details dd {
   margin: 0;
-  color: #ddd4bb;
+  color: var(--vinyl-ink);
   font-size: 10px;
 }
 
@@ -339,20 +339,20 @@
 
 .mini-record h3 {
   margin: 7px 0 1px;
-  color: #e1d9c1;
+  color: var(--vinyl-ink);
   font: 500 15px "Cormorant Garamond", Georgia, serif;
 }
 
 .mini-record p,
 .mini-record strong {
   display: block;
-  color: #aba68f;
+  color: var(--vinyl-muted);
   font-size: 9px;
 }
 
 .mini-record strong {
   margin-top: 4px;
-  color: #d8c49e;
+  color: var(--vinyl-burgundy);
 }
 
 .wishlist-heading {
@@ -365,17 +365,17 @@
 .wishlist-sort {
   display: grid;
   gap: 5px;
-  color: #aba68f;
+  color: var(--vinyl-muted);
   font-size: 9px;
 }
 
 .wishlist-sort select {
   min-width: 138px;
   padding: 8px 26px 8px 9px;
-  border: 1px solid #625a3e;
-  border-radius: 0;
-  background: #222206;
-  color: #e1d9c1;
+  border: 1px solid var(--vinyl-border);
+  border-radius: 6px;
+  background: var(--vinyl-surface);
+  color: var(--vinyl-ink);
   font-size: 9px;
 }
 
@@ -389,7 +389,7 @@
   position: relative;
   overflow: hidden;
   aspect-ratio: 1;
-  background: #29280e;
+  background: var(--vinyl-surface);
 }
 
 .record-artwork {
@@ -498,8 +498,8 @@
   height: 25px;
   border: 0;
   border-radius: 50%;
-  background: #1d1d00d9;
-  color: #dcaa69;
+  background: rgba(56, 42, 28, .88);
+  color: var(--vinyl-cream);
   cursor: pointer;
 }
 
@@ -510,7 +510,7 @@
 
 .wishlist-record-info p {
   overflow: hidden;
-  color: #aba68f;
+  color: var(--vinyl-muted);
   font-size: 9px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -519,14 +519,14 @@
 .wishlist-record-info h2 {
   overflow: hidden;
   margin: 2px 0;
-  color: #e1d9c1;
+  color: var(--vinyl-ink);
   font: 500 15px/1.1 "Cormorant Garamond", Georgia, serif;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .wishlist-record-info strong {
-  color: #d8c49e;
+  color: var(--vinyl-burgundy);
   font-size: 10px;
   font-weight: 500;
 }
@@ -538,15 +538,15 @@
   min-height: 34px;
   padding: 0 15px;
   border: 0;
-  background: #62000e;
-  color: #f1e7cd;
+  background: var(--vinyl-burgundy);
+  color: var(--vinyl-cream);
   font-size: 10px;
   text-align: center;
   cursor: pointer;
 }
 
 .account-primary-button:hover {
-  background: #820a1a;
+  background: #5E091F;
 }
 
 .wishlist-add {
@@ -556,7 +556,7 @@
 
 .wishlist-footnote {
   margin-top: 19px;
-  color: #928c76;
+  color: var(--vinyl-muted);
   font-size: 9px;
 }
 
@@ -570,7 +570,7 @@
 }
 
 .empty-wishlist > span {
-  color: #ba8247;
+  color: var(--vinyl-burgundy);
   font-size: 32px;
 }
 
@@ -581,7 +581,7 @@
 
 .empty-wishlist p {
   margin-bottom: 9px;
-  color: #aba68f;
+  color: var(--vinyl-muted);
   font-size: 10px;
 }
 
@@ -614,7 +614,7 @@
 
 .settings-section-heading p {
   margin-top: 3px;
-  color: #928c76;
+  color: var(--vinyl-muted);
   font-size: 9px;
 }
 
@@ -628,7 +628,7 @@
 .auth-form-panel form > label {
   display: grid;
   gap: 5px;
-  color: #c6bea4;
+  color: var(--vinyl-muted);
   font-size: 9px;
 }
 
@@ -639,11 +639,11 @@
   min-width: 0;
   min-height: 32px;
   padding: 8px 10px;
-  border: 1px solid #49472a;
-  border-radius: 0;
+  border: 1px solid var(--vinyl-border);
+  border-radius: 6px;
   outline: none;
-  background: #222206;
-  color: #e1d9c1;
+  background: var(--vinyl-background);
+  color: var(--vinyl-ink);
   font-size: 10px;
 }
 
@@ -655,7 +655,7 @@
 .settings-fields input:focus,
 .settings-fields textarea:focus,
 .auth-form-panel input:focus {
-  border-color: #ba8247;
+  border-color: var(--vinyl-burgundy);
 }
 
 .settings-bio {
@@ -672,7 +672,7 @@
   align-items: center;
   gap: 20px;
   min-height: 49px;
-  border-top: 1px solid #49472a;
+  border-top: 1px solid var(--vinyl-border);
   cursor: pointer;
 }
 
@@ -683,7 +683,7 @@
 
 .preference-row strong,
 .security-row strong {
-  color: #ddd4bb;
+  color: var(--vinyl-ink);
   font-size: 10px;
   font-weight: 500;
 }
@@ -691,7 +691,7 @@
 .preference-row small,
 .security-row p {
   margin-top: 2px;
-  color: #928c76;
+  color: var(--vinyl-muted);
   font-size: 8px;
 }
 
@@ -701,9 +701,9 @@
   height: 14px;
   flex: 0 0 25px;
   margin: 0;
-  border: 1px solid #70674b;
+  border: 1px solid var(--vinyl-border);
   border-radius: 99px;
-  background: #373522;
+  background: var(--vinyl-surface);
   cursor: pointer;
   transition: background .15s;
 }
@@ -715,17 +715,17 @@
   height: 10px;
   margin: 1px;
   border-radius: 50%;
-  background: #bdb69e;
+  background: var(--vinyl-cream);
   transition: transform .15s;
 }
 
 .preference-row input:checked {
-  background: #ba8247;
+  background: var(--vinyl-burgundy);
 }
 
 .preference-row input:checked::before {
   transform: translateX(11px);
-  background: #211c12;
+  background: var(--vinyl-cream);
 }
 
 .security-panel > div:first-child {
@@ -738,7 +738,7 @@
   gap: 14px;
   align-items: center;
   min-height: 48px;
-  border-top: 1px solid #49472a;
+  border-top: 1px solid var(--vinyl-border);
 }
 
 .security-row a,
@@ -746,7 +746,7 @@
   padding: 0;
   border: 0;
   background: transparent;
-  color: #c2a277;
+  color: var(--vinyl-burgundy);
   font-size: 9px;
   cursor: pointer;
 }
@@ -763,20 +763,20 @@
   justify-content: center;
   min-height: 34px;
   padding: 0 14px;
-  border: 1px solid #625a3e;
-  color: #e1d9c1;
+  border: 1px solid var(--vinyl-border);
+  color: var(--vinyl-ink);
   font-size: 10px;
 }
 
 .settings-actions > span {
   margin-left: auto;
-  color: #928c76;
+  color: var(--vinyl-muted);
   font-size: 8px;
 }
 
 .account-notice {
   margin: 10px 0 0;
-  color: #d6ad75;
+  color: var(--vinyl-burgundy);
   font-size: 9px;
   line-height: 1.5;
 }
@@ -823,19 +823,19 @@
 }
 
 .auth-story-mark {
-  color: #f3e8cc;
+  color: var(--vinyl-cream);
   font: 500 22px "Cormorant Garamond", Georgia, serif;
   letter-spacing: .12em;
 }
 
 .auth-story h1 {
   margin: 0 0 8px;
-  color: #f2e7ce;
+  color: var(--vinyl-cream);
   font: 500 clamp(32px, 4vw, 44px)/.95 "Cormorant Garamond", Georgia, serif;
 }
 
 .auth-story p {
-  color: #e2d9c1;
+  color: var(--vinyl-cream);
   font: 12px/1.45 "Cormorant Garamond", Georgia, serif;
 }
 
@@ -850,7 +850,7 @@
 
 .auth-intro {
   margin: 6px 0 18px;
-  color: #aba68f;
+  color: var(--vinyl-muted);
   font-size: 10px;
 }
 
@@ -865,7 +865,9 @@
 
 .auth-form-panel input:not([type="checkbox"]) {
   min-height: 35px;
-  background: #222206;
+  background: var(--vinyl-background);
+  border: 1px solid var(--vinyl-border);
+  color: var(--vinyl-ink);
 }
 
 .auth-form-options {
@@ -873,12 +875,12 @@
   justify-content: space-between;
   align-items: center;
   margin: 2px 0 6px;
-  color: #aba68f;
+  color: var(--vinyl-muted);
   font-size: 9px;
 }
 
 .auth-form-options a {
-  color: #c2a277;
+  color: var(--vinyl-burgundy);
 }
 
 .auth-checkbox {
@@ -890,7 +892,7 @@
 
 .auth-checkbox input {
   margin: 0;
-  accent-color: #ba8247;
+  accent-color: var(--vinyl-burgundy);
 }
 
 .auth-form-panel .account-primary-button {
@@ -900,13 +902,13 @@
 
 .auth-switch {
   margin-top: 13px;
-  color: #aba68f;
+  color: var(--vinyl-muted);
   font-size: 9px;
   text-align: center;
 }
 
 .auth-switch a {
-  color: #d6ad75;
+  color: var(--vinyl-burgundy);
 }
 
 .account-site .vinyl-footer {
