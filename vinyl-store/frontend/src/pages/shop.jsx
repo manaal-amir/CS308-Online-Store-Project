@@ -27,7 +27,7 @@ export default function Shop() {
   const [sort, setSort] = useState(() =>
     new URLSearchParams(window.location.search).get("sort") === "newest"
       ? "newest"
-      : "featured",
+      : "newest",
   );
   const [expanded, setExpanded] = useState({
     genre: true,
@@ -99,8 +99,8 @@ export default function Shop() {
                 setSort(event.target.value);
               }}
             >
-              <option value="featured">Featured</option>
               <option value="newest">Newest</option>
+              <option value="popularity">Popularity</option>
               <option value="price-low">Price: Low to High</option>
               <option value="price-high">Price: High to Low</option>
               <option value="name">Name</option>

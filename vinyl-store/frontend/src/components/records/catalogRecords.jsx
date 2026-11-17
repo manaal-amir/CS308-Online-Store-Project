@@ -23,7 +23,7 @@ export default function CatalogRecords({
   genres = [],
   categories = [],
   genre,
-  sort = "featured",
+  sort = "newest",
   stockStatus = "all",
   maxPrice = 14990,
   search = "",
@@ -32,26 +32,34 @@ export default function CatalogRecords({
   const [status, setStatus] = useState("loading");
   const [errorMessage, setErrorMessage] = useState("");
   const [isPreview, setIsPreview] = useState(false);
+  const isPopularitySort = sort === "popularity";
 
   useEffect(() => {
     const controller = new AbortController();
+    setStatus("loading");
+    setErrorMessage("");
 
-    getCatalogProducts(controller.signal)
+    getCatalogProducts(
+      controller.signal,
+      isPopularitySort ? "popularity" : undefined,
+    )
       .then(({ products: items, source, apiError }) => {
+        if (controller.signal.aborted) return;
+
         setProducts(items);
         setIsPreview(source === "spreadsheet-preview");
         setErrorMessage(apiError);
         setStatus("ready");
       })
       .catch((error) => {
-        if (error.name !== "AbortError") {
+        if (!controller.signal.aborted && error.name !== "AbortError") {
           setErrorMessage(error.message);
           setStatus("error");
         }
       });
 
     return () => controller.abort();
-  }, []);
+  }, [isPopularitySort]);
 
   const records = useMemo(() => {
     const selectedGenres = genre ? [genre] : genres;
@@ -82,6 +90,8 @@ export default function CatalogRecords({
       return searchMatches && genreMatches && categoryMatches && stockMatches && Number(product.price) <= maxPrice;
     });
 
+    if (isPopularitySort) return matching;
+
     return [...matching].sort((first, second) => {
       const firstPrice = Number(first.price);
       const secondPrice = Number(second.price);
@@ -93,7 +103,7 @@ export default function CatalogRecords({
       }
       return 0;
     });
-  }, [products, genres, categories, genre, sort, stockStatus, maxPrice, search]);
+  }, [products, genres, categories, genre, sort, isPopularitySort, stockStatus, maxPrice, search]);
 
   if (status === "loading") {
     return (
