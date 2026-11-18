@@ -19,7 +19,7 @@ export default function NewsLetter() {
         <h2>Good music. Straight to your inbox.</h2>
 
         <p>
-          New drops, hidden gems, and stories worth sharing. Join our magazine newsletter.
+          New drops, hidden gems, and stories worth sharing. Join our magazine newsletter!
         </p>
 
         <form
