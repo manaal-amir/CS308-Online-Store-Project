@@ -6,6 +6,7 @@ import Genres from "./pages/genres.jsx";
 import Account from "./pages/account.jsx";
 import ProductDetail from "./pages/productDetail.jsx";
 import Orders from "./pages/orders.jsx";
+import OrderDetail from "./pages/orderDetail.jsx";
 
 function App() {
   const path = window.location.pathname;
@@ -26,6 +27,11 @@ function App() {
   const productMatch = path.match(/^\/product\/(\d+)\/?$/);
   if (productMatch) {
     return <ProductDetail id={productMatch[1]} />;
+  }
+
+  const orderMatch = path.match(/^\/orders\/(\d+)\/?$/);
+  if (orderMatch) {
+    return <OrderDetail id={orderMatch[1]} />;
   }
 
   if (path === "/orders") {

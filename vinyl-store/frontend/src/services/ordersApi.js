@@ -34,6 +34,11 @@ async function requestOrders(path, token, { method = "GET", body, signal } = {})
   return data;
 }
 
+// GET /api/orders/:id: one order with its items, totals and address.
+export function getOrder(token, orderId, signal) {
+  return requestOrders(`/${encodeURIComponent(orderId)}`, token, { signal });
+}
+
 // GET /api/orders: the signed-in customer's orders, newest first.
 export function getOrders(token, signal) {
   return requestOrders("", token, { signal });
