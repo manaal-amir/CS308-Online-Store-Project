@@ -29,7 +29,7 @@ const recommendedRecords = [
 
 const profileSections = [
   { href: "/profile", label: "Profile overview", icon: "◉" },
-  { href: "/profile#orders", label: "My Orders", icon: "▤" },
+  { href: "/orders", label: "My Orders", icon: "▤" },
   { href: "/wishlist", label: "Wishlist", icon: "♡" },
   { href: "/account-settings", label: "Account Settings", icon: "⚙" },
 ];
@@ -313,6 +313,10 @@ function AuthPage({ mode, notice, onSubmit, onNotice, isSubmitting = false }) {
 }
 
 function AccountShell({ activePath, children, user, onLogout }) {
+  // Product managers also get a link to the delivery list.
+  const sections = user?.role === "PRODUCT_MANAGER"
+    ? [...profileSections, { href: "/manager/deliveries", label: "Delivery list", icon: "▦" }]
+    : profileSections;
   const accountLabel = user?.email?.split("@")[0] || "Your account";
   const initials = accountLabel
     .split(/[.\s_-]+/)
@@ -334,7 +338,7 @@ function AccountShell({ activePath, children, user, onLogout }) {
           {user?.email && <p>{user.email}</p>}
           <a className="account-edit-link" href="/account-settings">Edit Profile</a>
           <nav aria-label="Account navigation">
-            {profileSections.map((section) => (
+            {sections.map((section) => (
               <a
                 href={section.href}
                 className={section.href === activePath ? "is-active" : ""}
@@ -376,7 +380,7 @@ function OverviewPage({ user, notice }) {
         <section className="account-panel latest-order" id="orders">
           <div className="account-panel-heading">
             <div><span className="account-eyebrow">YOUR LATEST ORDER</span><h2>Order #VN-2048</h2></div>
-            <a href="/shop?sort=newest">View all orders →</a>
+            <a href="/orders">View all orders →</a>
           </div>
           <p className="order-date">Placed on October 12, 2024 <span className="order-status">Delivered</span></p>
           <div className="order-record">
