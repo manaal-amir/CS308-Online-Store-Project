@@ -61,6 +61,21 @@ describe("catalogRecords preview cart blocking", () => {
     assert.deepEqual(getGuestCart(), [{ productId: 17, quantity: 1 }]);
   });
 
+  test("catalog add button disables when the product stock is already in the cart", () => {
+    localStorage.clear();
+    resetGuestCartForTests();
+    addCatalogProductToCart(product, false);
+    addCatalogProductToCart(product, false);
+    addCatalogProductToCart(product, false);
+
+    const { container } = render(
+      React.createElement(CatalogCard, { product, isPreview: false }),
+    );
+
+    expect(container.querySelector(".catalog-add-button").disabled).toBe(true);
+    expect(container.querySelector(".catalog-add-button").textContent).toBe("Stock Limit Reached");
+  });
+
   test.each([0, -2])("out-of-stock products cannot be added through the cart handler (quantity %s)", (quantity) => {
     localStorage.clear();
     resetGuestCartForTests();

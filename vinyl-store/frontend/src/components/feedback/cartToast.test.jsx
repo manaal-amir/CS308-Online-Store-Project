@@ -9,7 +9,6 @@ import {
 } from "@testing-library/react";
 import CatalogRecords from "../records/catalogRecords.jsx";
 import {
-  addToGuestCart,
   getGuestCart,
   resetGuestCartForTests,
 } from "../../utils/guestCart.js";
@@ -95,14 +94,21 @@ describe("cart toast feedback", () => {
   });
 
   test("does not show success feedback when a cart update fails", async () => {
-    addToGuestCart(17, 1, 1);
-    const { container } = await renderCatalog(1);
+    mockCatalog(1);
+    const fetchMock = globalThis.fetch;
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => [{ ...product, id: "invalid", quantity: 1 }],
+    });
+    const { container } = render(<CatalogRecords />);
+    await screen.findByRole("button", { name: "Add to Cart" });
 
     fireEvent.click(screen.getByRole("button", { name: "Add to Cart" }));
 
-    expect(container.querySelector('[role="alert"]').textContent).toMatch(/Only 1 in stock/);
+    expect(container.querySelector('[role="alert"]').textContent).toMatch(/Invalid product or quantity/);
     expect(container.querySelector(".cart-toast")).toBeNull();
-    expect(getGuestCart()).toEqual([{ productId: 17, quantity: 1 }]);
+    expect(getGuestCart()).toEqual([]);
   });
 
   test("the dismiss control closes the notification", async () => {

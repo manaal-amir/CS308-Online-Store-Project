@@ -1,0 +1,66 @@
+const API_BASE = (
+  import.meta.env.VITE_API_BASE_URL || ""
+).replace(/\/+$/, "");
+
+const pendingAdds = new Map();
+
+async function requestCart(path, token, { method = "GET", body, signal } = {}) {
+  let response;
+
+  try {
+    response = await fetch(`${API_BASE}/api/cart${path}`, {
+      method,
+      signal,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(body ? { "Content-Type": "application/json" } : {}),
+      },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+    });
+  } catch (error) {
+    if (error.name === "AbortError") throw error;
+    throw new Error("Could not reach the server. Please try again later.");
+  }
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(
+      data?.error || data?.message || `Cart request failed (${response.status})`,
+    );
+  }
+
+  return data;
+}
+
+export function getAuthenticatedCart(token, signal) {
+  return requestCart("", token, { signal });
+}
+
+export function addAuthenticatedCartItem(token, productId, quantity = 1) {
+  const requestKey = `${token}:${productId}`;
+  const pendingRequest = pendingAdds.get(requestKey);
+  if (pendingRequest) return pendingRequest;
+
+  const request = requestCart("/items", token, {
+    method: "POST",
+    body: { productId, quantity },
+  }).finally(() => {
+    pendingAdds.delete(requestKey);
+  });
+
+  pendingAdds.set(requestKey, request);
+  return request;
+}
+
+export function updateAuthenticatedCartItem(token, productId, quantity) {
+  return requestCart(`/items/${encodeURIComponent(productId)}`, token, {
+    method: "PATCH",
+    body: { quantity },
+  });
+}
+
+export function removeAuthenticatedCartItem(token, productId) {
+  return requestCart(`/items/${encodeURIComponent(productId)}`, token, {
+    method: "DELETE",
+  });
+}

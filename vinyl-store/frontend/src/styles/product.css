@@ -94,6 +94,28 @@
   color: var(--vinyl-burgundy);
 }
 
+.product-quantity-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 16px;
+  color: var(--vinyl-ink);
+}
+
+.product-quantity-control button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--vinyl-border);
+  background: transparent;
+  color: var(--vinyl-ink);
+  cursor: pointer;
+}
+
+.product-quantity-control button:disabled {
+  color: var(--vinyl-muted);
+  cursor: not-allowed;
+}
+
 .product-add-button {
   display: inline-flex;
   min-width: 220px;
