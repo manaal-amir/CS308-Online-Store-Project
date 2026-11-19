@@ -7,6 +7,7 @@ import Account from "./pages/account.jsx";
 import ProductDetail from "./pages/productDetail.jsx";
 import Orders from "./pages/orders.jsx";
 import OrderDetail from "./pages/orderDetail.jsx";
+import Deliveries from "./pages/deliveries.jsx";
 
 function App() {
   const path = window.location.pathname;
@@ -27,6 +28,10 @@ function App() {
   const productMatch = path.match(/^\/product\/(\d+)\/?$/);
   if (productMatch) {
     return <ProductDetail id={productMatch[1]} />;
+  }
+
+  if (path === "/manager/deliveries") {
+    return <Deliveries />;
   }
 
   const orderMatch = path.match(/^\/orders\/(\d+)\/?$/);

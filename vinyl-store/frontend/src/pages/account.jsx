@@ -313,6 +313,10 @@ function AuthPage({ mode, notice, onSubmit, onNotice, isSubmitting = false }) {
 }
 
 function AccountShell({ activePath, children, user, onLogout }) {
+  // Product managers also get a link to the delivery list.
+  const sections = user?.role === "PRODUCT_MANAGER"
+    ? [...profileSections, { href: "/manager/deliveries", label: "Delivery list", icon: "▦" }]
+    : profileSections;
   const accountLabel = user?.email?.split("@")[0] || "Your account";
   const initials = accountLabel
     .split(/[.\s_-]+/)
@@ -334,7 +338,7 @@ function AccountShell({ activePath, children, user, onLogout }) {
           {user?.email && <p>{user.email}</p>}
           <a className="account-edit-link" href="/account-settings">Edit Profile</a>
           <nav aria-label="Account navigation">
-            {profileSections.map((section) => (
+            {sections.map((section) => (
               <a
                 href={section.href}
                 className={section.href === activePath ? "is-active" : ""}

@@ -262,3 +262,55 @@
   color: var(--vinyl-ink);
   font-size: 14px;
 }
+
+.orders-page-wide {
+  max-width: 1200px;
+}
+
+.delivery-filters {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 20px;
+}
+
+.delivery-filters button {
+  padding: 8px 16px;
+  border: 1px solid var(--vinyl-border);
+  background: transparent;
+  color: var(--vinyl-ink);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.delivery-filters button.is-active {
+  background: var(--vinyl-burgundy);
+  border-color: var(--vinyl-burgundy);
+  color: var(--vinyl-cream);
+}
+
+.delivery-table-wrap {
+  overflow-x: auto;
+}
+
+.delivery-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.delivery-table th,
+.delivery-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--vinyl-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.delivery-table th {
+  border-top: 1px solid var(--vinyl-border);
+  color: var(--vinyl-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
