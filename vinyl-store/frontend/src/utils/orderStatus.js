@@ -25,3 +25,10 @@ export function formatOrderDate(value) {
     year: "numeric",
   }).format(date);
 }
+
+// The only status an order may move to next (mirrors the API's rules).
+const NEXT_STATUS = { PROCESSING: "IN_TRANSIT", IN_TRANSIT: "DELIVERED" };
+
+export function nextStatus(status) {
+  return NEXT_STATUS[status] ?? null;
+}

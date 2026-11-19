@@ -4,6 +4,8 @@ import NavBar from "../components/layout/navBar.jsx";
 import Footer from "../components/layout/footer.jsx";
 import { StatusBadge } from "./orders.jsx";
 import { getDeliveries } from "../services/deliveriesApi.js";
+import { updateOrderStatus } from "../services/ordersApi.js";
+import { nextStatus, statusLabel } from "../utils/orderStatus.js";
 import { clearAuthSession, getAuthSession } from "../utils/authSession.js";
 import { formatPrice } from "../utils/productFormat.js";
 import "../styles/home.css";
@@ -15,7 +17,57 @@ const FILTERS = [
   { value: "delivered", label: "Delivered", completed: true },
 ];
 
-export function DeliveryTable({ deliveries }) {
+// Badge plus a dropdown with the one allowed next status (SCRUM-133).
+// Orders cannot go backwards, so delivered/cancelled rows only show the badge.
+export function StatusControl({ delivery, token, onChanged, onStale }) {
+  const next = nextStatus(delivery.status);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleChange(event) {
+    const value = event.target.value;
+    if (!value) return;
+    setSaving(true);
+    setError("");
+    try {
+      const result = await updateOrderStatus(token, delivery.deliveryId, value);
+      onChanged(delivery.deliveryId, result.status);
+    } catch (err) {
+      if (err.status === 409) {
+        // The order changed elsewhere: show why and reload the list.
+        onStale?.(err.message);
+      }
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="delivery-status-cell">
+      <StatusBadge status={delivery.status} />
+      {next && token && (
+        <select
+          className="delivery-status-select"
+          aria-label={`Update status of order ${delivery.deliveryId}`}
+          value=""
+          disabled={saving}
+          onChange={handleChange}
+        >
+          <option value="">Update status…</option>
+          <option value={next}>Mark as {statusLabel(next)}</option>
+        </select>
+      )}
+      {error && (
+        <p className="delivery-status-error" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export function DeliveryTable({ deliveries, token, onChanged, onStale }) {
   return (
     <div className="delivery-table-wrap">
       <table className="delivery-table">
@@ -40,7 +92,12 @@ export function DeliveryTable({ deliveries }) {
               <td>{formatPrice(row.totalPrice)}</td>
               <td>{row.deliveryAddress}</td>
               <td>
-                <StatusBadge status={row.status} />
+                <StatusControl
+                  delivery={row}
+                  token={token}
+                  onChanged={onChanged}
+                  onStale={onStale}
+                />
               </td>
             </tr>
           ))}
@@ -57,6 +114,18 @@ export default function Deliveries() {
   const [deliveries, setDeliveries] = useState([]);
   const [status, setStatus] = useState(isManager ? "loading" : session ? "forbidden" : "guest");
   const [errorMessage, setErrorMessage] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
+
+  // One order can have several rows (one per product): update them all.
+  function handleChanged(orderId, newStatus) {
+    setDeliveries((rows) =>
+      rows.map((row) =>
+        row.deliveryId === orderId
+          ? { ...row, status: newStatus, completed: newStatus === "DELIVERED" }
+          : row,
+      ),
+    );
+  }
 
   useEffect(() => {
     if (!session) {
@@ -89,7 +158,7 @@ export default function Deliveries() {
       });
 
     return () => controller.abort();
-  }, [session, isManager, filter]);
+  }, [session, isManager, filter, reloadKey]);
 
   return (
     <div className="vinyl-site orders-site">
@@ -134,7 +203,12 @@ export default function Deliveries() {
           <p className="orders-state">No deliveries match this filter.</p>
         )}
         {status === "ready" && deliveries.length > 0 && (
-          <DeliveryTable deliveries={deliveries} />
+          <DeliveryTable
+            deliveries={deliveries}
+            token={session.token}
+            onChanged={handleChanged}
+            onStale={() => setReloadKey((key) => key + 1)}
+          />
         )}
       </main>
       <Footer />
