@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { registerUser } from "../services/api.js";
+import { loginUser, registerUser, API_BASE_URL } from "../services/api.js";
+import { getGuestCart, mergeGuestCartAfterLogin } from "../utils/guestCart.js";
+import {
+  clearAuthSession,
+  getAuthSession,
+  saveAuthSession,
+} from "../utils/authSession.js";
 import NavBar from "../components/layout/navBar.jsx";
 import Footer from "../components/layout/footer.jsx";
 import heroImage from "../assets/hero/hero.png";
@@ -36,15 +42,11 @@ function formatPrice(value) {
 }
 
 export default function Account() {
-  const path = window.location.pathname;
+  const [path, setPath] = useState(window.location.pathname);
+  const [session, setSession] = useState(getAuthSession);
   const [wishlist, setWishlist] = useState(initialWishlist);
   const [notice, setNotice] = useState("");
-
-  function showPrototypeNotice(event) {
-    event.preventDefault();
-    setNotice("This is a frontend preview. Account services are not connected yet.");
-  }
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
 async function handleRegister(event) {
   event.preventDefault();
@@ -79,6 +81,52 @@ async function handleRegister(event) {
   }
 }
 
+  async function handleLogin(event) {
+    event.preventDefault();
+    setNotice("");
+    setIsSubmitting(true);
+
+    const formData = new FormData(event.currentTarget);
+    const email = String(formData.get("email") || "").trim();
+    const password = String(formData.get("password") || "");
+    const remember = formData.get("remember") === "on";
+
+    try {
+      const authenticated = await loginUser({ email, password });
+      saveAuthSession(authenticated, remember);
+      setSession(authenticated);
+
+      window.history.pushState({}, "", "/profile");
+      setPath("/profile");
+
+      if (getGuestCart().length > 0) {
+        try {
+          const mergeResult = await mergeGuestCartAfterLogin(
+            authenticated.token,
+            API_BASE_URL,
+          );
+          if (mergeResult?.adjustments?.length) {
+            setNotice("You’re signed in. Some cart quantities were adjusted to match available stock.");
+          }
+        } catch (error) {
+          setNotice(`You’re signed in, but your guest cart could not be synced: ${error.message}`);
+        }
+      }
+    } catch (error) {
+      setNotice(error.message || "Sign in failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  function handleLogout(event) {
+    event.preventDefault();
+    clearAuthSession();
+    setSession(null);
+    setNotice("You have been signed out.");
+    window.history.pushState({}, "", "/sign-in");
+    setPath("/sign-in");
+  }
 
   function pageContent() {
     if (path === "/sign-in") {
@@ -86,7 +134,8 @@ async function handleRegister(event) {
         <AuthPage
           mode="sign-in"
           notice={notice}
-          onSubmit={showPrototypeNotice}
+          isSubmitting={isSubmitting}
+          onSubmit={handleLogin}
           onNotice={setNotice}
         />
       );
@@ -105,7 +154,7 @@ async function handleRegister(event) {
 
     if (path === "/wishlist") {
       return (
-        <AccountShell activePath={path}>
+        <AccountShell activePath={path} user={session?.user} onLogout={handleLogout}>
           <WishlistPage
             records={wishlist}
             onRemove={(title) =>
@@ -118,15 +167,15 @@ async function handleRegister(event) {
 
     if (path === "/account-settings") {
       return (
-        <AccountShell activePath={path}>
+        <AccountShell activePath={path} user={session?.user} onLogout={handleLogout}>
           <SettingsPage notice={notice} setNotice={setNotice} />
         </AccountShell>
       );
     }
 
     return (
-      <AccountShell activePath="/profile">
-        <OverviewPage />
+      <AccountShell activePath="/profile" user={session?.user} onLogout={handleLogout}>
+        <OverviewPage user={session?.user} notice={notice} />
       </AccountShell>
     );
   }
@@ -140,7 +189,7 @@ async function handleRegister(event) {
   );
 }
 
-function AuthPage({ mode, notice, onSubmit, onNotice }) {
+function AuthPage({ mode, notice, onSubmit, onNotice, isSubmitting = false }) {
   const isSignIn = mode === "sign-in";
 
   function handleSubmit(event) {
@@ -244,8 +293,10 @@ function AuthPage({ mode, notice, onSubmit, onNotice }) {
                 }}>Forgot password?</a>
               </div>
             )}
-            <button className="account-primary-button" type="submit">
-              {isSignIn ? "Log in" : "Create Account"}
+            <button className="account-primary-button" type="submit" disabled={isSubmitting}>
+              {isSubmitting
+                ? "Signing in…"
+                : isSignIn ? "Log in" : "Create Account"}
             </button>
             {notice && <p className="account-notice" role="status">{notice}</p>}
           </form>
@@ -261,7 +312,15 @@ function AuthPage({ mode, notice, onSubmit, onNotice }) {
   );
 }
 
-function AccountShell({ activePath, children }) {
+function AccountShell({ activePath, children, user, onLogout }) {
+  const accountLabel = user?.email?.split("@")[0] || "Your account";
+  const initials = accountLabel
+    .split(/[.\s_-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("") || "A";
+
   return (
     <div className="account-page">
       <p className="account-breadcrumb">
@@ -270,9 +329,9 @@ function AccountShell({ activePath, children }) {
       </p>
       <div className="account-layout">
         <aside className="account-sidebar">
-          <div className="account-avatar">JL</div>
-          <h2>Jamie Laurent</h2>
-          <p>jamie.laurent@email.com</p>
+          <div className="account-avatar">{initials}</div>
+          <h2>{accountLabel}</h2>
+          {user?.email && <p>{user.email}</p>}
           <a className="account-edit-link" href="/account-settings">Edit Profile</a>
           <nav aria-label="Account navigation">
             {profileSections.map((section) => (
@@ -285,7 +344,7 @@ function AccountShell({ activePath, children }) {
                 <span aria-hidden="true">{section.icon}</span>{section.label}
               </a>
             ))}
-            <a href="/sign-in"><span aria-hidden="true">↪</span>Log Out</a>
+            <a href="/sign-in" onClick={onLogout}><span aria-hidden="true">↪</span>Log Out</a>
           </nav>
           <div className="sidebar-help">
             <h3>Need a hand?</h3>
@@ -299,7 +358,7 @@ function AccountShell({ activePath, children }) {
   );
 }
 
-function OverviewPage() {
+function OverviewPage({ user, notice }) {
   return (
     <>
       <header className="account-heading">
@@ -307,6 +366,7 @@ function OverviewPage() {
         <h1>Profile overview</h1>
         <p>Your listening life, all in one place.</p>
       </header>
+      {notice && <p className="account-notice" role="status">{notice}</p>}
       <div className="account-stat-grid">
         <StatCard label="Total orders" value="04" detail="Since you joined" />
         <StatCard label="Wishlist" value="06" detail="Records saved for later" />
@@ -331,9 +391,19 @@ function OverviewPage() {
             <a href="/account-settings">Edit →</a>
           </div>
           <dl>
-            <div><dt>Name</dt><dd>Jamie Laurent</dd></div>
-            <div><dt>Email</dt><dd>jamie.laurent@email.com</dd></div>
-            <div><dt>Address</dt><dd>Brooklyn, New York</dd></div>
+            {user?.email ? (
+              <>
+                <div><dt>Account ID</dt><dd>{user.id}</dd></div>
+                <div><dt>Email</dt><dd>{user.email}</dd></div>
+                <div><dt>Role</dt><dd>{user.role}</dd></div>
+              </>
+            ) : (
+              <>
+                <div><dt>Name</dt><dd>Jamie Laurent</dd></div>
+                <div><dt>Email</dt><dd>jamie.laurent@email.com</dd></div>
+                <div><dt>Address</dt><dd>Brooklyn, New York</dd></div>
+              </>
+            )}
           </dl>
         </section>
       </div>

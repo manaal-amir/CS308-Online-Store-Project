@@ -1,9 +1,22 @@
 // Tests for the product detail page (VS-08/09/10): all fields render and stock is visible.
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import {
+  cleanup,
+  fireEvent,
+  render as renderWithDom,
+  screen,
+} from "@testing-library/react";
 import { ProductDetails } from "./productDetail.jsx";
 import { displayValue, formatPrice, stockLabel } from "../utils/productFormat.js";
+import { addToGuestCart, getGuestCart, resetGuestCartForTests } from "../utils/guestCart.js";
+
+afterEach(() => {
+  cleanup();
+  localStorage.clear();
+  resetGuestCartForTests();
+});
 
 const product = {
   id: 7,
@@ -88,6 +101,27 @@ describe("ProductDetails", () => {
 
   test("uses a placeholder when there is no cover image", () => {
     expect(render(product)).toContain("placeholder-record-disc");
+  });
+
+  test("shows a cart toast with the updated quantity after a successful add", () => {
+    const { container } = renderWithDom(<ProductDetails product={product} />);
+
+    fireEvent.click(container.querySelector(".product-add-button"));
+
+    expect(screen.getByText("Added L.A. Woman to your cart.")).toBeTruthy();
+    expect(screen.getByText("Cart quantity: 1")).toBeTruthy();
+    expect(getGuestCart()).toEqual([{ productId: 7, quantity: 1 }]);
+  });
+
+  test("preserves the cart error and shows no success toast when adding fails", () => {
+    addToGuestCart(7, 8, 8);
+    const { container } = renderWithDom(<ProductDetails product={product} />);
+
+    fireEvent.click(container.querySelector(".product-add-button"));
+
+    expect(container.querySelector('[role="alert"]').textContent).toMatch(/Only 8 in stock/);
+    expect(container.querySelector(".cart-toast")).toBeNull();
+    expect(getGuestCart()).toEqual([{ productId: 7, quantity: 8 }]);
   });
 });
 
