@@ -135,3 +135,53 @@ export async function loginUser(credentials) {
 
   return data;
 }
+
+export async function createOrder(orderData, token) {
+  if (!token) {
+    throw new Error("Please sign in before checking out.");
+  }
+
+  let response;
+
+  try {
+    response = await fetch(`${API_BASE}/api/orders`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(orderData),
+    });
+  } catch {
+    throw new Error(
+      "Could not reach the checkout server. Please try again."
+    );
+  }
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const fallbackMessages = {
+      400: "Your cart is empty or the checkout information is invalid.",
+      401: "Please sign in before checking out.",
+      403: "Only customer accounts can place orders.",
+      402: "Your card was declined. Please try another test card.",
+      409: "Some items are no longer available in the requested quantity.",
+    };
+
+    throw new Error(
+      data?.error?.message ||
+      (typeof data?.error === "string" ? data.error : null) ||
+      data?.message ||
+      fallbackMessages[response.status] ||
+      "Checkout failed. Please try again."
+    );
+  }
+
+  if (!data) {
+    throw new Error("The server returned an invalid checkout response.");
+  }
+
+  return data;
+}
+

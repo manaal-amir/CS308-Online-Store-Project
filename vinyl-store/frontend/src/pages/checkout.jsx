@@ -2,6 +2,8 @@
 import { useState } from "react";
 import "../styles/checkout.css";
 import { validateCheckout } from "../utils/checkoutValidation.js";
+import { createOrder } from "../services/api.js";
+import { getAuthSession } from "../utils/authSession.js";
 
 
 export default function Checkout() {
@@ -16,6 +18,8 @@ export default function Checkout() {
     });
 
     const [errors, setErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [orderResult, setOrderResult] = useState(null);
 
     function handleChange(event) {
         const { name, value } = event.target;
@@ -25,8 +29,11 @@ export default function Checkout() {
         }));
     }
 
-    function handleSubmit(event) {
+
+    async function handleSubmit(event) {
         event.preventDefault();
+
+        if (isSubmitting || orderResult) return;
 
         const validationErrors = validateCheckout(form);
         setErrors(validationErrors);
@@ -34,10 +41,48 @@ export default function Checkout() {
         if (Object.keys(validationErrors).length > 0) {
             return;
         }
-        setErrors({
-            submit: "Form validated. Payment integration is not available yet.",
-        });
+
+        const session = getAuthSession();
+
+        if (!session?.token) {
+            setErrors({
+                submit: "Please sign in before placing your order.",
+            });
+            return;
+        }
+
+        const orderData = {
+            cardHolder: form.cardHolder.trim(),
+            cardNumber: form.cardNumber.replace(/\s/g, ""),
+            expiryMonth: Number(form.expiryMonth),
+            expiryYear: Number(form.expiryYear),
+            cvv: form.cvv.trim(),
+            deliveryAddress: form.address.trim(),
+        };
+
+        setIsSubmitting(true);
+
+        try {
+            const order = await createOrder(orderData, session.token);
+
+            setOrderResult(order);
+            setErrors({});
+
+            // Clear sensitive card details after successful checkout.
+            setForm((previous) => ({
+                ...previous,
+                cardNumber: "",
+                cvv: "",
+            }));
+        } catch (error) {
+            setErrors({
+                submit: error.message || "Checkout failed. Please try again.",
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
     }
+
 
     return (
         <main className="checkout-page">
@@ -182,15 +227,38 @@ export default function Checkout() {
                             Order items and totals will appear here
                             after cart integration.
                         </div>
-                        
+
                         {errors.submit && (
                             <p className="checkout-error" role="alert">
                                 {errors.submit}
                             </p>
                         )}
 
-                        <button className="checkout-submit" type="submit">
-                            Place Order
+                        {orderResult && (
+                            <div className="checkout-success" role="status">
+                                <h3>Order placed successfully!</h3>
+                                <p>Order #{orderResult.id}</p>
+                                <p>
+                                    Total: {Number(orderResult.totalPrice).toFixed(2)}
+                                </p>
+                                <p>Status: {orderResult.status}</p>
+                                {orderResult.invoiceNumber && (
+                                    <p>Invoice: {orderResult.invoiceNumber}</p>
+                                )}
+                            </div>
+                        )}
+
+
+                        <button
+                            className="checkout-submit"
+                            type="submit"
+                            disabled={isSubmitting || Boolean(orderResult)}
+                        >
+                            {isSubmitting
+                                ? "Processing..."
+                                : orderResult
+                                    ? "Order Placed"
+                                    : "Place Order"}
                         </button>
 
                         <p className="checkout-note">
