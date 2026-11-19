@@ -94,6 +94,28 @@
   color: #c68e4a;
 }
 
+.product-quantity-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 16px;
+  color: #e1d9c1;
+}
+
+.product-quantity-control button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(230, 210, 170, 0.4);
+  background: transparent;
+  color: #eee2c9;
+  cursor: pointer;
+}
+
+.product-quantity-control button:disabled {
+  color: #77715e;
+  cursor: not-allowed;
+}
+
 .product-add-button {
   min-width: 220px;
   padding: 14px 24px;

@@ -1,9 +1,20 @@
 // Tests for the product detail page (VS-08/09/10): all fields render and stock is visible.
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import {
+  cleanup,
+  fireEvent,
+  render as renderComponent,
+  screen,
+} from "@testing-library/react";
 import { ProductDetails } from "./productDetail.jsx";
 import { displayValue, formatPrice, stockLabel } from "../utils/productFormat.js";
+import {
+  addToGuestCart,
+  getGuestCart,
+  resetGuestCartForTests,
+} from "../utils/guestCart.js";
 
 const product = {
   id: 7,
@@ -22,6 +33,12 @@ const product = {
 };
 
 const render = (item) => renderToStaticMarkup(<ProductDetails product={item} />);
+
+afterEach(() => {
+  cleanup();
+  localStorage.clear();
+  resetGuestCartForTests();
+});
 
 describe("ProductDetails", () => {
   test("renders every required product field", () => {
@@ -56,7 +73,56 @@ describe("ProductDetails", () => {
   });
 
   test("in stock keeps the add button enabled", () => {
-    expect(render(product)).not.toMatch(/<button[^>]*disabled/);
+    expect(render(product)).not.toMatch(/class="product-add-button"[^>]*disabled/);
+  });
+
+  test("quantity controls stop at available stock and repeated adds stay within stock", () => {
+    renderComponent(<ProductDetails product={{ ...product, quantity: 3 }} />);
+    const increase = screen.getByRole("button", { name: "Increase quantity" });
+    const addButton = screen.getByRole("button", { name: "Add to Cart" });
+
+    fireEvent.click(increase);
+    fireEvent.click(increase);
+
+    expect(screen.getByText("3", { selector: ".product-quantity-control span" })).toBeTruthy();
+    expect(increase.disabled).toBe(true);
+
+    fireEvent.click(addButton);
+
+    expect(getGuestCart()).toEqual([{ productId: 7, quantity: 3 }]);
+    expect(screen.getByRole("button", { name: "Stock Limit Reached" }).disabled).toBe(true);
+  });
+
+  test("existing cart quantity reduces the remaining amount available", () => {
+    addToGuestCart(7, 2, 3);
+    renderComponent(<ProductDetails product={{ ...product, quantity: 3 }} />);
+
+    const increase = screen.getByRole("button", { name: "Increase quantity" });
+    expect(increase.disabled).toBe(true);
+    expect(screen.getByRole("button", { name: "Add to Cart" }).disabled).toBe(false);
+
+    fireEvent.click(screen.getByRole("button", { name: "Add to Cart" }));
+
+    expect(getGuestCart()).toEqual([{ productId: 7, quantity: 3 }]);
+  });
+
+  test("repeated Add to Cart clicks cannot exceed stock", () => {
+    renderComponent(<ProductDetails product={{ ...product, quantity: 2 }} />);
+    const addButton = screen.getByRole("button", { name: "Add to Cart" });
+
+    fireEvent.click(addButton);
+    fireEvent.click(screen.getByRole("button", { name: "Add to Cart" }));
+    fireEvent.click(screen.getByRole("button", { name: "Stock Limit Reached" }));
+
+    expect(getGuestCart()).toEqual([{ productId: 7, quantity: 2 }]);
+  });
+
+  test("out-of-stock products disable quantity controls and cannot be added", () => {
+    renderComponent(<ProductDetails product={{ ...product, quantity: 0 }} />);
+
+    expect(screen.getByRole("button", { name: "Increase quantity" }).disabled).toBe(true);
+    expect(screen.getByRole("button", { name: "Out of Stock" }).disabled).toBe(true);
+    expect(getGuestCart()).toEqual([]);
   });
 
   test("missing fields render a dash instead of undefined", () => {

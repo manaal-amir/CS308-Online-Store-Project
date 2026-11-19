@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { getCatalogProducts } from "../../services/api.js";
 import { addCatalogProductToCart } from "../../utils/catalogCart.js";
+import { getGuestCart, subscribeToGuestCart } from "../../utils/guestCart.js";
 
 function getRelationName(value) {
   return typeof value === "object" && value !== null ? value.name : value;
@@ -157,6 +158,9 @@ export function CatalogCard({ product, isPreview = false }) {
   const [saved, setSaved] = useState(false);
   const [cartMessage, setCartMessage] = useState("");
   const [cartError, setCartError] = useState("");
+  const [cart, setCart] = useState(getGuestCart);
+
+  useEffect(() => subscribeToGuestCart(setCart), []);
 
   function handleAddToCart() {
     try {
@@ -173,7 +177,10 @@ export function CatalogCard({ product, isPreview = false }) {
   const artist = getRelationName(product.artist) || product.distributor || "Various Artists";
   const category = getRelationName(product.category);
   const isVinyl = category?.toLowerCase() === "vinyl";
-  const isOutOfStock = Number(product.quantity) <= 0;
+  const stock = Number(product.quantity);
+  const isOutOfStock = !Number.isInteger(stock) || stock <= 0;
+  const cartQuantity = cart.find((item) => item.productId === Number(product.id))?.quantity || 0;
+  const isAtStockLimit = !isOutOfStock && cartQuantity >= stock;
 
   return (
     <article className="catalog-record">
@@ -215,9 +222,9 @@ export function CatalogCard({ product, isPreview = false }) {
         type="button"
         className="catalog-add-button"
         onClick={handleAddToCart}
-        disabled={isPreview || isOutOfStock}
+        disabled={isPreview || isOutOfStock || isAtStockLimit}
        >
-       {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+       {isOutOfStock ? "Out of Stock" : isAtStockLimit ? "Stock Limit Reached" : "Add to Cart"}
        </button>
 
       {cartMessage && (

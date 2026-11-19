@@ -3,7 +3,11 @@ import { useEffect, useState } from "react";
 import NavBar from "../components/layout/navBar.jsx";
 import Footer from "../components/layout/footer.jsx";
 import { getProductById } from "../services/api.js";
-import { addToGuestCart } from "../utils/guestCart.js";
+import {
+  addToGuestCart,
+  getGuestCart,
+  subscribeToGuestCart,
+} from "../utils/guestCart.js";
 import {
   displayValue,
   formatPrice,
@@ -17,12 +21,19 @@ import "../styles/product.css";
 export function ProductDetails({ product }) {
   const [cartMessage, setCartMessage] = useState("");
   const [cartError, setCartError] = useState("");
+  const [cart, setCart] = useState(getGuestCart);
+  const [quantity, setQuantity] = useState(1);
 
   const artist = relationName(product.artist);
   const genre = relationName(product.genre);
   const category = relationName(product.category);
   const stock = Number(product.quantity);
-  const inStock = stock > 0;
+  const inStock = Number.isInteger(stock) && stock > 0;
+  const cartQuantity = cart.find((item) => item.productId === Number(product.id))?.quantity || 0;
+  const available = inStock ? Math.max(0, stock - cartQuantity) : 0;
+  const selectedQuantity = available > 0 ? Math.min(quantity, available) : 1;
+
+  useEffect(() => subscribeToGuestCart(setCart), []);
 
   // The API does not return a release year yet, so it only shows once it does.
   const specs = [
@@ -40,7 +51,7 @@ export function ProductDetails({ product }) {
 
   function handleAddToCart() {
     try {
-      addToGuestCart(Number(product.id), 1, stock);
+      addToGuestCart(Number(product.id), selectedQuantity, stock);
       setCartMessage("Added to cart!");
       setCartError("");
     } catch (error) {
@@ -77,16 +88,35 @@ export function ProductDetails({ product }) {
 
         <p className="product-price">{formatPrice(product.price)}</p>
         <p className={`product-stock${inStock ? "" : " is-out"}`} role="status">
-          {stockLabel(product.quantity)}
+          {available === 0 && inStock ? "Stock limit reached" : stockLabel(product.quantity)}
         </p>
 
+        <div className="product-quantity-control" aria-label="Quantity">
+          <button
+            type="button"
+            aria-label="Decrease quantity"
+            disabled={available === 0 || selectedQuantity <= 1}
+            onClick={() => setQuantity(Math.max(1, selectedQuantity - 1))}
+          >
+            −
+          </button>
+          <span aria-live="polite">{available === 0 ? 0 : selectedQuantity}</span>
+          <button
+            type="button"
+            aria-label="Increase quantity"
+            disabled={available === 0 || selectedQuantity >= available}
+            onClick={() => setQuantity(Math.min(available, selectedQuantity + 1))}
+          >
+            +
+          </button>
+        </div>
         <button
           type="button"
           className="product-add-button"
           onClick={handleAddToCart}
-          disabled={!inStock}
+          disabled={!inStock || available === 0}
         >
-          {inStock ? "Add to Cart" : "Out of Stock"}
+          {!inStock ? "Out of Stock" : available === 0 ? "Stock Limit Reached" : "Add to Cart"}
         </button>
         {cartMessage && (
           <p className="product-feedback" role="status">
