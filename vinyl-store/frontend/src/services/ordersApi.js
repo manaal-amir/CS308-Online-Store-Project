@@ -51,3 +51,12 @@ export function cancelOrder(token, orderId) {
 export function getOrders(token, signal) {
   return requestOrders("", token, { signal });
 }
+
+// PATCH /api/orders/:id/status (product managers only). Orders only move
+// forward: PROCESSING -> IN_TRANSIT -> DELIVERED, anything else is a 409.
+export function updateOrderStatus(token, orderId, status) {
+  return requestOrders(`/${encodeURIComponent(orderId)}/status`, token, {
+    method: "PATCH",
+    body: { status },
+  });
+}

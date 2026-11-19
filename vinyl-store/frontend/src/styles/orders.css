@@ -314,3 +314,31 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
+
+.delivery-status-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.delivery-status-select {
+  padding: 6px 8px;
+  border: 1px solid var(--vinyl-border);
+  background: var(--vinyl-cream);
+  color: var(--vinyl-ink);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.delivery-status-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.delivery-status-error {
+  margin: 0;
+  max-width: 220px;
+  color: var(--vinyl-burgundy);
+  font-size: 12px;
+}
