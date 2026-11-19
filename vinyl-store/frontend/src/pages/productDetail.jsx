@@ -8,6 +8,9 @@ import {
   getGuestCart,
   subscribeToGuestCart,
 } from "../utils/guestCart.js";
+import CartIcon from "../components/icons/cartIcon.jsx";
+import CartToast from "../components/feedback/cartToast.jsx";
+import useCartToast from "../hooks/useCartToast.js";
 import {
   displayValue,
   formatPrice,
@@ -19,10 +22,10 @@ import "../styles/catalog.css";
 import "../styles/product.css";
 
 export function ProductDetails({ product }) {
-  const [cartMessage, setCartMessage] = useState("");
   const [cartError, setCartError] = useState("");
   const [cart, setCart] = useState(getGuestCart);
   const [quantity, setQuantity] = useState(1);
+  const { notification, showCartToast, dismissCartToast } = useCartToast();
 
   const artist = relationName(product.artist);
   const genre = relationName(product.genre);
@@ -51,12 +54,14 @@ export function ProductDetails({ product }) {
 
   function handleAddToCart() {
     try {
-      addToGuestCart(Number(product.id), selectedQuantity, stock);
-      setCartMessage("Added to cart!");
+      const updatedCart = addToGuestCart(Number(product.id), selectedQuantity, stock);
+      const cartItem = updatedCart.find(
+        (entry) => String(entry.productId) === String(product.id),
+      );
+      showCartToast(product.name, cartItem?.quantity);
       setCartError("");
     } catch (error) {
       setCartError(error.message);
-      setCartMessage("");
     }
   }
 
@@ -116,13 +121,13 @@ export function ProductDetails({ product }) {
           onClick={handleAddToCart}
           disabled={!inStock || available === 0}
         >
-          {!inStock ? "Out of Stock" : available === 0 ? "Stock Limit Reached" : "Add to Cart"}
+          {inStock && <CartIcon />}
+          {!inStock
+            ? "Out of Stock"
+            : available === 0
+              ? "Stock Limit Reached"
+              : "Add to Cart"}
         </button>
-        {cartMessage && (
-          <p className="product-feedback" role="status">
-            {cartMessage} <a href="/cart">View cart</a>
-          </p>
-        )}
         {cartError && (
           <p className="product-feedback is-error" role="alert">{cartError}</p>
         )}
@@ -142,6 +147,7 @@ export function ProductDetails({ product }) {
             ))}
         </dl>
       </div>
+      <CartToast notification={notification} onDismiss={dismissCartToast} />
     </article>
   );
 }

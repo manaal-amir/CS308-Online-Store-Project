@@ -3,6 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import { getCatalogProducts } from "../../services/api.js";
 import { addCatalogProductToCart } from "../../utils/catalogCart.js";
 import { getGuestCart, subscribeToGuestCart } from "../../utils/guestCart.js";
+import CartIcon from "../icons/cartIcon.jsx";
+import CartToast from "../feedback/cartToast.jsx";
+import useCartToast from "../../hooks/useCartToast.js";
 
 function getRelationName(value) {
   return typeof value === "object" && value !== null ? value.name : value;
@@ -33,6 +36,7 @@ export default function CatalogRecords({
   const [status, setStatus] = useState("loading");
   const [errorMessage, setErrorMessage] = useState("");
   const [isPreview, setIsPreview] = useState(false);
+  const { notification, showCartToast, dismissCartToast } = useCartToast();
   const isPopularitySort = sort === "popularity";
 
   useEffect(() => {
@@ -110,6 +114,7 @@ export default function CatalogRecords({
     return (
       <div className="catalog-results">
         <p className="catalog-state" role="status">Loading records…</p>
+        <CartToast notification={notification} onDismiss={dismissCartToast} />
       </div>
     );
   }
@@ -120,6 +125,7 @@ export default function CatalogRecords({
         <p className="catalog-state" role="alert">
           Could not load records from the product API. {errorMessage}
         </p>
+        <CartToast notification={notification} onDismiss={dismissCartToast} />
       </div>
     );
   }
@@ -138,10 +144,21 @@ export default function CatalogRecords({
       ) : (
         <div className="catalog-records">
           {records.map((product) => (
-            <CatalogCard key={product.id} product={product} isPreview={isPreview} />
+            <CatalogCard
+              key={product.id}
+              product={product}
+              isPreview={isPreview}
+              onCartAdded={(name) => {
+                const cartItem = getGuestCart().find(
+                  (entry) => String(entry.productId) === String(product.id),
+                );
+                showCartToast(name, cartItem?.quantity);
+              }}
+            />
           ))}
         </div>
       )}
+      <CartToast notification={notification} onDismiss={dismissCartToast} />
     </div>
   );
 }
@@ -154,9 +171,8 @@ export function CatalogPreviewNotice() {
   );
 }
 
-export function CatalogCard({ product, isPreview = false }) {
+export function CatalogCard({ product, isPreview = false, onCartAdded }) {
   const [saved, setSaved] = useState(false);
-  const [cartMessage, setCartMessage] = useState("");
   const [cartError, setCartError] = useState("");
   const [cart, setCart] = useState(getGuestCart);
 
@@ -165,12 +181,10 @@ export function CatalogCard({ product, isPreview = false }) {
   function handleAddToCart() {
     try {
       if (!addCatalogProductToCart(product, isPreview)) return;
-
-      setCartMessage("Added to cart!");
       setCartError("");
+      onCartAdded?.(product.name);
     } catch (error) {
       setCartError(error.message);
-      setCartMessage("");
     }
   }
 
@@ -215,7 +229,12 @@ export function CatalogCard({ product, isPreview = false }) {
         <h2>{artist}</h2>
         <p>{product.name}</p>
         <span className="catalog-record-price">{formatPrice(product.price)}</span>
-        {isOutOfStock && <span className="catalog-stock">Out of stock</span>}
+        <span
+          className={`catalog-stock${isOutOfStock ? " is-out" : ""}`}
+          aria-hidden={!isOutOfStock}
+        >
+          {isOutOfStock ? "Out of stock" : "\u00a0"}
+        </span>
       </a>
       
        <button
@@ -224,12 +243,13 @@ export function CatalogCard({ product, isPreview = false }) {
         onClick={handleAddToCart}
         disabled={isPreview || isOutOfStock || isAtStockLimit}
        >
-       {isOutOfStock ? "Out of Stock" : isAtStockLimit ? "Stock Limit Reached" : "Add to Cart"}
+       {!isOutOfStock && <CartIcon />}
+       {isOutOfStock
+         ? "Out of Stock"
+         : isAtStockLimit
+           ? "Stock Limit Reached"
+           : "Add to Cart"}
        </button>
-
-      {cartMessage && (
-      <p role="status">{cartMessage}</p>
-      )}
 
       {cartError && (
        <p role="alert">{cartError}</p>

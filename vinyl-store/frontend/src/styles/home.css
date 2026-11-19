@@ -3,8 +3,8 @@
 
 :root {
   font-family: "Inter", sans-serif;
-  color: #e1d9c1;
-  background: #1d1d00;
+  color: var(--vinyl-ink);
+  background: var(--vinyl-background);
 }
 
 * {
@@ -26,7 +26,8 @@ button, input {
 
 .vinyl-site {
   min-height: 100vh;
-  background: #1d1d00;
+  background: var(--vinyl-background);
+  color: var(--vinyl-ink);
 }
 
 .vinyl-site h1,
@@ -46,15 +47,16 @@ button, input {
   display: flex;
   align-items: center;
   gap: 42px;
-  background: #1d1d00;
-  border-bottom: 1px solid #333225;
+  background: var(--vinyl-brown);
+  border-bottom: 1px solid var(--vinyl-border);
+  color: var(--vinyl-cream);
 }
 
 .vinyl-mark {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: #e1d9c1;
+  background: var(--vinyl-cream);
   display: grid;
   place-items: center;
   flex-shrink: 0;
@@ -63,7 +65,7 @@ button, input {
 .vinyl-mark span {
   width: 14px;
   height: 14px;
-  background: #ba8247;
+  background: var(--vinyl-accent);
   border-radius: 50%;
   position: relative;
 }
@@ -76,7 +78,7 @@ button, input {
   top: 5px;
   left: 5px;
   border-radius: 50%;
-  background: #e1d9c1;
+  background: var(--vinyl-brown);
 }
 
 .vinyl-nav nav {
@@ -88,7 +90,7 @@ button, input {
 
 .vinyl-nav nav a:hover,
 .vinyl-footer a:hover {
-  color: #ba8247;
+  color: var(--vinyl-accent);
 }
 
 .nav-actions {
@@ -102,7 +104,7 @@ button, input {
   width: 16px;
   height: 16px;
   fill: none;
-  stroke: #e1d9c1;
+  stroke: var(--vinyl-cream);
   stroke-width: 1.5;
 }
 
@@ -112,8 +114,8 @@ button, input {
   flex: 0 1 260px;
   min-width: 150px;
   margin-left: auto;
-  border: 1px solid #625a3e;
-  background: #222206;
+  border: 1px solid var(--vinyl-border);
+  background: var(--vinyl-surface);
 }
 
 .nav-search-form input {
@@ -124,14 +126,14 @@ button, input {
   border: 0;
   outline: 0;
   background: transparent;
-  color: #e1d9c1;
+  color: var(--vinyl-ink);
   font-size: 11px;
   line-height: 1;
   text-transform: none;
 }
 
 .nav-search-form input::placeholder {
-  color: #aba68f;
+  color: var(--vinyl-muted);
 }
 
 .nav-search-form button {
@@ -141,12 +143,12 @@ button, input {
   border: 0;
   padding: 0;
   background: transparent;
-  color: #e1d9c1;
+  color: var(--vinyl-ink);
   cursor: pointer;
 }
 
 .nav-search-form button:hover {
-  color: #ba8247;
+  color: var(--vinyl-accent);
 }
 
 .nav-search-form button svg {
@@ -183,6 +185,13 @@ button, input {
   align-items: center;
   overflow: hidden;
   background-color: #3d2a1d;
+  color: var(--vinyl-cream);
+}
+
+.vinyl-hero h1,
+.vinyl-hero .hero-tagline,
+.vinyl-hero .hero-description {
+  color: var(--vinyl-cream);
 }
 
 .vinyl-hero::after {
@@ -232,13 +241,14 @@ button, input {
   align-items: center;
   gap: 22px;
   padding: 12px 20px;
-  background: #3c0008;
+  background: var(--vinyl-burgundy);
+  color: var(--vinyl-cream);
   font-size: 12px;
 }
 
 .vinyl-button:hover,
 .newsletter-form button:hover {
-  background: #650b17;
+  background: #5E091F;
 }
 
 /* SHARED SECTION STYLES */
@@ -251,7 +261,7 @@ button, input {
 
 .eyebrow {
   display: block;
-  color: #ba8247;
+  color: var(--vinyl-burgundy);
   font-size: 14px;
 }
 
@@ -262,7 +272,7 @@ button, input {
 }
 
 .section-subtitle {
-  color: #aba68f;
+  color: var(--vinyl-muted);
   font-size: 17px;
   margin: 0 0 30px;
 }
@@ -270,7 +280,7 @@ button, input {
 /* FEATURED RECORDS */
 
 .featured-section {
-  background: #1d1d00;
+  background: var(--vinyl-background);
   min-height: 610px;
   padding: 45px 0 35px;
 }
@@ -289,7 +299,7 @@ button, input {
   position: relative;
   width: 100%;
   aspect-ratio: 300 / 285;
-  background: #5e5742;
+  background: var(--vinyl-surface);
   overflow: hidden;
   border-radius: 4px;
 }
@@ -313,7 +323,7 @@ button, input {
   display: grid;
   place-items: center;
   background:
-    radial-gradient(circle at 54% 46%, #ba8247 0 10%, #1b1813 10.5% 11%, transparent 11.5%),
+    radial-gradient(circle at 54% 46%, var(--vinyl-accent) 0 10%, #1b1813 10.5% 11%, transparent 11.5%),
     repeating-radial-gradient(circle at 54% 46%, #121211 0 2px, #302e27 3px 4px);
   color: #eee2c3;
 }
@@ -325,7 +335,7 @@ button, input {
 .missing-cover .placeholder-record-initial {
   position: relative;
   z-index: 1;
-  color: #ba8247;
+  color: var(--vinyl-accent);
   font: 500 42px/1 "Cormorant Garamond", Georgia, serif;
   text-shadow: 0 2px 6px #0008;
 }
@@ -334,7 +344,7 @@ button, input {
   display: block;
   margin-top: 10px;
   font-size: 12px;
-  color: #ba8247;
+  color: var(--vinyl-accent);
   text-transform: uppercase;
 }
 
@@ -347,20 +357,20 @@ button, input {
 .record-card p {
   font-size: 15px;
   margin: 0;
-  color: #aba68f;
+  color: var(--vinyl-muted);
 }
 
 .catalog-message {
-  color: #aba68f;
+  color: var(--vinyl-muted);
   padding: 60px 0;
 }
 
 .featured-section .catalog-preview-note {
   margin: 0 0 16px;
   padding: 9px 12px;
-  border-left: 2px solid #ba8247;
-  background: #29280e;
-  color: #c8bea0;
+  border-left: 2px solid var(--vinyl-accent);
+  background: var(--vinyl-surface);
+  color: var(--vinyl-ink);
   font-size: 10px;
   line-height: 1.5;
 }
@@ -368,7 +378,7 @@ button, input {
 /* GENRES */
 
 .genres-section {
-  background: #29280e;
+  background: var(--vinyl-surface);
   padding: 34px 0 46px;
 }
 
@@ -413,7 +423,7 @@ button, input {
   z-index: 2;
   width: 40px;
   height: 4px;
-  background: #ba8247;
+  background: var(--vinyl-accent);
   top: 18px;
   left: 18px;
 }
@@ -456,7 +466,7 @@ button, input {
 /* ABOUT */
 
 .about-section {
-  background: #1d1d00;
+  background: var(--vinyl-background);
   padding: 65px 0;
 }
 
@@ -490,14 +500,14 @@ button, input {
 .text-link {
   display: inline-block;
   margin-top: 25px;
-  color: #ba8247;
+  color: var(--vinyl-burgundy);
   font-size: 15px;
 }
 
 /* NEWSLETTER */
 
 .newsletter-section {
-  background: #29280e;
+  background: var(--vinyl-surface);
   padding: 46px 0 60px;
 }
 
@@ -507,7 +517,7 @@ button, input {
 }
 
 .newsletter-section p {
-  color: #aba68f;
+  color: var(--vinyl-muted);
   font-size: 17px;
 }
 
@@ -523,19 +533,19 @@ button, input {
   min-width: 0;
   height: 65px;
   padding: 0 20px;
-  background: #1d1d00;
-  border: none;
+  background: var(--vinyl-background);
+  border: 1px solid var(--vinyl-border);
   border-radius: 4px;
-  color: #e1d9c1;
+  color: var(--vinyl-ink);
 }
 
 .newsletter-form button {
   height: 65px;
   padding: 0 28px;
-  background: #3c0008;
-  border: none;
+  background: var(--vinyl-burgundy);
+  border: 1px solid transparent;
   border-radius: 4px;
-  color: #e1d9c1;
+  color: var(--vinyl-cream);
   cursor: pointer;
 }
 
@@ -547,12 +557,14 @@ button, input {
 
 .vinyl-footer {
   min-height: 185px;
-  margin: 0 60px;
-  padding: 40px 0;
-  border-top: 1px solid #ba8247;
+  margin: 0;
+  padding: 40px max(60px, calc((100% - 1320px) / 2));
+  border-top: 1px solid var(--vinyl-accent);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: var(--vinyl-brown);
+  color: var(--vinyl-cream);
 }
 
 .footer-logo {
@@ -561,7 +573,7 @@ button, input {
 }
 
 .vinyl-footer p {
-  color: #aba68f;
+  color: var(--vinyl-cream);
   font-size: 17px;
   margin: 5px 0;
 }
@@ -585,7 +597,7 @@ button, input {
     display: block;
     background: transparent;
     border: none;
-    color: #e1d9c1;
+    color: var(--vinyl-cream);
     font-size: 25px;
     cursor: pointer;
   }
@@ -597,7 +609,7 @@ button, input {
     left: 0;
     right: 0;
     z-index: 10;
-    background: #1d1d00;
+    background: var(--vinyl-brown);
     padding: 25px;
     flex-direction: column;
   }
@@ -653,7 +665,8 @@ button, input {
   }
 
   .vinyl-footer {
-    margin: 0 24px;
+    padding-right: 24px;
+    padding-left: 24px;
   }
 }
 
@@ -751,8 +764,8 @@ button, input {
   height: 18px;
   padding: 0 4px;
   border-radius: 999px;
-  background: #850018;
-  color: white;
+  background: var(--vinyl-burgundy);
+  color: var(--vinyl-cream);
   font-size: 11px;
   font-weight: 600;
   display: flex;

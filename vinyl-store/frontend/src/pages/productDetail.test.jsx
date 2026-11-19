@@ -16,6 +16,12 @@ import {
   resetGuestCartForTests,
 } from "../utils/guestCart.js";
 
+afterEach(() => {
+  cleanup();
+  localStorage.clear();
+  resetGuestCartForTests();
+});
+
 const product = {
   id: 7,
   name: "L.A. Woman",
@@ -33,12 +39,6 @@ const product = {
 };
 
 const render = (item) => renderToStaticMarkup(<ProductDetails product={item} />);
-
-afterEach(() => {
-  cleanup();
-  localStorage.clear();
-  resetGuestCartForTests();
-});
 
 describe("ProductDetails", () => {
   test("renders every required product field", () => {
@@ -154,6 +154,27 @@ describe("ProductDetails", () => {
 
   test("uses a placeholder when there is no cover image", () => {
     expect(render(product)).toContain("placeholder-record-disc");
+  });
+
+  test("shows a cart toast with the updated quantity after a successful add", () => {
+    const { container } = renderComponent(<ProductDetails product={product} />);
+
+    fireEvent.click(container.querySelector(".product-add-button"));
+
+    expect(screen.getByText("Added L.A. Woman to your cart.")).toBeTruthy();
+    expect(screen.getByText("Cart quantity: 1")).toBeTruthy();
+    expect(getGuestCart()).toEqual([{ productId: 7, quantity: 1 }]);
+  });
+
+  test("preserves the cart error and shows no success toast when adding fails", () => {
+    const invalidProduct = { ...product, id: "invalid" };
+    const { container } = renderComponent(<ProductDetails product={invalidProduct} />);
+
+    fireEvent.click(container.querySelector(".product-add-button"));
+
+    expect(container.querySelector('[role="alert"]').textContent).toMatch(/Invalid product or quantity/);
+    expect(container.querySelector(".cart-toast")).toBeNull();
+    expect(getGuestCart()).toEqual([]);
   });
 });
 
