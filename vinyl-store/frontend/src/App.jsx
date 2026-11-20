@@ -1,3 +1,4 @@
+
 import Cart from "./pages/cart.jsx";
 import Home from "./pages/home.jsx";
 import Shop from "./pages/shop.jsx";
@@ -5,6 +6,7 @@ import Genre from "./pages/genre.jsx";
 import Genres from "./pages/genres.jsx";
 import Account from "./pages/account.jsx";
 import ProductDetail from "./pages/productDetail.jsx";
+import Checkout from "./pages/checkout.jsx";
 
 function App() {
   const path = window.location.pathname;
@@ -28,8 +30,12 @@ function App() {
   }
 
   if (path === "/cart") {
-  return <Cart />;
-}
+    return <Cart />;
+  }
+  
+  if (path === "/checkout") {
+    return <Checkout />;
+  }
 
   if (
     path === "/sign-in" ||
