@@ -48,38 +48,38 @@ export default function Account() {
   const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-async function handleRegister(event) {
-  event.preventDefault();
-  setNotice("");
+  async function handleRegister(event) {
+    event.preventDefault();
+    setNotice("");
 
-  const form = event.currentTarget;
-  const formData = new FormData(form);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
 
-  const password = formData.get("password");
-  const confirmPassword = formData.get("confirm-password");
+    const password = formData.get("password");
+    const confirmPassword = formData.get("confirm-password");
 
-  if (password !== confirmPassword) {
-    setNotice("Passwords do not match.");
-    return;
+    if (password !== confirmPassword) {
+      setNotice("Passwords do not match.");
+      return;
+    }
+
+    const userData = {
+      name: formData.get("name").trim(),
+      lastname: formData.get("lastname").trim(),
+      taxId: formData.get("taxId").trim(),
+      homeAddress: formData.get("homeAddress").trim(),
+      email: formData.get("email").trim(),
+      password: password,
+    };
+
+    try {
+      await registerUser(userData);
+      setNotice("Account created successfully! You can now sign in.");
+      form.reset();
+    } catch (error) {
+      setNotice(error.message || "Registration failed. Please try again.");
+    }
   }
-
-  const userData = {
-    name: formData.get("name").trim(),
-    lastname: formData.get("lastname").trim(),
-    taxId: formData.get("taxId").trim(),
-    homeAddress: formData.get("homeAddress").trim(),
-    email: formData.get("email").trim(),
-    password: password,
-  };
-
-  try {
-    await registerUser(userData);
-    setNotice("Account created successfully! You can now sign in.");
-    form.reset();
-  } catch (error) {
-    setNotice(error.message || "Registration failed. Please try again.");
-  }
-}
 
   async function handleLogin(event) {
     event.preventDefault();
@@ -96,9 +96,6 @@ async function handleRegister(event) {
       saveAuthSession(authenticated, remember);
       setSession(authenticated);
 
-      window.history.pushState({}, "", "/profile");
-      setPath("/profile");
-
       if (getGuestCart().length > 0) {
         try {
           const mergeResult = await mergeGuestCartAfterLogin(
@@ -109,85 +106,101 @@ async function handleRegister(event) {
             setNotice("You’re signed in. Some cart quantities were adjusted to match available stock.");
           }
         } catch (error) {
-          setNotice(`You’re signed in, but your guest cart could not be synced: ${error.message}`);
-        }
+          setNotice(
+            `You're signed in, but your guest cart could not be synced: ${error.message}`
+          );
+          return;
+        } 
       }
-    } catch (error) {
-      setNotice(error.message || "Sign in failed. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+    
+      const returnTo =
+      new URLSearchParams(window.location.search).get("returnTo");
+
+    const destination =
+      returnTo === "/checkout" ? "/checkout" : "/profile";
+
+    if (destination === "/checkout") {
+      window.location.assign(destination);
+    } else {
+      window.history.pushState({}, "", destination);
+      setPath(destination);
     }
+  } catch (error) {
+    setNotice(error.message || "Sign in failed. Please try again.");
+  } finally {
+    setIsSubmitting(false);
   }
+}
 
-  function handleLogout(event) {
-    event.preventDefault();
-    clearAuthSession();
-    setSession(null);
-    setNotice("You have been signed out.");
-    window.history.pushState({}, "", "/sign-in");
-    setPath("/sign-in");
-  }
+function handleLogout(event) {
+  event.preventDefault();
+  clearAuthSession();
+  setSession(null);
+  setNotice("You have been signed out.");
+  window.history.pushState({}, "", "/sign-in");
+  setPath("/sign-in");
+}
 
-  function pageContent() {
-    if (path === "/sign-in") {
-      return (
-        <AuthPage
-          mode="sign-in"
-          notice={notice}
-          isSubmitting={isSubmitting}
-          onSubmit={handleLogin}
-          onNotice={setNotice}
-        />
-      );
-    }
-
-    if (path === "/create-account") {
-      return (
-        <AuthPage
-          mode="create-account"
-          notice={notice}
-          onSubmit={handleRegister}
-          onNotice={setNotice}
-        />
-      );
-    }
-
-    if (path === "/wishlist") {
-      return (
-        <AccountShell activePath={path} user={session?.user} onLogout={handleLogout}>
-          <WishlistPage
-            records={wishlist}
-            onRemove={(title) =>
-              setWishlist((records) => records.filter((record) => record.title !== title))
-            }
-          />
-        </AccountShell>
-      );
-    }
-
-    if (path === "/account-settings") {
-      return (
-        <AccountShell activePath={path} user={session?.user} onLogout={handleLogout}>
-          <SettingsPage notice={notice} setNotice={setNotice} />
-        </AccountShell>
-      );
-    }
-
+function pageContent() {
+  if (path === "/sign-in") {
     return (
-      <AccountShell activePath="/profile" user={session?.user} onLogout={handleLogout}>
-        <OverviewPage user={session?.user} notice={notice} />
+      <AuthPage
+        mode="sign-in"
+        notice={notice}
+        isSubmitting={isSubmitting}
+        onSubmit={handleLogin}
+        onNotice={setNotice}
+      />
+    );
+  }
+
+  if (path === "/create-account") {
+    return (
+      <AuthPage
+        mode="create-account"
+        notice={notice}
+        onSubmit={handleRegister}
+        onNotice={setNotice}
+      />
+    );
+  }
+
+  if (path === "/wishlist") {
+    return (
+      <AccountShell activePath={path} user={session?.user} onLogout={handleLogout}>
+        <WishlistPage
+          records={wishlist}
+          onRemove={(title) =>
+            setWishlist((records) => records.filter((record) => record.title !== title))
+          }
+        />
+      </AccountShell>
+    );
+  }
+
+  if (path === "/account-settings") {
+    return (
+      <AccountShell activePath={path} user={session?.user} onLogout={handleLogout}>
+        <SettingsPage notice={notice} setNotice={setNotice} />
       </AccountShell>
     );
   }
 
   return (
-    <div className="vinyl-site account-site">
-      <NavBar />
-      <main>{pageContent()}</main>
-      <Footer />
-    </div>
+    <AccountShell activePath="/profile" user={session?.user} onLogout={handleLogout}>
+      <OverviewPage user={session?.user} notice={notice} />
+    </AccountShell>
   );
 }
+
+return (
+  <div className="vinyl-site account-site">
+    <NavBar />
+    <main>{pageContent()}</main>
+    <Footer />
+  </div>
+);
+  }
 
 function AuthPage({ mode, notice, onSubmit, onNotice, isSubmitting = false }) {
   const isSignIn = mode === "sign-in";
@@ -229,40 +242,40 @@ function AuthPage({ mode, notice, onSubmit, onNotice, isSubmitting = false }) {
           <form onSubmit={handleSubmit}>
             {!isSignIn && (
               <>
-                  <label htmlFor="account-name">First name</label>
-                  <input
-                   id="account-name"
-                   name="name"
-                   autoComplete="given-name"
-                   placeholder="Your first name"
-                   required
-                  />
+                <label htmlFor="account-name">First name</label>
+                <input
+                  id="account-name"
+                  name="name"
+                  autoComplete="given-name"
+                  placeholder="Your first name"
+                  required
+                />
 
                 <label htmlFor="account-lastname">Last name</label>
                 <input
-                 id="account-lastname"
-                 name="lastname"
-                 autoComplete="family-name"
-                 placeholder="Your last name"
-                 required
+                  id="account-lastname"
+                  name="lastname"
+                  autoComplete="family-name"
+                  placeholder="Your last name"
+                  required
                 />
-              
+
                 <label htmlFor="account-tax-id">Tax ID</label>
                 <input
-                id="account-tax-id"
-                name="taxId"
-                type="text"
-                placeholder="Your tax ID"
-                required
+                  id="account-tax-id"
+                  name="taxId"
+                  type="text"
+                  placeholder="Your tax ID"
+                  required
                 />
 
                 <label htmlFor="account-address">Home address</label>
                 <input
-                id="account-address"
-                name="homeAddress"
-                autoComplete="street-address"
-                placeholder="Your home address"
-                required
+                  id="account-address"
+                  name="homeAddress"
+                  autoComplete="street-address"
+                  placeholder="Your home address"
+                  required
                 />
               </>
             )}
