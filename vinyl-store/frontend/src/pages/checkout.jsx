@@ -68,6 +68,22 @@ export default function Checkout() {
             setOrderResult(order);
             setErrors({});
 
+            sessionStorage.setItem(
+                "vinyl-store-last-order",
+                JSON.stringify({
+                    id: order.id,
+                    status: order.status,
+                    totalPrice: order.totalPrice,
+                    deliveryAddress: order.deliveryAddress,
+                    cardLast4: order.cardLast4,
+                    createdAt: order.createdAt,
+                    invoiceNumber: order.invoiceNumber,
+                    items: order.items,
+                })
+            );
+
+            window.location.assign("/invoice");
+
             // Clear sensitive card details after successful checkout.
             setForm((previous) => ({
                 ...previous,

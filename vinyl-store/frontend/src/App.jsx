@@ -7,6 +7,7 @@ import Genres from "./pages/genres.jsx";
 import Account from "./pages/account.jsx";
 import ProductDetail from "./pages/productDetail.jsx";
 import Checkout from "./pages/checkout.jsx";
+import Invoice from "./pages/invoice.jsx";
 
 function App() {
   const path = window.location.pathname;
@@ -46,6 +47,19 @@ function App() {
   ) {
     return <Account />;
   }
+
+  if (path === "/invoice") {
+  const savedOrder = sessionStorage.getItem("vinyl-store-last-order");
+  let order = null;
+
+  try {
+    order = savedOrder ? JSON.parse(savedOrder) : null;
+  } catch {
+    order = null;
+  }
+
+  return <Invoice order={order} />;
+}
 
   return <Home />;
 }
