@@ -12,6 +12,7 @@ import {
 
 import "../styles/home.css";
 import "../styles/cart.css";
+import { getCheckoutDestination } from "../utils/checkoutNavigation.js";
 
 function formatPrice(value) {
     return new Intl.NumberFormat("tr-TR", {
@@ -64,11 +65,11 @@ export default function Cart() {
     }).filter(Boolean);
 
     const missingItems = cart.filter(
-    (item) =>
-    !products.some(
-      (product) => Number(product.id) === item.productId
-    )
-   );
+        (item) =>
+            !products.some(
+                (product) => Number(product.id) === item.productId
+            )
+    );
 
     const subtotal = cartItems.reduce(
         (sum, item) => sum + Number(item.price) * item.cartQuantity,
@@ -93,6 +94,10 @@ export default function Cart() {
         setError("");
     }
 
+    function handleCheckout() {
+  window.location.assign(getCheckoutDestination());
+}
+
 
     return (
         <div className="vinyl-site">
@@ -113,26 +118,26 @@ export default function Cart() {
                 ) : (
                     <div className="cart-layout">
                         <div className="cart-items">
-                            
-{missingItems.map((item) => (
-  <article key={item.productId} className="cart-item">
-    <div className="cart-item-info">
-      <h2>Product unavailable</h2>
-      <p>Product ID: {item.productId}</p>
-      <p>This product could not be found in the current catalog.</p>
-      <p>Saved quantity: {item.quantity}</p>
 
-      <div className="cart-controls">
-        <button
-          type="button"
-          onClick={() => removeItem(item.productId)}
-        >
-          Remove unavailable item
-        </button>
-      </div>
-    </div>
-  </article>
-))}
+                            {missingItems.map((item) => (
+                                <article key={item.productId} className="cart-item">
+                                    <div className="cart-item-info">
+                                        <h2>Product unavailable</h2>
+                                        <p>Product ID: {item.productId}</p>
+                                        <p>This product could not be found in the current catalog.</p>
+                                        <p>Saved quantity: {item.quantity}</p>
+
+                                        <div className="cart-controls">
+                                            <button
+                                                type="button"
+                                                onClick={() => removeItem(item.productId)}
+                                            >
+                                                Remove unavailable item
+                                            </button>
+                                        </div>
+                                    </div>
+                                </article>
+                            ))}
 
                             {cartItems.map((item) => (
                                 <article key={item.id} className="cart-item">
@@ -187,13 +192,31 @@ export default function Cart() {
                             ))}
                         </div>
 
+
                         <aside className="cart-summary">
                             <h2>Order Summary</h2>
+
                             <div className="cart-summary-total">
                                 <span>Subtotal</span>
                                 <strong>{formatPrice(subtotal)}</strong>
                             </div>
+
+                            <button
+                                type="button"
+                                className="cart-checkout-button"
+                                onClick={handleCheckout}
+                                disabled={cartItems.length === 0 || missingItems.length > 0}
+                            >
+                                Proceed to Checkout
+                            </button>
+
+                            {missingItems.length > 0 && (
+                                <p className="cart-checkout-warning">
+                                    Remove unavailable products before checking out.
+                                </p>
+                            )}
                         </aside>
+
                     </div>
                 )}
             </main>
