@@ -3,12 +3,21 @@ import assert from "node:assert/strict";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { act, cleanup, fireEvent, render, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import CatalogRecords, { CatalogCard, CatalogPreviewNotice } from "./catalogRecords.jsx";
 import Shop from "../../pages/shop.jsx";
 import { catalogPreview } from "../../data/catalogPreview.js";
 import { addCatalogProductToCart } from "../../utils/catalogCart.js";
 import { getGuestCart, resetGuestCartForTests } from "../../utils/guestCart.js";
+import { saveAuthSession } from "../../utils/authSession.js";
+import { getLocalWishlistIds } from "../../utils/localWishlist.js";
 
 const product = {
   id: 17,
@@ -23,6 +32,8 @@ const product = {
 afterEach(() => {
   cleanup();
   resetGuestCartForTests();
+  localStorage.clear();
+  sessionStorage.clear();
   vi.unstubAllGlobals();
 });
 
@@ -84,6 +95,50 @@ describe("catalogRecords preview cart blocking", () => {
       /Product is out of stock/,
     );
     assert.deepEqual(getGuestCart(), []);
+  });
+});
+
+describe("catalog wishlist controls", () => {
+  test("heart state follows saved wishlist changes and survives remounting", () => {
+    saveAuthSession({
+      token: "customer-token",
+      user: { id: 8, role: "CUSTOMER" },
+    }, true);
+
+    const cards = React.createElement(
+      React.Fragment,
+      null,
+      React.createElement(CatalogCard, { product }),
+      React.createElement(CatalogCard, { product }),
+    );
+    const { unmount } = render(cards);
+    const hearts = screen.getAllByRole("button", {
+      name: "Add Test Record to wishlist",
+    });
+
+    fireEvent.click(hearts[0]);
+
+    const savedHearts = screen.getAllByRole("button", {
+      name: "Remove Test Record from wishlist",
+    });
+    expect(savedHearts).toHaveLength(2);
+    expect(savedHearts.every((heart) => heart.getAttribute("aria-pressed") === "true"))
+      .toBe(true);
+    expect(getLocalWishlistIds()).toEqual(["17"]);
+
+    unmount();
+    render(cards);
+    expect(screen.getAllByRole("button", {
+      name: "Remove Test Record from wishlist",
+    })).toHaveLength(2);
+
+    fireEvent.click(screen.getAllByRole("button", {
+      name: "Remove Test Record from wishlist",
+    })[0]);
+    expect(getLocalWishlistIds()).toEqual([]);
+    expect(screen.getAllByRole("button", {
+      name: "Add Test Record to wishlist",
+    })).toHaveLength(2);
   });
 });
 
