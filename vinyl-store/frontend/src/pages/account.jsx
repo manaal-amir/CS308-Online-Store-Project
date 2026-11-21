@@ -55,7 +55,7 @@ const recommendedRecords = [
 
 const profileSections = [
   { href: "/profile", label: "Profile overview", icon: "◉" },
-  { href: "/profile#orders", label: "My Orders", icon: "▤" },
+  { href: "/orders", label: "My Orders", icon: "▤" },
   { href: "/wishlist", label: "Wishlist", icon: "♡" },
   {
     href: "/account-settings",
@@ -808,10 +808,11 @@ function OverviewPage({
           <div className="account-panel-heading">
             <div>
               <span className="account-eyebrow">
-                YOUR LATEST ORDER
+                YOUR ORDER HISTORY
               </span>
               <h2>Order history</h2>
             </div>
+            <a href="/orders">View all orders →</a>
           </div>
 
           <p>
