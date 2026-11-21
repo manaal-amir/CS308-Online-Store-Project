@@ -29,7 +29,7 @@ const recommendedRecords = [
 
 const profileSections = [
   { href: "/profile", label: "Profile overview", icon: "◉" },
-  { href: "/profile#orders", label: "My Orders", icon: "▤" },
+  { href: "/orders", label: "My Orders", icon: "▤" },
   { href: "/wishlist", label: "Wishlist", icon: "♡" },
   { href: "/account-settings", label: "Account Settings", icon: "⚙" },
 ];
@@ -376,7 +376,7 @@ function OverviewPage({ user, notice }) {
         <section className="account-panel latest-order" id="orders">
           <div className="account-panel-heading">
             <div><span className="account-eyebrow">YOUR LATEST ORDER</span><h2>Order #VN-2048</h2></div>
-            <a href="/shop?sort=newest">View all orders →</a>
+            <a href="/orders">View all orders →</a>
           </div>
           <p className="order-date">Placed on October 12, 2024 <span className="order-status">Delivered</span></p>
           <div className="order-record">

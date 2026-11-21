@@ -1,0 +1,203 @@
+.orders-page {
+  max-width: 960px;
+  min-height: 640px;
+  margin: 0 auto;
+  padding: 48px 32px 70px;
+  color: var(--vinyl-ink);
+}
+
+.orders-page h1 {
+  margin: 0 0 28px;
+  font-size: 42px;
+  line-height: 1.1;
+}
+
+.orders-state {
+  color: var(--vinyl-muted);
+  font-size: 14px;
+}
+
+.orders-state a {
+  color: var(--vinyl-burgundy);
+  text-decoration: underline;
+}
+
+.order-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--vinyl-border);
+}
+
+.order-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 8px;
+  border-bottom: 1px solid var(--vinyl-border);
+  color: var(--vinyl-ink);
+  font-size: 14px;
+  transition: background 0.15s ease;
+}
+
+.order-row:hover {
+  background: var(--vinyl-surface);
+}
+
+.order-row-id {
+  font-weight: 600;
+}
+
+.order-row-date {
+  color: var(--vinyl-muted);
+}
+
+.order-row-total {
+  text-align: right;
+  font-weight: 600;
+}
+
+.order-status {
+  display: inline-block;
+  width: fit-content;
+  padding: 3px 10px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.order-status-processing {
+  color: #8a5a1f;
+}
+
+.order-status-in-transit {
+  color: var(--vinyl-brown);
+}
+
+.order-status-delivered {
+  color: #3f6b3a;
+}
+
+.order-status-cancelled {
+  color: var(--vinyl-burgundy);
+}
+
+@media (max-width: 700px) {
+  .orders-page {
+    padding: 32px 16px 55px;
+  }
+
+  .order-row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .order-row-total {
+    text-align: left;
+  }
+}
+
+.orders-back {
+  display: inline-block;
+  margin-bottom: 24px;
+  color: var(--vinyl-muted);
+  font-size: 12px;
+}
+
+.orders-back:hover {
+  color: var(--vinyl-ink);
+}
+
+.order-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.order-detail-header h1 {
+  margin-bottom: 4px;
+}
+
+.order-detail-date {
+  margin: 0;
+  color: var(--vinyl-muted);
+  font-size: 13px;
+}
+
+.order-items {
+  margin: 0 0 28px;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--vinyl-border);
+}
+
+.order-item {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 8px;
+  border-bottom: 1px solid var(--vinyl-border);
+  font-size: 14px;
+}
+
+.order-item-name {
+  color: var(--vinyl-ink);
+  font-weight: 600;
+}
+
+.order-item-name:hover {
+  color: var(--vinyl-burgundy);
+  text-decoration: underline;
+}
+
+.order-item-artist,
+.order-item-qty {
+  color: var(--vinyl-muted);
+}
+
+.order-item-total {
+  text-align: right;
+  font-weight: 600;
+}
+
+.order-summary {
+  max-width: 420px;
+  margin: 0 0 0 auto;
+}
+
+.order-summary > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 8px 0;
+  font-size: 14px;
+}
+
+.order-summary dt {
+  color: var(--vinyl-muted);
+}
+
+.order-summary dd {
+  margin: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.order-summary-total {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+@media (max-width: 700px) {
+  .order-item {
+    grid-template-columns: 1fr auto;
+  }
+
+  .order-summary {
+    max-width: none;
+  }
+}
