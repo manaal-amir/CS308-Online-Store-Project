@@ -24,9 +24,11 @@ async function requestCart(path, token, { method = "GET", body, signal } = {}) {
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(
+    const error = new Error(
       data?.error || data?.message || `Cart request failed (${response.status})`,
     );
+    error.status = response.status;
+    throw error;
   }
 
   return data;
