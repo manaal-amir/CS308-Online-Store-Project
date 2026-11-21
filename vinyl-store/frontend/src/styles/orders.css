@@ -201,3 +201,64 @@
     max-width: none;
   }
 }
+
+.order-cancel {
+  margin: 0 0 24px;
+}
+
+.order-cancel-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.order-cancel-confirm p {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--vinyl-ink);
+  font-size: 14px;
+}
+
+.order-cancel-button,
+.order-keep-button {
+  padding: 10px 20px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.order-cancel-button {
+  background: var(--vinyl-burgundy);
+  color: var(--vinyl-cream);
+}
+
+.order-cancel-button:hover:not(:disabled) {
+  background: #5c0919;
+}
+
+.order-keep-button {
+  border: 1px solid var(--vinyl-border);
+  background: transparent;
+  color: var(--vinyl-ink);
+}
+
+.order-cancel-button:disabled,
+.order-keep-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.order-cancel-error {
+  margin: 12px 0 0;
+  color: var(--vinyl-burgundy);
+  font-size: 13px;
+}
+
+.order-refund-notice {
+  margin: 0 0 24px;
+  padding: 12px 16px;
+  border: 1px solid var(--vinyl-border);
+  background: var(--vinyl-surface);
+  color: var(--vinyl-ink);
+  font-size: 14px;
+}

@@ -39,6 +39,14 @@ export function getOrder(token, orderId, signal) {
   return requestOrders(`/${encodeURIComponent(orderId)}`, token, { signal });
 }
 
+// POST /api/orders/:id/cancel: only works while the order is processing,
+// otherwise the API answers 409 with a message. Returns { status, refundedAmount, ... }.
+export function cancelOrder(token, orderId) {
+  return requestOrders(`/${encodeURIComponent(orderId)}/cancel`, token, {
+    method: "POST",
+  });
+}
+
 // GET /api/orders: the signed-in customer's orders, newest first.
 export function getOrders(token, signal) {
   return requestOrders("", token, { signal });
