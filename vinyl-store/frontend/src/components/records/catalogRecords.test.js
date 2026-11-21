@@ -72,6 +72,55 @@ describe("catalogRecords preview cart blocking", () => {
     assert.deepEqual(getGuestCart(), [{ productId: 17, quantity: 1 }]);
   });
 
+  test("signed-in catalog additions use the account cart and report its returned quantity", async () => {
+    saveAuthSession({
+      token: "customer-token",
+      user: { id: 8, role: "CUSTOMER" },
+    });
+    const cartItem = {
+      productId: product.id,
+      name: product.name,
+      artist: "Test Artist",
+      imageUrl: null,
+      price: product.price,
+      quantity: 1,
+      stock: product.quantity,
+      lineTotal: product.price,
+    };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ items: [], itemCount: 0, total: 0 }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ items: [cartItem], itemCount: 1, total: product.price }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ items: [cartItem], itemCount: 1, total: product.price }),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+    const onCartAdded = vi.fn();
+    render(React.createElement(CatalogCard, { product, onCartAdded }));
+
+    const addButton = await screen.findByRole("button", { name: "Add to Cart" });
+    await waitFor(() => expect(addButton.disabled).toBe(false));
+    fireEvent.click(addButton);
+
+    await waitFor(() => expect(onCartAdded).toHaveBeenCalledWith(cartItem));
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      "/api/cart",
+      "/api/cart/items",
+      "/api/cart",
+      "/api/cart",
+    ]);
+    expect(getGuestCart()).toEqual([]);
+  });
+
   test("catalog add button disables when the product stock is already in the cart", () => {
     localStorage.clear();
     resetGuestCartForTests();

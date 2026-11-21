@@ -8,7 +8,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import Account from "./account.jsx";
-import { addToGuestCart, resetGuestCartForTests } from "../utils/guestCart.js";
+import { addToGuestCart, getGuestCart, resetGuestCartForTests } from "../utils/guestCart.js";
 import { getAuthSession, saveAuthSession } from "../utils/authSession.js";
 import { toggleLocalWishlist } from "../utils/localWishlist.js";
 import { formatPrice } from "../utils/productFormat.js";
@@ -119,6 +119,7 @@ describe("account sign-in", () => {
         body: JSON.stringify({ items: [{ productId: 3, quantity: 2 }] }),
       },
     ]);
+    expect(getGuestCart()).toEqual([]);
   });
 
   test("logout clears the stored authentication session", async () => {

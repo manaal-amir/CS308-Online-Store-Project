@@ -253,6 +253,10 @@ export function mergeGuestCartAfterLogin(token, apiBaseUrl = '') {
   return mergeInProgress;
 }
 
+export function waitForGuestCartMerge() {
+  return mergeInProgress || Promise.resolve(null);
+}
+
 //only for tests: resets the memory copy and flags so every test starts fresh
 export function resetGuestCartForTests() {
   memoryCart = [];

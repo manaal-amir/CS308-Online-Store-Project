@@ -1,56 +1,44 @@
+
 import { useEffect, useState } from "react";
-import {
-  getGuestCartCount,
-  subscribeToGuestCart,
-} from "../../utils/guestCart.js";
+import useCart from "../../hooks/useCart.js";
 
 export default function NavBar() {
-  const [cartCount, setCartCount] = useState(getGuestCartCount);
-  const [open, setOpen] = useState(false);
- 
-  const [query, setQuery] = useState(() =>
-    new URLSearchParams(window.location.search).get("search") || "",
+  const { items: cartItems } = useCart();
+
+  const cartCount = cartItems.reduce(
+    (total, item) => total + Number(item.quantity || 0),
+    0
   );
 
-  //const [searchOpen, setSearchOpen] = useState(false);
-  //const searchInput = useRef(null);
+  const [open, setOpen] = useState(false);
 
+  const [query, setQuery] = useState(() =>
+    new URLSearchParams(window.location.search).get("search") || ""
+  );
 
   useEffect(() => {
+    function handleSearchCleared() {
+      setQuery("");
+    }
 
-    return subscribeToGuestCart(() => {
-      setCartCount(getGuestCartCount());
-    });
-  }, []);
-
-  //useEffect(() => {
-    //if (searchOpen) searchInput.current?.focus();
-  //}, [searchOpen]);
-
-  
-useEffect(() => {
-  function handleSearchCleared() {
-    setQuery("");
-  }
-
-  window.addEventListener(
-    "catalog:search-cleared",
-    handleSearchCleared
-  );
-
-  return () => {
-    window.removeEventListener(
+    window.addEventListener(
       "catalog:search-cleared",
       handleSearchCleared
     );
-  };
-}, []);
 
-
+    return () => {
+      window.removeEventListener(
+        "catalog:search-cleared",
+        handleSearchCleared
+      );
+    };
+  }, []);
 
   function submitSearch(event) {
     event.preventDefault();
+
     const search = query.trim();
+
     window.location.href = search
       ? `/shop?search=${encodeURIComponent(search)}`
       : "/shop";
@@ -79,8 +67,15 @@ useEffect(() => {
         <a href="/#newsletter">Magazine</a>
       </nav>
 
-      <form className="nav-search-form" role="search" onSubmit={submitSearch}>
-        <label className="sr-only" htmlFor="site-record-search">Search records</label>
+      <form
+        className="nav-search-form"
+        role="search"
+        onSubmit={submitSearch}
+      >
+        <label className="sr-only" htmlFor="site-record-search">
+          Search records
+        </label>
+
         <input
           id="site-record-search"
           type="search"
@@ -88,6 +83,7 @@ useEffect(() => {
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search records..."
         />
+
         <button type="submit" aria-label="Submit search">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="10.8" cy="10.8" r="6.5" />
@@ -104,25 +100,23 @@ useEffect(() => {
           </svg>
         </a>
 
-        
-<a
-  href="/cart"
-  className="nav-cart-link"
-  aria-label={`Shopping cart, ${cartCount} items`}
->
-  <svg viewBox="0 0 24 24">
-    <path d="M3 4h2l2.2 11h11.5l2-8H6" />
-    <circle cx="9" cy="20" r="1" />
-    <circle cx="18" cy="20" r="1" />
-  </svg>
+        <a
+          href="/cart"
+          className="nav-cart-link"
+          aria-label={`Shopping cart, ${cartCount} items`}
+        >
+          <svg viewBox="0 0 24 24">
+            <path d="M3 4h2l2.2 11h11.5l2-8H6" />
+            <circle cx="9" cy="20" r="1" />
+            <circle cx="18" cy="20" r="1" />
+          </svg>
 
-  {cartCount > 0 && (
-    <span className="cart-count-badge" aria-hidden="true">
-      {cartCount}
-    </span>
-  )}
-</a>
-
+          {cartCount > 0 && (
+            <span className="cart-count-badge" aria-hidden="true">
+              {cartCount}
+            </span>
+          )}
+        </a>
       </div>
     </header>
   );
