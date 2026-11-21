@@ -2,7 +2,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { getCatalogProducts } from "../../services/api.js";
 import { addCatalogProductToCart } from "../../utils/catalogCart.js";
+import { getAuthSession } from "../../utils/authSession.js";
 import { getGuestCart, subscribeToGuestCart } from "../../utils/guestCart.js";
+import {
+  isInLocalWishlist,
+  subscribeToLocalWishlist,
+  toggleLocalWishlist,
+} from "../../utils/localWishlist.js";
 import CartIcon from "../icons/cartIcon.jsx";
 import CartToast from "../feedback/cartToast.jsx";
 import useCartToast from "../../hooks/useCartToast.js";
@@ -172,11 +178,16 @@ export function CatalogPreviewNotice() {
 }
 
 export function CatalogCard({ product, isPreview = false, onCartAdded }) {
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(() => isInLocalWishlist(product.id));
   const [cartError, setCartError] = useState("");
+  const [wishlistError, setWishlistError] = useState("");
   const [cart, setCart] = useState(getGuestCart);
 
   useEffect(() => subscribeToGuestCart(setCart), []);
+
+  useEffect(() => subscribeToLocalWishlist((ids) => {
+    setSaved(ids.includes(String(product.id)));
+  }), [product.id]);
 
   function handleAddToCart() {
     try {
@@ -185,6 +196,21 @@ export function CatalogCard({ product, isPreview = false, onCartAdded }) {
       onCartAdded?.(product.name);
     } catch (error) {
       setCartError(error.message);
+    }
+  }
+
+  function handleToggleWishlist() {
+    const session = getAuthSession();
+    if (!session?.token || session.user?.id == null) {
+      window.location.href = "/sign-in";
+      return;
+    }
+
+    try {
+      toggleLocalWishlist(product.id);
+      setWishlistError("");
+    } catch (error) {
+      setWishlistError(error.message);
     }
   }
 
@@ -217,7 +243,7 @@ export function CatalogCard({ product, isPreview = false, onCartAdded }) {
           className={`save-record${saved ? " is-saved" : ""}`}
           aria-label={saved ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
           aria-pressed={saved}
-          onClick={() => setSaved((value) => !value)}
+          onClick={handleToggleWishlist}
         >
           {saved ? "♥" : "♡"}
         </button>
@@ -253,6 +279,10 @@ export function CatalogCard({ product, isPreview = false, onCartAdded }) {
 
       {cartError && (
        <p role="alert">{cartError}</p>
+      )}
+
+      {wishlistError && (
+        <p role="alert">{wishlistError}</p>
       )}
 
     </article>
