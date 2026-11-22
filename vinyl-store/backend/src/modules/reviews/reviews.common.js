@@ -26,4 +26,19 @@ async function hasDeliveredOrder(db, userId, productId) {
   return order !== null;
 }
 
-module.exports = { httpError, ensureProductExists, hasDeliveredOrder };
+//average stars and number of ratings of one record, average rounded to 1 decimal (e.g. 4.3)
+//a record with no ratings yet has averageRating null, so the frontend can show "no ratings"
+async function getRatingSummary(db, productId) {
+  const result = await db.rating.aggregate({
+    where: { productId },
+    _avg: { value: true },
+    _count: { _all: true },
+  });
+  const average = result._avg.value;
+  return {
+    averageRating: average === null ? null : Math.round(average * 10) / 10,
+    ratingCount: result._count._all,
+  };
+}
+
+module.exports = { httpError, ensureProductExists, hasDeliveredOrder, getRatingSummary };
