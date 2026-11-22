@@ -30,6 +30,14 @@ import heroImage from "../assets/hero/hero.png";
 import "../styles/home.css";
 import "../styles/account.css";
 
+//only allow known pages as returnTo, so the link can't send users to another site
+const ALLOWED_RETURN_PATHS = ["/checkout"];
+
+function getSafeReturnTo() {
+  const returnTo = new URLSearchParams(window.location.search).get("returnTo");
+  return ALLOWED_RETURN_PATHS.includes(returnTo) ? returnTo : null;
+}
+
 // These recommendations are unchanged from your original UI.
 // They are separate from the user's saved wishlist.
 const recommendedRecords = [
@@ -242,9 +250,7 @@ export default function Account() {
       saveAuthSession(authenticated, remember);
       setSession(authenticated);
 
-      window.history.pushState({}, "", "/profile");
-      setPath("/profile");
-
+      //merge the guest cart first, so checkout sees the merged items
       if (getGuestCart().length > 0) {
         try {
           const result = await mergeGuestCartAfterLogin(
@@ -263,6 +269,15 @@ export default function Account() {
           );
         }
       }
+
+      //guests sent here from checkout go back to it, everyone else goes to the profile
+      if (getSafeReturnTo() === "/checkout") {
+        window.location.assign("/checkout");
+        return;
+      }
+
+      window.history.pushState({}, "", "/profile");
+      setPath("/profile");
     } catch (error) {
       setNotice(
         error.message ||

@@ -4,6 +4,7 @@ import NavBar from "../components/layout/navBar.jsx";
 import Footer from "../components/layout/footer.jsx";
 import { getCatalogProducts } from "../services/api.js";
 import useCart from "../hooks/useCart.js";
+import { getCheckoutDestination } from "../utils/checkoutNavigation.js";
 
 import "../styles/home.css";
 import "../styles/cart.css";
@@ -94,6 +95,11 @@ export default function Cart() {
         } catch (err) {
             setProductError(err.message);
         }
+    }
+
+    //guests go to sign-in first and come back to checkout afterwards
+    function handleCheckout() {
+        window.location.assign(getCheckoutDestination());
     }
 
     const error = cartError || productError;
@@ -200,6 +206,19 @@ export default function Cart() {
                                 <span>Subtotal</span>
                                 <strong>{formatPrice(subtotal)}</strong>
                             </div>
+                            <button
+                                type="button"
+                                className="cart-checkout-button"
+                                onClick={handleCheckout}
+                                disabled={cartItems.length === 0 || missingItems.length > 0}
+                            >
+                                Proceed to Checkout
+                            </button>
+                            {missingItems.length > 0 && (
+                                <p className="cart-checkout-warning">
+                                    Remove unavailable products before checking out.
+                                </p>
+                            )}
                         </aside>
                     </div>
                 )}

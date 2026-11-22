@@ -21,6 +21,7 @@ const product = {
 afterEach(() => {
   cleanup();
   localStorage.clear();
+  sessionStorage.clear();
   resetGuestCartForTests();
   vi.unstubAllGlobals();
 });
@@ -181,5 +182,58 @@ describe("cart stock controls", () => {
       "/api/cart",
     ]);
     expect(getGuestCart()).toEqual([]);
+  });
+});
+
+describe("proceed to checkout", () => {
+  function stubLocationAssign() {
+    const assign = vi.fn();
+    vi.stubGlobal("location", { ...window.location, assign });
+    return assign;
+  }
+
+  test("a guest is sent to sign-in with checkout as the return page", async () => {
+    addToGuestCart(product.id, 1, product.quantity);
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => [product],
+    }));
+    const assign = stubLocationAssign();
+
+    render(<Cart />);
+
+    const button = await screen.findByRole("button", { name: "Proceed to Checkout" });
+    await waitFor(() => expect(button.disabled).toBe(false));
+    fireEvent.click(button);
+    expect(assign).toHaveBeenCalledWith("/sign-in?returnTo=%2Fcheckout");
+  });
+
+  test("a signed-in customer with items in the account cart goes straight to checkout", async () => {
+    saveAuthSession({ token: "customer-token", user: { id: 8, role: "CUSTOMER" } });
+    const accountItem = {
+      productId: 17,
+      name: "Account Record",
+      artist: "Account Artist",
+      imageUrl: null,
+      price: 100,
+      quantity: 1,
+      stock: 3,
+      lineTotal: 100,
+    };
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ items: [accountItem], itemCount: 1, total: 100 }),
+    })));
+    const assign = stubLocationAssign();
+
+    render(<Cart />);
+
+    await screen.findByRole("heading", { name: "Account Record" });
+    const button = screen.getByRole("button", { name: "Proceed to Checkout" });
+    expect(button.disabled).toBe(false);
+    fireEvent.click(button);
+    expect(assign).toHaveBeenCalledWith("/checkout");
   });
 });
