@@ -31,11 +31,11 @@ import "../styles/home.css";
 import "../styles/account.css";
 
 //only allow known pages as returnTo, so the link can't send users to another site
-const ALLOWED_RETURN_PATHS = ["/checkout"];
+const ALLOWED_RETURN_PATHS = [/^\/checkout$/, /^\/invoice\/\d+$/];
 
 function getSafeReturnTo() {
-  const returnTo = new URLSearchParams(window.location.search).get("returnTo");
-  return ALLOWED_RETURN_PATHS.includes(returnTo) ? returnTo : null;
+  const returnTo = new URLSearchParams(window.location.search).get("returnTo") || "";
+  return ALLOWED_RETURN_PATHS.some((pattern) => pattern.test(returnTo)) ? returnTo : null;
 }
 
 // These recommendations are unchanged from your original UI.
@@ -270,9 +270,10 @@ export default function Account() {
         }
       }
 
-      //guests sent here from checkout go back to it, everyone else goes to the profile
-      if (getSafeReturnTo() === "/checkout") {
-        window.location.assign("/checkout");
+      //guests sent here from checkout or an invoice go back to it, everyone else goes to the profile
+      const returnTo = getSafeReturnTo();
+      if (returnTo) {
+        window.location.assign(returnTo);
         return;
       }
 

@@ -132,21 +132,8 @@ export default function Checkout() {
             //the server emptied the cart, so refresh the navbar count
             notifyAuthenticatedCartChanged();
 
-            sessionStorage.setItem(
-                "vinyl-store-last-order",
-                JSON.stringify({
-                    id: order.id,
-                    status: order.status,
-                    totalPrice: order.totalPrice,
-                    deliveryAddress: order.deliveryAddress,
-                    cardLast4: order.cardLast4,
-                    createdAt: order.createdAt,
-                    invoiceNumber: order.invoiceNumber,
-                    items: order.items,
-                })
-            );
-
-            window.location.assign("/invoice");
+            //the invoice page loads the invoice from the API by order id
+            window.location.assign(`/invoice/${order.id}`);
 
             // Clear sensitive card details after successful checkout.
             setForm((previous) => ({

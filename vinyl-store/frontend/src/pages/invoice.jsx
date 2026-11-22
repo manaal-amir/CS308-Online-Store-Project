@@ -1,156 +1,171 @@
-
+import { useEffect, useState } from "react";
 import NavBar from "../components/layout/navBar.jsx";
 import Footer from "../components/layout/footer.jsx";
+import { getInvoice } from "../services/invoicesApi.js";
+import { getOrder } from "../services/ordersApi.js";
+import { clearAuthSession, getAuthSession } from "../utils/authSession.js";
+import { statusLabel } from "../utils/orderStatus.js";
+import { formatPrice } from "../utils/productFormat.js";
 
 import "../styles/home.css";
 import "../styles/invoice.css";
-
-function formatPrice(value) {
-  return new Intl.NumberFormat("tr-TR", {
-    style: "currency",
-    currency: "TRY",
-    maximumFractionDigits: 2,
-  }).format(Number(value));
-}
 
 function InvoiceLayout({ children }) {
   return (
     <div className="vinyl-site">
       <NavBar />
-      {children}
+      <main className="invoice-page">
+        <div className="invoice-container">
+          <p className="invoice-label">VINYL STORE</p>
+          <h1>Order Confirmation</h1>
+          {children}
+        </div>
+      </main>
       <Footer />
     </div>
   );
 }
 
-export default function Invoice({ order }) {
-  if (!order) {
-    return (
-      <InvoiceLayout>
-        <main className="invoice-page">
-          <div className="invoice-container">
-            <p className="invoice-label">VINYL STORE</p>
-            <h1>Order Confirmation</h1>
+function InvoiceMessage({ title, text, role = "status" }) {
+  return (
+    <section className="invoice-card" role={role}>
+      <h2>{title}</h2>
+      {text && <p>{text}</p>}
+      <a href="/orders" className="invoice-shop-button">
+        View my orders
+      </a>
+    </section>
+  );
+}
 
-            <section className="invoice-card">
-              <h2>No order information is available.</h2>
+export function InvoiceDetails({ invoice, order }) {
+  return (
+    <>
+      <p className="invoice-subtitle">
+        Thank you! Your order has been placed successfully.
+      </p>
+
+      <section className="invoice-card">
+        <h2>Order Details</h2>
+
+        <div className="invoice-detail">
+          <span>Order Number</span>
+          <strong>#{order.id}</strong>
+        </div>
+
+        <div className="invoice-detail">
+          <span>Invoice Number</span>
+          <strong>{invoice.invoiceNumber}</strong>
+        </div>
+
+        <div className="invoice-detail">
+          <span>Status</span>
+          <strong>{statusLabel(order.status)}</strong>
+        </div>
+
+        <div className="invoice-detail">
+          <span>Order Date</span>
+          <strong>{new Date(order.createdAt).toLocaleDateString("tr-TR")}</strong>
+        </div>
+      </section>
+
+      <section className="invoice-card">
+        <h2>Purchased Records</h2>
+
+        {invoice.items.map((item, index) => (
+          <div className="invoice-item" key={`${item.productName}-${index}`}>
+            <div>
+              <strong>{item.productName}</strong>
               <p>
-                Your order details will appear here after
-                a successful checkout.
+                {item.quantity} × {formatPrice(item.unitPrice)}
               </p>
+            </div>
 
-              <a href="/shop" className="invoice-shop-button">
-                Continue Shopping
-              </a>
-            </section>
+            <strong>{formatPrice(item.lineTotal)}</strong>
           </div>
-        </main>
-      </InvoiceLayout>
-    );
-  }
+        ))}
+
+        <div className="invoice-total">
+          <span>Total Paid</span>
+          <strong>{formatPrice(invoice.totalAmount)}</strong>
+        </div>
+      </section>
+
+      <section className="invoice-card">
+        <h2>Delivery & Payment</h2>
+
+        <div className="invoice-detail">
+          <span>Delivery Address</span>
+          <strong>{invoice.deliveryAddress}</strong>
+        </div>
+
+        {order.cardLast4 && (
+          <div className="invoice-detail">
+            <span>Payment Method</span>
+            <strong>Card ending in {order.cardLast4}</strong>
+          </div>
+        )}
+      </section>
+
+      <a href="/shop" className="invoice-shop-button">
+        Continue Shopping
+      </a>
+    </>
+  );
+}
+
+//loads the invoice and the order from the API, so the page also works after a refresh or later on
+export default function Invoice({ orderId }) {
+  const [state, setState] = useState({ status: "loading" });
+
+  useEffect(() => {
+    const session = getAuthSession();
+    const returnTo = encodeURIComponent(`/invoice/${orderId}`);
+
+    if (!session?.token) {
+      window.location.replace(`/sign-in?returnTo=${returnTo}`);
+      return undefined;
+    }
+
+    const controller = new AbortController();
+
+    Promise.all([
+      getInvoice(session.token, orderId, controller.signal),
+      getOrder(session.token, orderId, controller.signal),
+    ])
+      .then(([invoice, order]) => setState({ status: "ready", invoice, order }))
+      .catch((error) => {
+        if (error.name === "AbortError") return;
+
+        //an expired login gets a 401, so sign in again and come back here
+        if (error.status === 401) {
+          clearAuthSession();
+          window.location.replace(`/sign-in?returnTo=${returnTo}`);
+          return;
+        }
+
+        setState({
+          status: error.status === 404 ? "missing" : "error",
+          message: error.message,
+        });
+      });
+
+    return () => controller.abort();
+  }, [orderId]);
 
   return (
     <InvoiceLayout>
-      <main className="invoice-page">
-        <div className="invoice-container">
-          <p className="invoice-label">VINYL STORE</p>
-
-          <h1>Order Confirmation</h1>
-
-          <p className="invoice-subtitle">
-            Thank you! Your order has been placed successfully.
-          </p>
-
-          <section className="invoice-card">
-            <h2>Order Details</h2>
-
-            <div className="invoice-detail">
-              <span>Order Number</span>
-              <strong>#{order.id}</strong>
-            </div>
-
-            <div className="invoice-detail">
-              <span>Invoice Number</span>
-              <strong>
-                {order.invoiceNumber || "Not yet available"}
-              </strong>
-            </div>
-
-            <div className="invoice-detail">
-              <span>Status</span>
-              <strong>{order.status || "Not available"}</strong>
-            </div>
-
-            <div className="invoice-detail">
-              <span>Order Date</span>
-              <strong>
-                {order.createdAt
-                  ? new Date(order.createdAt).toLocaleDateString("tr-TR")
-                  : "Not available"}
-              </strong>
-            </div>
-          </section>
-
-          <section className="invoice-card">
-            <h2>Purchased Records</h2>
-
-            {Array.isArray(order.items) && order.items.length > 0 ? (
-              order.items.map((item, index) => (
-                <div
-                  className="invoice-item"
-                  key={`${item.productId}-${index}`}
-                >
-                  <div>
-                    <strong>{item.name}</strong>
-                    <p>
-                      {item.quantity} × {formatPrice(item.unitPrice)}
-                    </p>
-                  </div>
-
-                  <strong>
-                    {formatPrice(item.lineTotal)}
-                  </strong>
-                </div>
-              ))
-            ) : (
-              <p>No product details are available.</p>
-            )}
-
-            <div className="invoice-total">
-              <span>Total Paid</span>
-              <strong>
-                {order.totalPrice != null
-                  ? formatPrice(order.totalPrice)
-                  : "Not available"}
-              </strong>
-            </div>
-          </section>
-
-          <section className="invoice-card">
-            <h2>Delivery & Payment</h2>
-
-            <div className="invoice-detail">
-              <span>Delivery Address</span>
-              <strong>
-                {order.deliveryAddress || "Not available"}
-              </strong>
-            </div>
-
-            <div className="invoice-detail">
-              <span>Payment Method</span>
-              <strong>
-                {order.cardLast4
-                  ? `Card ending in ${order.cardLast4}`
-                  : "Not available"}
-              </strong>
-            </div>
-          </section>
-
-          <a href="/shop" className="invoice-shop-button">
-            Continue Shopping
-          </a>
-        </div>
-      </main>
+      {state.status === "loading" && <p role="status">Loading your invoice…</p>}
+      {state.status === "missing" && (
+        <InvoiceMessage
+          title="Invoice not found."
+          text="This order does not exist or does not belong to your account."
+        />
+      )}
+      {state.status === "error" && (
+        <InvoiceMessage title="We could not load your invoice." text={state.message} role="alert" />
+      )}
+      {state.status === "ready" && <InvoiceDetails invoice={state.invoice} order={state.order} />}
     </InvoiceLayout>
   );
 }

@@ -53,6 +53,11 @@ function App() {
     return <Checkout />;
   }
 
+  const invoiceMatch = path.match(/^\/invoice\/(\d+)\/?$/);
+  if (invoiceMatch) {
+    return <Invoice orderId={invoiceMatch[1]} />;
+  }
+
   if (
     path === "/sign-in" ||
     path === "/create-account" ||
@@ -62,19 +67,6 @@ function App() {
   ) {
     return <Account />;
   }
-
-  if (path === "/invoice") {
-  const savedOrder = sessionStorage.getItem("vinyl-store-last-order");
-  let order = null;
-
-  try {
-    order = savedOrder ? JSON.parse(savedOrder) : null;
-  } catch {
-    order = null;
-  }
-
-  return <Invoice order={order} />;
-}
 
   return <Home />;
 }
