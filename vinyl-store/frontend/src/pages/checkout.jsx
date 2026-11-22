@@ -1,10 +1,17 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "../styles/checkout.css";
 import { validateCheckout } from "../utils/checkoutValidation.js";
 import { createOrder } from "../services/api.js";
-import { getAuthSession } from "../utils/authSession.js";
+import { getAuthSession, clearAuthSession, } from "../utils/authSession.js";
+import { getAuthenticatedCart } from "../services/cartApi.js";
 
+function formatPrice(value) {
+    return new Intl.NumberFormat("tr-TR", {
+        style: "currency",
+        currency: "TRY",
+    }).format(Number(value));
+}
 
 export default function Checkout() {
     const [form, setForm] = useState({
@@ -20,6 +27,59 @@ export default function Checkout() {
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [orderResult, setOrderResult] = useState(null);
+    const [cart, setCart] = useState(null);
+    const [cartLoading, setCartLoading] = useState(true);
+    const [cartError, setCartError] = useState("");
+
+    useEffect(() => {
+        const session = getAuthSession();
+
+        function redirectToSignIn() {
+            window.location.replace("/sign-in?returnTo=%2Fcheckout");
+        }
+
+        // Guests must sign in before opening checkout.
+        if (!session?.token) {
+            redirectToSignIn();
+            return;
+        }
+
+        const controller = new AbortController();
+
+        getAuthenticatedCart(session.token, controller.signal)
+            .then((data) => {
+                if (!Array.isArray(data?.items)) {
+                    throw new Error("Invalid cart response.");
+                }
+
+                setCart(data);
+                setCartError("");
+            })
+            .catch((error) => {
+                if (controller.signal.aborted || error.name === "AbortError") {
+                    return;
+                }
+
+                // An expired or invalid token receives HTTP 401.
+                if (error.status === 401) {
+                    clearAuthSession();
+                    redirectToSignIn();
+                    return;
+                }
+
+                setCartError(
+                    error.message || "Could not load your cart."
+                );
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) {
+                    setCartLoading(false);
+                }
+            });
+
+        return () => controller.abort();
+    }, []);
+
 
     function handleChange(event) {
         const { name, value } = event.target;
@@ -33,8 +93,13 @@ export default function Checkout() {
     async function handleSubmit(event) {
         event.preventDefault();
 
-        if (isSubmitting || orderResult) return;
-
+        if (
+            isSubmitting ||
+            orderResult ||
+            cartLoading ||
+            cartError ||
+            !cart?.items?.length
+        ) return;
         const validationErrors = validateCheckout(form);
         setErrors(validationErrors);
 
@@ -75,13 +140,21 @@ export default function Checkout() {
                 cvv: "",
             }));
         } catch (error) {
+            if (error.status === 401) {
+                clearAuthSession();
+                window.location.replace("/sign-in?returnTo=%2Fcheckout");
+                return;
+            }
+
             setErrors({
                 submit: error.message || "Checkout failed. Please try again.",
             });
-        } finally {
+        }finally {
             setIsSubmitting(false);
         }
     }
+
+
 
 
     return (
@@ -223,10 +296,39 @@ export default function Checkout() {
                         <h2>Order Summary</h2>
                         <p>Your selected records.</p>
 
-                        <div className="checkout-summary-placeholder">
-                            Order items and totals will appear here
-                            after cart integration.
-                        </div>
+                        {cartLoading ? (
+                            <p>Loading your order...</p>
+                        ) : cartError ? (
+                            <p className="checkout-error" role="alert">
+                                {cartError}
+                            </p>
+                        ) : !cart?.items?.length ? (
+                            <p>Your cart is empty.</p>
+                        ) : (
+                            <div className="checkout-summary-items">
+                                {cart.items.map((item) => (
+                                    <div
+                                        className="checkout-summary-line"
+                                        key={item.productId}
+                                    >
+                                        <div>
+                                            <strong>{item.name}</strong>
+                                            <span>
+                                                {item.quantity} × {formatPrice(item.price)}
+                                            </span>
+                                        </div>
+
+                                        <strong>{formatPrice(item.lineTotal)}</strong>
+                                    </div>
+                                ))}
+
+                                <div className="checkout-summary-total">
+                                    <span>Total</span>
+                                    <strong>{formatPrice(cart.total)}</strong>
+                                </div>
+                            </div>
+                        )}
+
 
                         {errors.submit && (
                             <p className="checkout-error" role="alert">
@@ -252,7 +354,13 @@ export default function Checkout() {
                         <button
                             className="checkout-submit"
                             type="submit"
-                            disabled={isSubmitting || Boolean(orderResult)}
+                            disabled={
+                                isSubmitting ||
+                                Boolean(orderResult) ||
+                                cartLoading ||
+                                Boolean(cartError) ||
+                                !cart?.items?.length
+                            }
                         >
                             {isSubmitting
                                 ? "Processing..."

@@ -24,8 +24,8 @@ export async function getProducts(signal, sort) {
   const products = Array.isArray(payload)
     ? payload
     : payload.products ??
-      payload.data?.products ??
-      payload.data;
+    payload.data?.products ??
+    payload.data;
 
   if (!Array.isArray(products)) {
     throw new Error("Unexpected products API response");
@@ -169,19 +169,23 @@ export async function createOrder(orderData, token) {
       409: "Some items are no longer available in the requested quantity.",
     };
 
-    throw new Error(
+
+    const message =
       data?.error?.message ||
       (typeof data?.error === "string" ? data.error : null) ||
       data?.message ||
       fallbackMessages[response.status] ||
-      "Checkout failed. Please try again."
-    );
-  }
+      "Checkout failed. Please try again.";
 
-  if (!data) {
-    throw new Error("The server returned an invalid checkout response.");
-  }
+    const error = new Error(message);
+    error.status = response.status;
+    throw error;
 
-  return data;
+
+    if (!data) {
+      throw new Error("The server returned an invalid checkout response.");
+    }
+
+    return data;
+  }
 }
-
