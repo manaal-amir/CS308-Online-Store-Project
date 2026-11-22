@@ -132,6 +132,9 @@ export default function Checkout() {
             //the server emptied the cart, so refresh the navbar count
             notifyAuthenticatedCartChanged();
 
+            //the invoice page loads the invoice from the API by order id
+            window.location.assign(`/invoice/${order.id}`);
+
             // Clear sensitive card details after successful checkout.
             setForm((previous) => ({
                 ...previous,

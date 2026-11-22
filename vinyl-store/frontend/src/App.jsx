@@ -9,6 +9,7 @@ import Orders from "./pages/orders.jsx";
 import OrderDetail from "./pages/orderDetail.jsx";
 import Deliveries from "./pages/deliveries.jsx";
 import Checkout from "./pages/checkout.jsx";
+import Invoice from "./pages/invoice.jsx";
 
 function App() {
   const path = window.location.pathname;
@@ -50,6 +51,11 @@ function App() {
 
   if (path === "/checkout") {
     return <Checkout />;
+  }
+
+  const invoiceMatch = path.match(/^\/invoice\/(\d+)\/?$/);
+  if (invoiceMatch) {
+    return <Invoice orderId={invoiceMatch[1]} />;
   }
 
   if (
