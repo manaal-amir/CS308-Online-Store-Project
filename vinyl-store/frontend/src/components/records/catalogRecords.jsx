@@ -1,8 +1,13 @@
 // Displays catalog records and prevents spreadsheet-preview items from being added to the cart.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getCatalogProducts } from "../../services/api.js";
-import { addCatalogProductToCart } from "../../utils/catalogCart.js";
-import { getGuestCart, subscribeToGuestCart } from "../../utils/guestCart.js";
+import useCart from "../../hooks/useCart.js";
+import { getAuthSession } from "../../utils/authSession.js";
+import {
+  isInLocalWishlist,
+  subscribeToLocalWishlist,
+  toggleLocalWishlist,
+} from "../../utils/localWishlist.js";
 import CartIcon from "../icons/cartIcon.jsx";
 import CartToast from "../feedback/cartToast.jsx";
 import useCartToast from "../../hooks/useCartToast.js";
@@ -37,6 +42,7 @@ export default function CatalogRecords({
   const [errorMessage, setErrorMessage] = useState("");
   const [isPreview, setIsPreview] = useState(false);
   const { notification, showCartToast, dismissCartToast } = useCartToast();
+  const cart = useCart();
   const isPopularitySort = sort === "popularity";
 
   useEffect(() => {
@@ -132,6 +138,7 @@ export default function CatalogRecords({
 
   return (
     <div className="catalog-results">
+      {cart.error && <p className="catalog-state" role="alert">{cart.error}</p>}
       {isPreview && (
         <CatalogPreviewNotice />
       )}
@@ -148,12 +155,10 @@ export default function CatalogRecords({
               key={product.id}
               product={product}
               isPreview={isPreview}
-              onCartAdded={(name) => {
-                const cartItem = getGuestCart().find(
-                  (entry) => String(entry.productId) === String(product.id),
-                );
-                showCartToast(name, cartItem?.quantity);
-              }}
+              onCartAdded={(cartItem) =>
+                showCartToast(product.name, cartItem?.quantity)
+              }
+              cart={cart}
             />
           ))}
         </div>
@@ -171,20 +176,82 @@ export function CatalogPreviewNotice() {
   );
 }
 
-export function CatalogCard({ product, isPreview = false, onCartAdded }) {
-  const [saved, setSaved] = useState(false);
-  const [cartError, setCartError] = useState("");
-  const [cart, setCart] = useState(getGuestCart);
+export function CatalogCard(props) {
+  if (props.cart) {
+    return <CatalogCardContent {...props} cartState={props.cart} />;
+  }
+  return <CatalogCardWithCart {...props} />;
+}
 
-  useEffect(() => subscribeToGuestCart(setCart), []);
+function CatalogCardWithCart(props) {
+  const cartState = useCart();
+  return <CatalogCardContent {...props} cartState={cartState} />;
+}
+
+function CatalogCardContent({
+  product,
+  isPreview = false,
+  onCartAdded,
+  cartState,
+}) {
+  const [saved, setSaved] = useState(() => isInLocalWishlist(product.id));
+  const [cartError, setCartError] = useState("");
+  const [wishlistError, setWishlistError] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
+  const addInProgress = useRef(false);
+  const { items: cart, add, loading: cartLoading, isAuthenticated } = cartState;
+
+  useEffect(() => subscribeToLocalWishlist((ids) => {
+    setSaved(ids.includes(String(product.id)));
+  }), [product.id]);
 
   function handleAddToCart() {
+    if (addInProgress.current) return;
+    addInProgress.current = true;
+    setIsAdding(true);
+    const finishAdding = () => {
+      addInProgress.current = false;
+      setIsAdding(false);
+    };
     try {
-      if (!addCatalogProductToCart(product, isPreview)) return;
-      setCartError("");
-      onCartAdded?.(product.name);
+      if (isPreview) return;
+      const result = add(Number(product.id), 1, stock);
+      if (result && typeof result.then === "function") {
+        result
+          .then((cartItem) => {
+            setCartError("");
+            onCartAdded?.(cartItem);
+          })
+          .catch((error) => setCartError(error.message))
+          .finally(finishAdding);
+      } else {
+        const cartItem = result.find(
+          (entry) => Number(entry.productId) === Number(product.id),
+        );
+        setCartError("");
+        onCartAdded?.(cartItem);
+        finishAdding();
+      }
     } catch (error) {
       setCartError(error.message);
+      finishAdding();
+    } finally {
+      if (isPreview) finishAdding();
+    }
+  }
+
+  function handleToggleWishlist() {
+    const session = getAuthSession();
+    if (!session?.token || session.user?.id == null) {
+      window.location.href = "/sign-in";
+      return;
+    }
+
+    try {
+      toggleLocalWishlist(product.id);
+      setWishlistError("");
+    } catch (error) {
+      setWishlistError(error.message);
     }
   }
 
@@ -193,7 +260,9 @@ export function CatalogCard({ product, isPreview = false, onCartAdded }) {
   const isVinyl = category?.toLowerCase() === "vinyl";
   const stock = Number(product.quantity);
   const isOutOfStock = !Number.isInteger(stock) || stock <= 0;
-  const cartQuantity = cart.find((item) => item.productId === Number(product.id))?.quantity || 0;
+  const cartQuantity = cart.find((item) =>
+    Number(item.productId) === Number(product.id),
+  )?.quantity || 0;
   const isAtStockLimit = !isOutOfStock && cartQuantity >= stock;
 
   return (
@@ -217,7 +286,7 @@ export function CatalogCard({ product, isPreview = false, onCartAdded }) {
           className={`save-record${saved ? " is-saved" : ""}`}
           aria-label={saved ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
           aria-pressed={saved}
-          onClick={() => setSaved((value) => !value)}
+          onClick={handleToggleWishlist}
         >
           {saved ? "♥" : "♡"}
         </button>
@@ -241,7 +310,10 @@ export function CatalogCard({ product, isPreview = false, onCartAdded }) {
         type="button"
         className="catalog-add-button"
         onClick={handleAddToCart}
-        disabled={isPreview || isOutOfStock || isAtStockLimit}
+        disabled={
+          isPreview || isOutOfStock || isAtStockLimit || isAdding ||
+          (isAuthenticated && cartLoading)
+        }
        >
        {!isOutOfStock && <CartIcon />}
        {isOutOfStock
@@ -253,6 +325,10 @@ export function CatalogCard({ product, isPreview = false, onCartAdded }) {
 
       {cartError && (
        <p role="alert">{cartError}</p>
+      )}
+
+      {wishlistError && (
+        <p role="alert">{wishlistError}</p>
       )}
 
     </article>

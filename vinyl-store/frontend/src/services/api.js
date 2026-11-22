@@ -169,13 +169,16 @@ export async function createOrder(orderData, token) {
       409: "Some items are no longer available in the requested quantity.",
     };
 
-    throw new Error(
+    const message =
       data?.error?.message ||
       (typeof data?.error === "string" ? data.error : null) ||
       data?.message ||
       fallbackMessages[response.status] ||
-      "Checkout failed. Please try again."
-    );
+      "Checkout failed. Please try again.";
+
+    const error = new Error(message);
+    error.status = response.status;
+    throw error;
   }
 
   if (!data) {
@@ -184,4 +187,3 @@ export async function createOrder(orderData, token) {
 
   return data;
 }
-

@@ -1,13 +1,9 @@
 // Product detail page (VS-08/09/10): shows every product field and the stock quantity.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import NavBar from "../components/layout/navBar.jsx";
 import Footer from "../components/layout/footer.jsx";
 import { getProductById } from "../services/api.js";
-import {
-  addToGuestCart,
-  getGuestCart,
-  subscribeToGuestCart,
-} from "../utils/guestCart.js";
+import useCart from "../hooks/useCart.js";
 import CartIcon from "../components/icons/cartIcon.jsx";
 import CartToast from "../components/feedback/cartToast.jsx";
 import useCartToast from "../hooks/useCartToast.js";
@@ -23,8 +19,15 @@ import "../styles/product.css";
 
 export function ProductDetails({ product }) {
   const [cartError, setCartError] = useState("");
-  const [cart, setCart] = useState(getGuestCart);
+  const [isAdding, setIsAdding] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const addInProgress = useRef(false);
+  const {
+    items: cart,
+    add,
+    loading: cartLoading,
+    error: cartLoadError,
+  } = useCart();
   const { notification, showCartToast, dismissCartToast } = useCartToast();
 
   const artist = relationName(product.artist);
@@ -35,8 +38,6 @@ export function ProductDetails({ product }) {
   const cartQuantity = cart.find((item) => item.productId === Number(product.id))?.quantity || 0;
   const available = inStock ? Math.max(0, stock - cartQuantity) : 0;
   const selectedQuantity = available > 0 ? Math.min(quantity, available) : 1;
-
-  useEffect(() => subscribeToGuestCart(setCart), []);
 
   // The API does not return a release year yet, so it only shows once it does.
   const specs = [
@@ -53,15 +54,34 @@ export function ProductDetails({ product }) {
   ];
 
   function handleAddToCart() {
+    if (addInProgress.current) return;
+    addInProgress.current = true;
+    setIsAdding(true);
+    const finishAdding = () => {
+      addInProgress.current = false;
+      setIsAdding(false);
+    };
     try {
-      const updatedCart = addToGuestCart(Number(product.id), selectedQuantity, stock);
-      const cartItem = updatedCart.find(
-        (entry) => String(entry.productId) === String(product.id),
-      );
-      showCartToast(product.name, cartItem?.quantity);
-      setCartError("");
+      const result = add(Number(product.id), selectedQuantity, stock);
+      if (result && typeof result.then === "function") {
+        result
+          .then((cartItem) => {
+            showCartToast(product.name, cartItem?.quantity);
+            setCartError("");
+          })
+          .catch((error) => setCartError(error.message))
+          .finally(finishAdding);
+      } else {
+        const cartItem = result.find(
+          (entry) => String(entry.productId) === String(product.id),
+        );
+        showCartToast(product.name, cartItem?.quantity);
+        setCartError("");
+        finishAdding();
+      }
     } catch (error) {
       setCartError(error.message);
+      finishAdding();
     }
   }
 
@@ -119,7 +139,7 @@ export function ProductDetails({ product }) {
           type="button"
           className="product-add-button"
           onClick={handleAddToCart}
-          disabled={!inStock || available === 0}
+          disabled={!inStock || available === 0 || isAdding || cartLoading}
         >
           {inStock && <CartIcon />}
           {!inStock
@@ -130,6 +150,9 @@ export function ProductDetails({ product }) {
         </button>
         {cartError && (
           <p className="product-feedback is-error" role="alert">{cartError}</p>
+        )}
+        {cartLoadError && (
+          <p className="product-feedback is-error" role="alert">{cartLoadError}</p>
         )}
 
         <h2>Description</h2>

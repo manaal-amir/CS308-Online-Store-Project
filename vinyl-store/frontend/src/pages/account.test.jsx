@@ -8,8 +8,10 @@ import {
   waitFor,
 } from "@testing-library/react";
 import Account from "./account.jsx";
-import { addToGuestCart, resetGuestCartForTests } from "../utils/guestCart.js";
-import { getAuthSession } from "../utils/authSession.js";
+import { addToGuestCart, getGuestCart, resetGuestCartForTests } from "../utils/guestCart.js";
+import { getAuthSession, saveAuthSession } from "../utils/authSession.js";
+import { toggleLocalWishlist } from "../utils/localWishlist.js";
+import { formatPrice } from "../utils/productFormat.js";
 
 const authenticated = {
   token: "jwt-test-token",
@@ -40,7 +42,9 @@ afterEach(() => {
 
 describe("account sign-in", () => {
   test("authenticates through the API, stores the session, and opens the profile", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(response(authenticated));
+    const fetchMock = vi.fn((url) =>
+      Promise.resolve(response(url === "/api/orders" ? [] : authenticated)),
+    );
     vi.stubGlobal("fetch", fetchMock);
     openSignIn();
 
@@ -54,7 +58,9 @@ describe("account sign-in", () => {
     fireEvent.click(screen.getByRole("button", { name: "Log in" }));
 
     await screen.findByRole("heading", { name: "Profile overview" });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(
+      fetchMock.mock.calls.filter(([url]) => url === "/api/auth/login"),
+    ).toHaveLength(1);
     expect(fetchMock).toHaveBeenCalledWith("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -117,6 +123,7 @@ describe("account sign-in", () => {
         body: JSON.stringify({ items: [{ productId: 3, quantity: 2 }] }),
       },
     ]);
+    expect(getGuestCart()).toEqual([]);
   });
 
   test("logout clears the stored authentication session", async () => {
@@ -137,5 +144,56 @@ describe("account sign-in", () => {
     expect(await screen.findByRole("button", { name: "Log in" })).toBeTruthy();
     expect(getAuthSession()).toBeNull();
     expect(window.location.pathname).toBe("/sign-in");
+  });
+});
+
+describe("account wishlist", () => {
+  const savedProduct = {
+    id: 17,
+    name: "Test Record",
+    artist: { name: "Test Artist" },
+    price: 1234.5,
+    imageUrl: null,
+  };
+
+  test("loads matching product data and current price from a products object response", async () => {
+    saveAuthSession(authenticated, true);
+    toggleLocalWishlist(savedProduct.id);
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+      response({ products: [savedProduct] }),
+    ));
+    window.history.pushState({}, "", "/wishlist");
+
+    render(<Account />);
+
+    expect(await screen.findByRole("heading", { name: "Test Record" })).toBeTruthy();
+    expect(screen.getByText("Test Artist")).toBeTruthy();
+    expect(screen.getByText(formatPrice(savedProduct.price))).toBeTruthy();
+    expect(screen.getByRole("link", { name: "View Product" }).getAttribute("href"))
+      .toBe("/product/17");
+    expect(document.querySelector(".record-artwork")).toBeTruthy();
+  });
+
+  test("shows the empty wishlist for a signed-in user with no saved products", async () => {
+    saveAuthSession(authenticated, true);
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response({ products: [] })));
+    window.history.pushState({}, "", "/wishlist");
+
+    render(<Account />);
+
+    expect(await screen.findByRole("heading", { name: "Your wishlist is waiting." }))
+      .toBeTruthy();
+  });
+
+  test("reports product API failures instead of showing invented wishlist data", async () => {
+    saveAuthSession(authenticated, true);
+    toggleLocalWishlist(savedProduct.id);
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Catalog unavailable")));
+    window.history.pushState({}, "", "/wishlist");
+
+    render(<Account />);
+
+    expect((await screen.findByRole("alert")).textContent)
+      .toContain("Could not load your wishlist: Catalog unavailable");
   });
 });
