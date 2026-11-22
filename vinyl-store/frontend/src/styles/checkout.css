@@ -169,3 +169,42 @@
   line-height: 1.5;
   margin-top: 4px;
 }
+
+.checkout-summary-items {
+  border-top: 1px solid #bfa476;
+  margin: 20px 0 24px;
+}
+
+.checkout-summary-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid #bfa476;
+  font-size: 14px;
+}
+
+.checkout-summary-line > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.checkout-summary-line span {
+  color: #77644b;
+  font-size: 13px;
+}
+
+.checkout-summary-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 20px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.checkout-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -3,16 +3,11 @@ import { useEffect, useState } from "react";
 import NavBar from "../components/layout/navBar.jsx";
 import Footer from "../components/layout/footer.jsx";
 import { getCatalogProducts } from "../services/api.js";
-import {
-    getGuestCart,
-    updateGuestCartItem,
-    removeFromGuestCart,
-    subscribeToGuestCart,
-} from "../utils/guestCart.js";
+import useCart from "../hooks/useCart.js";
+import { getCheckoutDestination } from "../utils/checkoutNavigation.js";
 
 import "../styles/home.css";
 import "../styles/cart.css";
-import { getCheckoutDestination } from "../utils/checkoutNavigation.js";
 
 function formatPrice(value) {
     return new Intl.NumberFormat("tr-TR", {
@@ -23,16 +18,23 @@ function formatPrice(value) {
 }
 
 export default function Cart() {
-    const [cart, setCart] = useState(getGuestCart);
+    const {
+        items: cart,
+        loading: cartLoading,
+        error: cartError,
+        isAuthenticated,
+        update,
+        remove,
+    } = useCart();
     const [products, setProducts] = useState([]);
-    const [error, setError] = useState("");
-    const [loading, setLoading] = useState(true);
+    const [productError, setProductError] = useState("");
+    const [productsLoading, setProductsLoading] = useState(!isAuthenticated);
 
     useEffect(() => {
-        return subscribeToGuestCart(setCart);
-    }, []);
+        if (isAuthenticated) {
+            return undefined;
+        }
 
-    useEffect(() => {
         const controller = new AbortController();
 
         async function loadProducts() {
@@ -41,34 +43,36 @@ export default function Cart() {
                 setProducts(result.products);
             } catch (err) {
                 if (err.name !== "AbortError") {
-                    setError("Could not load products.");
+                    setProductError("Could not load products.");
                 }
             } finally {
                 if (!controller.signal.aborted) {
-                    setLoading(false);
+                    setProductsLoading(false);
                 }
             }
         }
 
         loadProducts();
         return () => controller.abort();
-    }, []);
+    }, [isAuthenticated]);
 
-    const cartItems = cart.map((item) => {
-        const product = products.find(
-            (p) => Number(p.id) === item.productId
-        );
+    const cartItems = isAuthenticated
+        ? cart.map((item) => ({
+            ...item,
+            id: item.productId,
+            cartQuantity: item.quantity,
+            quantity: item.stock,
+        }))
+        : cart.map((item) => {
+            const product = products.find((p) => Number(p.id) === item.productId);
 
-        return product
-            ? { ...product, cartQuantity: item.quantity }
-            : null;
-    }).filter(Boolean);
+            return product
+                ? { ...product, cartQuantity: item.quantity }
+                : null;
+        }).filter(Boolean);
 
-    const missingItems = cart.filter(
-        (item) =>
-            !products.some(
-                (product) => Number(product.id) === item.productId
-            )
+    const missingItems = isAuthenticated ? [] : cart.filter(
+        (item) => !products.some((product) => Number(product.id) === item.productId),
     );
 
     const subtotal = cartItems.reduce(
@@ -76,28 +80,30 @@ export default function Cart() {
         0
     );
 
-    function changeQuantity(product, quantity) {
+    async function changeQuantity(product, quantity) {
         try {
-            updateGuestCartItem(
-                Number(product.id),
-                quantity,
-                product.quantity
-            );
-            setError("");
+            await update(product.id, quantity, Number(product.quantity));
         } catch (err) {
-            setError(err.message);
+            setProductError(err.message);
         }
     }
 
-    function removeItem(productId) {
-        removeFromGuestCart(Number(productId));
-        setError("");
+    async function removeItem(productId) {
+        try {
+            await remove(Number(productId));
+            setProductError("");
+        } catch (err) {
+            setProductError(err.message);
+        }
     }
 
+    //guests go to sign-in first and come back to checkout afterwards
     function handleCheckout() {
-  window.location.assign(getCheckoutDestination());
-}
+        window.location.assign(getCheckoutDestination());
+    }
 
+    const error = cartError || productError;
+    const loading = cartLoading || productsLoading;
 
     return (
         <div className="vinyl-site">
@@ -111,33 +117,35 @@ export default function Cart() {
                 {loading ? (
                     <p>Loading cart...</p>
                 ) : cart.length === 0 ? (
-                    <div className="cart-empty">
-                        <p>Your cart is currently empty.</p>
-                        <a href="/shop">Continue Shopping</a>
-                    </div>
+                    error ? null : (
+                        <div className="cart-empty">
+                            <p>Your cart is currently empty.</p>
+                            <a href="/shop">Continue Shopping</a>
+                        </div>
+                    )
                 ) : (
                     <div className="cart-layout">
                         <div className="cart-items">
+                            
+{missingItems.map((item) => (
+  <article key={item.productId} className="cart-item">
+    <div className="cart-item-info">
+      <h2>Product unavailable</h2>
+      <p>Product ID: {item.productId}</p>
+      <p>This product could not be found in the current catalog.</p>
+      <p>Saved quantity: {item.quantity}</p>
 
-                            {missingItems.map((item) => (
-                                <article key={item.productId} className="cart-item">
-                                    <div className="cart-item-info">
-                                        <h2>Product unavailable</h2>
-                                        <p>Product ID: {item.productId}</p>
-                                        <p>This product could not be found in the current catalog.</p>
-                                        <p>Saved quantity: {item.quantity}</p>
-
-                                        <div className="cart-controls">
-                                            <button
-                                                type="button"
-                                                onClick={() => removeItem(item.productId)}
-                                            >
-                                                Remove unavailable item
-                                            </button>
-                                        </div>
-                                    </div>
-                                </article>
-                            ))}
+      <div className="cart-controls">
+        <button
+          type="button"
+          onClick={() => removeItem(item.productId)}
+        >
+          Remove unavailable item
+        </button>
+      </div>
+    </div>
+  </article>
+))}
 
                             {cartItems.map((item) => (
                                 <article key={item.id} className="cart-item">
@@ -192,15 +200,12 @@ export default function Cart() {
                             ))}
                         </div>
 
-
                         <aside className="cart-summary">
                             <h2>Order Summary</h2>
-
                             <div className="cart-summary-total">
                                 <span>Subtotal</span>
                                 <strong>{formatPrice(subtotal)}</strong>
                             </div>
-
                             <button
                                 type="button"
                                 className="cart-checkout-button"
@@ -209,14 +214,12 @@ export default function Cart() {
                             >
                                 Proceed to Checkout
                             </button>
-
                             {missingItems.length > 0 && (
                                 <p className="cart-checkout-warning">
                                     Remove unavailable products before checking out.
                                 </p>
                             )}
                         </aside>
-
                     </div>
                 )}
             </main>
