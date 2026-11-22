@@ -647,6 +647,15 @@ function AccountShell({
   user,
   onLogout,
 }) {
+  // Product managers also get a link to the delivery list.
+  const sections =
+    user?.role === "PRODUCT_MANAGER"
+      ? [
+          ...profileSections,
+          { href: "/manager/deliveries", label: "Delivery list", icon: "▦" },
+        ]
+      : profileSections;
+
   const accountLabel =
     user?.email?.split("@")[0] || "Your account";
 
@@ -667,7 +676,7 @@ function AccountShell({
         <span>/</span>
         <a href="/profile">My Account</a>
         <span>/</span>
-        {profileSections.find(
+        {sections.find(
           (section) => section.href === activePath
         )?.label || "Profile overview"}
       </p>
@@ -688,7 +697,7 @@ function AccountShell({
           </a>
 
           <nav aria-label="Account navigation">
-            {profileSections.map((section) => (
+            {sections.map((section) => (
               <a
                 href={section.href}
                 className={
