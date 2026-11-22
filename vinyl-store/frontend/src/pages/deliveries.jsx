@@ -116,14 +116,19 @@ export default function Deliveries() {
   const [errorMessage, setErrorMessage] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
 
-  // One order can have several rows (one per product): update them all.
+  // One order can have several rows (one per product): update them all, then
+  // drop rows that no longer match the active filter (e.g. a row marked
+  // Delivered must leave the "Waiting" list).
   function handleChanged(orderId, newStatus) {
+    const { completed } = FILTERS.find((item) => item.value === filter);
     setDeliveries((rows) =>
-      rows.map((row) =>
-        row.deliveryId === orderId
-          ? { ...row, status: newStatus, completed: newStatus === "DELIVERED" }
-          : row,
-      ),
+      rows
+        .map((row) =>
+          row.deliveryId === orderId
+            ? { ...row, status: newStatus, completed: newStatus === "DELIVERED" }
+            : row,
+        )
+        .filter((row) => completed === undefined || row.completed === completed),
     );
   }
 
