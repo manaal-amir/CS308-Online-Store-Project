@@ -42,7 +42,9 @@ afterEach(() => {
 
 describe("account sign-in", () => {
   test("authenticates through the API, stores the session, and opens the profile", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(response(authenticated));
+    const fetchMock = vi.fn((url) =>
+      Promise.resolve(response(url === "/api/orders" ? [] : authenticated)),
+    );
     vi.stubGlobal("fetch", fetchMock);
     openSignIn();
 
@@ -56,7 +58,9 @@ describe("account sign-in", () => {
     fireEvent.click(screen.getByRole("button", { name: "Log in" }));
 
     await screen.findByRole("heading", { name: "Profile overview" });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(
+      fetchMock.mock.calls.filter(([url]) => url === "/api/auth/login"),
+    ).toHaveLength(1);
     expect(fetchMock).toHaveBeenCalledWith("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
