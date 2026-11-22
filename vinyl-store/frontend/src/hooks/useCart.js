@@ -29,7 +29,7 @@ function isValidSession(session) {
   return Boolean(session?.token && session.user?.id != null);
 }
 
-function notifyAuthenticatedCartChanged() {
+export function notifyAuthenticatedCartChanged() {
   window.dispatchEvent(new Event(CART_CHANGED_EVENT));
 }
 

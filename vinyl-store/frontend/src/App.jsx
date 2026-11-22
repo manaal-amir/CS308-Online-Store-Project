@@ -8,6 +8,7 @@ import ProductDetail from "./pages/productDetail.jsx";
 import Orders from "./pages/orders.jsx";
 import OrderDetail from "./pages/orderDetail.jsx";
 import Deliveries from "./pages/deliveries.jsx";
+import Checkout from "./pages/checkout.jsx";
 
 function App() {
   const path = window.location.pathname;
@@ -44,8 +45,12 @@ function App() {
   }
 
   if (path === "/cart") {
-  return <Cart />;
-}
+    return <Cart />;
+  }
+
+  if (path === "/checkout") {
+    return <Checkout />;
+  }
 
   if (
     path === "/sign-in" ||
