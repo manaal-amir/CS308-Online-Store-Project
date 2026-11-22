@@ -1,5 +1,5 @@
 // Tests for the product detail page (VS-08/09/10): all fields render and stock is visible.
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
@@ -7,6 +7,7 @@ import {
   fireEvent,
   render as renderComponent,
   screen,
+  waitFor,
 } from "@testing-library/react";
 import { ProductDetails } from "./productDetail.jsx";
 import { displayValue, formatPrice, stockLabel } from "../utils/productFormat.js";
@@ -15,11 +16,13 @@ import {
   getGuestCart,
   resetGuestCartForTests,
 } from "../utils/guestCart.js";
+import { saveAuthSession } from "../utils/authSession.js";
 
 afterEach(() => {
   cleanup();
   localStorage.clear();
   resetGuestCartForTests();
+  vi.unstubAllGlobals();
 });
 
 const product = {
@@ -173,6 +176,85 @@ describe("ProductDetails", () => {
     fireEvent.click(container.querySelector(".product-add-button"));
 
     expect(container.querySelector('[role="alert"]').textContent).toMatch(/Invalid product or quantity/);
+    expect(container.querySelector(".cart-toast")).toBeNull();
+    expect(getGuestCart()).toEqual([]);
+  });
+
+  test("authenticated Add to Cart uses the account API and displays the returned cart quantity", async () => {
+    saveAuthSession({
+      token: "customer-token",
+      user: { id: 8, role: "CUSTOMER" },
+    });
+    const backendItem = {
+      productId: product.id,
+      name: product.name,
+      artist: "The Doors",
+      imageUrl: null,
+      price: product.price,
+      quantity: 1,
+      stock: product.quantity,
+      lineTotal: product.price,
+    };
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ items: [], itemCount: 0, total: 0 }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ items: [backendItem], itemCount: 1, total: product.price }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ items: [backendItem], itemCount: 1, total: product.price }),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+    renderComponent(<ProductDetails product={product} />);
+
+    const addButton = await screen.findByRole("button", { name: "Add to Cart" });
+    await waitFor(() => expect(addButton.disabled).toBe(false));
+    fireEvent.click(addButton);
+
+    expect(await screen.findByText("Cart quantity: 1")).toBeTruthy();
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      "/api/cart",
+      "/api/cart/items",
+      "/api/cart",
+      "/api/cart",
+    ]);
+    expect(fetchMock.mock.calls[1][1]).toEqual(expect.objectContaining({
+      method: "POST",
+      body: JSON.stringify({ productId: product.id, quantity: 1 }),
+    }));
+    expect(getGuestCart()).toEqual([]);
+  });
+
+  test("authenticated add failures show no successful cart notification", async () => {
+    saveAuthSession({
+      token: "customer-token",
+      user: { id: 8, role: "CUSTOMER" },
+    });
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ items: [], itemCount: 0, total: 0 }),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 409,
+        json: async () => ({ error: "Only 2 in stock" }),
+      }));
+
+    const { container } = renderComponent(<ProductDetails product={product} />);
+    const addButton = await screen.findByRole("button", { name: "Add to Cart" });
+    await waitFor(() => expect(addButton.disabled).toBe(false));
+    fireEvent.click(addButton);
+
+    expect(await screen.findByText("Only 2 in stock")).toBeTruthy();
     expect(container.querySelector(".cart-toast")).toBeNull();
     expect(getGuestCart()).toEqual([]);
   });

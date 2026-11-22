@@ -23,18 +23,13 @@ async function requestCart(path, token, { method = "GET", body, signal } = {}) {
   }
 
   const data = await response.json().catch(() => ({}));
-
-if (!response.ok) {
-  const message =
-    data?.error?.message ||
-    (typeof data?.error === "string" ? data.error : null) ||
-    data?.message ||
-    `Cart request failed (${response.status})`;
-
-  const error = new Error(message);
-  error.status = response.status;
-  throw error;
-}
+  if (!response.ok) {
+    const error = new Error(
+      data?.error || data?.message || `Cart request failed (${response.status})`,
+    );
+    error.status = response.status;
+    throw error;
+  }
 
   return data;
 }
