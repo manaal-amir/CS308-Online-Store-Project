@@ -21,6 +21,9 @@ import {
   subscribeToLocalWishlist,
 } from "../utils/localWishlist.js";
 import { formatPrice } from "../utils/productFormat.js";
+import { getOrders } from "../services/ordersApi.js";
+import { formatOrderDate } from "../utils/orderStatus.js";
+import { StatusBadge } from "./orders.jsx";
 import NavBar from "../components/layout/navBar.jsx";
 import Footer from "../components/layout/footer.jsx";
 import heroImage from "../assets/hero/hero.png";
@@ -363,6 +366,7 @@ export default function Account() {
         onLogout={handleLogout}
       >
         <OverviewPage
+          token={session.token}
           user={session.user}
           notice={notice}
           wishlistCount={wishlist.length}
@@ -735,13 +739,85 @@ function AccountShell({
   );
 }
 
+// Loads the signed-in customer's orders (newest first) for the overview.
+// Only customer accounts have an order history.
+function useOrderSummary(token, role) {
+  const hasHistory = role === "CUSTOMER" && Boolean(token);
+  const [summary, setSummary] = useState({
+    status: hasHistory ? "loading" : "unavailable",
+    orders: [],
+  });
+
+  useEffect(() => {
+    if (!hasHistory) return undefined;
+
+    const controller = new AbortController();
+    getOrders(token, controller.signal)
+      .then((orders) =>
+        setSummary({ status: "ready", orders: Array.isArray(orders) ? orders : [] }),
+      )
+      .catch((error) => {
+        if (error.name === "AbortError") return;
+        setSummary({ status: "error", orders: [] });
+      });
+
+    return () => controller.abort();
+  }, [token, hasHistory]);
+
+  return summary;
+}
+
+export function LatestOrderPanel({ summary }) {
+  const latest = summary.orders[0];
+
+  return (
+    <section className="account-panel latest-order" id="orders">
+      <div className="account-panel-heading">
+        <div>
+          <span className="account-eyebrow">YOUR LATEST ORDER</span>
+          <h2>{latest ? `Order #${latest.id}` : "Order history"}</h2>
+        </div>
+        <a href="/orders">View all orders →</a>
+      </div>
+
+      {summary.status === "loading" && <p role="status">Loading your orders…</p>}
+      {summary.status === "error" && (
+        <p role="alert">We could not load your orders right now.</p>
+      )}
+      {summary.status === "unavailable" && (
+        <p>Order history is only available for customer accounts.</p>
+      )}
+      {summary.status === "ready" && !latest && (
+        <p>
+          You have not placed any orders yet. <a href="/shop">Browse records →</a>
+        </p>
+      )}
+      {latest && (
+        <>
+          <p className="order-date">
+            Placed on {formatOrderDate(latest.createdAt)}{" "}
+            <StatusBadge status={latest.status} />
+          </p>
+          <p>
+            Total {formatPrice(latest.total)} ·{" "}
+            <a href={`/orders/${latest.id}`}>View details →</a>
+          </p>
+        </>
+      )}
+    </section>
+  );
+}
+
 function OverviewPage({
+  token,
   user,
   notice,
   wishlistCount,
   wishlistLoading,
   wishlistError,
 }) {
+  const orderSummary = useOrderSummary(token, user?.role);
+
   return (
     <>
       <header className="account-heading">
@@ -775,8 +851,12 @@ function OverviewPage({
       <div className="account-stat-grid">
         <StatCard
           label="Total orders"
-          value="—"
-          detail="Order history not loaded"
+          value={orderSummary.status === "ready" ? orderSummary.orders.length : "—"}
+          detail={
+            orderSummary.status === "ready"
+              ? "Orders you have placed"
+              : "Order history not available"
+          }
         />
         <StatCard
           label="Wishlist"
@@ -801,25 +881,7 @@ function OverviewPage({
       </div>
 
       <div className="overview-columns">
-        <section
-          className="account-panel latest-order"
-          id="orders"
-        >
-          <div className="account-panel-heading">
-            <div>
-              <span className="account-eyebrow">
-                YOUR ORDER HISTORY
-              </span>
-              <h2>Order history</h2>
-            </div>
-            <a href="/orders">View all orders →</a>
-          </div>
-
-          <p>
-            Order history is not loaded on
-            this page yet.
-          </p>
-        </section>
+        <LatestOrderPanel summary={orderSummary} />
 
         <section className="account-panel account-details">
           <div className="account-panel-heading">
