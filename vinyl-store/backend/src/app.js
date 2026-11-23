@@ -10,6 +10,7 @@ const orderRoutes = require('./modules/orders/orders.routes');
 const deliveryRoutes = require('./modules/deliveries/delivery.routes');
 const productReviewRoutes = require('./modules/reviews/reviews.routes');
 const commentRoutes = require('./modules/reviews/comments.routes');
+const userRoutes = require('./modules/users/user.routes');
 
 const app = express();
 
@@ -42,6 +43,8 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 //delivery list, only for product managers
 app.use('/api/deliveries', deliveryRoutes);
+//user profile, e.g. /api/users/me
+app.use('/api/users', userRoutes);
 
 //any request that didn't match a route above becomes a 404
 app.use(notFound);
