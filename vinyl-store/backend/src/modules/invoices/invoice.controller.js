@@ -1,12 +1,9 @@
-const { buildInvoice, listInvoices } = require('./invoice.service');
+const { getInvoiceForRead, listInvoices } = require('./invoice.service');
 
 async function getInvoice(req, res, next) {
   try {
     const orderId = req.params.orderId;
-    const invoice = await buildInvoice(orderId, req.user);
-
-    // No PDF generation here — checkout generates + emails it.
-    // GET must be side-effect-free.
+    const invoice = await getInvoiceForRead(orderId, req.user);
 
     res.status(200).json({
       invoiceNumber: invoice.invoiceNumber,

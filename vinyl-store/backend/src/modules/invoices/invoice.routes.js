@@ -15,6 +15,7 @@ router.get(
 );
 
 //single invoice — the owner or staff
+//read-only: 404 if the invoice does not exist yet (checkout creates it)
 router.get(
   '/:orderId',
   authenticate,
