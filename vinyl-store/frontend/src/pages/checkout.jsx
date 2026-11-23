@@ -4,7 +4,7 @@ import Footer from "../components/layout/footer.jsx";
 import { notifyAuthenticatedCartChanged } from "../hooks/useCart.js";
 import { validateCheckout } from "../utils/checkoutValidation.js";
 import { createOrder } from "../services/api.js";
-import { getAuthSession, clearAuthSession } from "../utils/authSession.js";
+import { getAuthSession, expireAuthSession } from "../utils/authSession.js";
 import { getAuthenticatedCart } from "../services/cartApi.js";
 import { formatPrice } from "../utils/productFormat.js";
 import "../styles/home.css";
@@ -59,8 +59,7 @@ export default function Checkout() {
 
                 // An expired or invalid token receives HTTP 401.
                 if (error.status === 401) {
-                    clearAuthSession();
-                    redirectToSignIn();
+                    if (expireAuthSession(session.token)) redirectToSignIn();
                     return;
                 }
 
@@ -143,8 +142,7 @@ export default function Checkout() {
             }));
         } catch (error) {
             if (error.status === 401) {
-                clearAuthSession();
-                window.location.replace("/sign-in?returnTo=%2Fcheckout");
+                if (expireAuthSession(session.token)) window.location.replace("/sign-in?returnTo=%2Fcheckout");
                 return;
             }
 

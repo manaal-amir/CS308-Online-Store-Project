@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { monitorAuthSession } from "./utils/authSession.js";
 import Cart from "./pages/cart.jsx";
 import Home from "./pages/home.jsx";
 import Shop from "./pages/shop.jsx";
@@ -14,6 +16,14 @@ import Checkout from "./pages/checkout.jsx";
 import Invoice from "./pages/invoice.jsx";
 
 function App() {
+  useEffect(() => monitorAuthSession(() => {
+    const { pathname } = window.location;
+    if (!/^\/(?:checkout|profile|wishlist|account-settings|orders(?:\/\d+)?|invoice\/\d+|manager(?:\/.*)?)\/?$/.test(pathname)) return;
+
+    const query = new URLSearchParams({ expired: "1", returnTo: pathname });
+    window.location.replace(`/sign-in?${query}`);
+  }), []);
+
   const path = window.location.pathname;
   const genre = new URLSearchParams(window.location.search).get("genre");
 

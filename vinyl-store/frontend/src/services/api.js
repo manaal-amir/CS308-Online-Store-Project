@@ -1,3 +1,4 @@
+import { authenticatedFetch } from "./authenticatedFetch.js";
 import { catalogPreview } from "../data/catalogPreview.js";
 
 const API_BASE = (
@@ -144,7 +145,7 @@ export async function createOrder(orderData, token) {
   let response;
 
   try {
-    response = await fetch(`${API_BASE}/api/orders`, {
+    response = await authenticatedFetch(`${API_BASE}/api/orders`, token, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

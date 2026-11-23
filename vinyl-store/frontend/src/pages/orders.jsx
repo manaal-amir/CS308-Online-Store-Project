@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import NavBar from "../components/layout/navBar.jsx";
 import Footer from "../components/layout/footer.jsx";
 import { getOrders } from "../services/ordersApi.js";
-import { clearAuthSession, getAuthSession } from "../utils/authSession.js";
+import { expireAuthSession, getAuthSession } from "../utils/authSession.js";
 import { formatOrderDate, statusClass, statusLabel } from "../utils/orderStatus.js";
 import { formatPrice } from "../utils/productFormat.js";
 import "../styles/home.css";
@@ -58,8 +58,7 @@ export default function Orders() {
         if (error.name === "AbortError") return;
         if (error.status === 401) {
           // The token expired or is invalid, so sign in again.
-          clearAuthSession();
-          window.location.replace("/sign-in");
+          if (expireAuthSession(session.token)) window.location.replace("/sign-in");
           return;
         }
         setErrorMessage(

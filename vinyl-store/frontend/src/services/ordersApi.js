@@ -1,3 +1,4 @@
+import { authenticatedFetch } from "./authenticatedFetch.js";
 const API_BASE = (
   import.meta.env.VITE_API_BASE_URL || ""
 ).replace(/\/+$/, "");
@@ -8,7 +9,7 @@ async function requestOrders(path, token, { method = "GET", body, signal } = {})
   let response;
 
   try {
-    response = await fetch(`${API_BASE}/api/orders${path}`, {
+    response = await authenticatedFetch(`${API_BASE}/api/orders${path}`, token, {
       method,
       signal,
       headers: {

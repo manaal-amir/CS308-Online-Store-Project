@@ -4,7 +4,7 @@ import NavBar from "../components/layout/navBar.jsx";
 import Footer from "../components/layout/footer.jsx";
 import { StatusBadge } from "./orders.jsx";
 import { cancelOrder, getOrder } from "../services/ordersApi.js";
-import { clearAuthSession, getAuthSession } from "../utils/authSession.js";
+import { expireAuthSession, getAuthSession } from "../utils/authSession.js";
 import { formatOrderDate } from "../utils/orderStatus.js";
 import { displayValue, formatPrice } from "../utils/productFormat.js";
 import "../styles/home.css";
@@ -180,8 +180,7 @@ export default function OrderDetail({ id }) {
       .catch((error) => {
         if (error.name === "AbortError") return;
         if (error.status === 401) {
-          clearAuthSession();
-          window.location.replace("/sign-in");
+          if (expireAuthSession(session.token)) window.location.replace("/sign-in");
           return;
         }
         if (error.status === 404) {

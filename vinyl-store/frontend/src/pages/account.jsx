@@ -31,7 +31,11 @@ import "../styles/home.css";
 import "../styles/account.css";
 
 //only allow known pages as returnTo, so the link can't send users to another site
-const ALLOWED_RETURN_PATHS = [/^\/checkout$/, /^\/invoice\/\d+$/];
+const ALLOWED_RETURN_PATHS = [
+  /^\/(?:checkout|profile|wishlist|account-settings|orders)$/,
+  /^\/(?:invoice|orders)\/\d+\/?$/,
+  /^\/manager(?:\/(?:deliveries|catalogue))?\/?$/,
+];
 
 function getSafeReturnTo() {
   const returnTo = new URLSearchParams(window.location.search).get("returnTo") || "";
@@ -101,7 +105,11 @@ export default function Account() {
   const [wishlist, setWishlist] = useState([]);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const [wishlistError, setWishlistError] = useState("");
-  const [notice, setNotice] = useState("");
+  const [notice, setNotice] = useState(() =>
+    path === "/sign-in" && new URLSearchParams(window.location.search).get("expired") === "1"
+      ? "Your session has expired. Please sign in again."
+      : ""
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -270,7 +278,13 @@ export default function Account() {
         }
       }
 
-      //guests sent here from checkout or an invoice go back to it, everyone else goes to the profile
+      if (getAuthSession()?.token !== authenticated.token) {
+        setSession(null);
+        setNotice("Your session has expired. Please sign in again.");
+        return;
+      }
+
+      // Resume the page the user was visiting before signing in.
       const returnTo = getSafeReturnTo();
       if (returnTo) {
         window.location.assign(returnTo);
