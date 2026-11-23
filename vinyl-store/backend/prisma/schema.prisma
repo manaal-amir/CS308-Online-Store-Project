@@ -30,6 +30,13 @@ enum PaymentStatus {
   REFUNDED //money given back after the customer cancels the order
 }
 
+//review state of a comment, a product manager approves or rejects it (requirement 5)
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum RefundStatus {
   PENDING
   APPROVED
@@ -289,10 +296,10 @@ model Rating {
 }
 
 model Comment {
-  id         Int      @id @default(autoincrement())
-  content    String
-  isApproved Boolean  @default(false) // product manager flips this
-  createdAt  DateTime @default(now())
+  id        Int           @id @default(autoincrement())
+  content   String
+  status    CommentStatus @default(PENDING) //new comments wait for a product manager
+  createdAt DateTime      @default(now())
 
   userId Int
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -300,7 +307,8 @@ model Comment {
   productId Int
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  @@index([productId, isApproved])
+  @@index([productId, status]) //approved comments of one product
+  @@index([status, createdAt]) //pending list for product managers, oldest first
 }
 
 /// RefundRequest: customer returns one item of a delivered order (within 30 days),
