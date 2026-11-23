@@ -66,3 +66,21 @@
   color: var(--vinyl-burgundy);
   font: inherit;
 }
+
+.catalogue-record-actions,
+.catalogue-stock-form,
+.catalogue-stock-form label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.catalogue-stock-form input {
+  width: 7rem;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 1px solid var(--vinyl-border);
+  border-radius: 8px;
+  font: inherit;
+}

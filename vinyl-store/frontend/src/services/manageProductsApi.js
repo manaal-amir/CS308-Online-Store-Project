@@ -36,3 +36,10 @@ export function addProduct(token, body) {
 export function removeProduct(token, id) {
   return requestProducts(`/${encodeURIComponent(id)}`, token, { method: "DELETE" });
 }
+
+export function updateProductStock(token, id, quantity) {
+  return requestProducts(`/${encodeURIComponent(id)}/stock`, token, {
+    method: "PATCH",
+    body: { quantity },
+  });
+}
