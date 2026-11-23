@@ -18,6 +18,16 @@ async function create(req, res, next) {
   }
 }
 
+//GET /api/products/:id/comments
+async function listApproved(req, res, next) {
+  try {
+    const comments = await commentService.listApprovedComments(req.params.id);
+    res.status(200).json(comments);
+  } catch (err) {
+    next(err);
+  }
+}
+
 //GET /api/comments/pending
 async function listPending(req, res, next) {
   try {
@@ -39,4 +49,4 @@ async function review(req, res, next) {
   }
 }
 
-module.exports = { create, listPending, review };
+module.exports = { create, listApproved, listPending, review };

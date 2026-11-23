@@ -1,5 +1,6 @@
 //these tests approve and reject real comments in the real database (docker must be running)
-//they check what fake tests cannot: the pending list order, and two managers deciding at once
+//they check what fake tests cannot: the pending list order, two managers deciding at once,
+//and that only approved comments reach the product page
 
 //load DATABASE_URL from .env so this file knows whether a database is available
 require('dotenv').config();
@@ -117,5 +118,42 @@ describeIfDb('review comments with the real database', () => {
     });
     const saved = await prisma.comment.findUnique({ where: { id: comment.id } });
     expect(saved.status).toBe('REJECTED');
+  });
+
+  //test 5: the product page only shows approved comments, newest first
+  it('shows only approved comments of the record, newest first', async () => {
+    //a fresh record, so the comments of the other tests do not count
+    const category = await prisma.category.findFirst();
+    const record = await prisma.product.create({
+      data: {
+        name: 'Approved Comments Record',
+        model: 'Test',
+        serialNumber: `APPROVED-TEST-${Date.now()}`,
+        quantity: 1,
+        price: '100.00',
+        warrantyStatus: 'None',
+        distributor: 'Test',
+        description: 'Only used by comment review tests',
+        categoryId: category.id,
+      },
+    });
+    //deleted at the end even if a check fails, its comments go with it (onDelete: Cascade)
+    try {
+      const make = (content, status, createdAt) =>
+        prisma.comment.create({
+          data: { userId, productId: record.id, content, status, createdAt },
+        });
+      const older = await make('Older', 'APPROVED', new Date('2026-11-20T12:00:00Z'));
+      const newer = await make('Newer', 'APPROVED', new Date('2026-11-22T12:00:00Z'));
+      await make('Waiting', 'PENDING', new Date('2026-11-23T12:00:00Z'));
+      await make('Rejected', 'REJECTED', new Date('2026-11-23T12:00:00Z'));
+
+      const list = await commentService.listApprovedComments(record.id);
+
+      expect(list.map((comment) => comment.id)).toEqual([newer.id, older.id]);
+      expect(list[0].authorName).toBe('Review T.');
+    } finally {
+      await prisma.product.delete({ where: { id: record.id } });
+    }
   });
 });

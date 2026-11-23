@@ -4,6 +4,7 @@
 //replace prisma with fake functions
 jest.mock('../src/config/prisma', () => ({
   $transaction: jest.fn(),
+  product: { findUnique: jest.fn() },
   comment: { findMany: jest.fn(), updateMany: jest.fn(), findUnique: jest.fn() },
 }));
 
@@ -12,6 +13,7 @@ const {
   createComment,
   listPendingComments,
   reviewComment,
+  listApprovedComments,
 } = require('../src/modules/reviews/comment.service');
 
 const createdAt = new Date('2026-11-23T10:00:00Z');
@@ -212,5 +214,60 @@ describe('review comment service', () => {
       status: 404,
       message: 'Comment not found',
     });
+  });
+});
+
+describe('approved comments service', () => {
+  //test 1: approved comments come newest first, with a short author name
+  it('lists approved comments newest first with a short author name', async () => {
+    prisma.product.findUnique.mockResolvedValue({ id: 5 });
+    prisma.comment.findMany.mockResolvedValue([
+      {
+        id: 4,
+        productId: 5,
+        content: 'Warm sound',
+        status: 'APPROVED',
+        createdAt,
+        user: { name: 'Ada', lastname: 'lovelace' },
+      },
+    ]);
+
+    const result = await listApprovedComments(5);
+
+    expect(result).toEqual([
+      { id: 4, productId: 5, content: 'Warm sound', createdAt, authorName: 'Ada L.' },
+    ]);
+    expect(prisma.comment.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { productId: 5, status: 'APPROVED' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      })
+    );
+  });
+
+  //test 2: the author's full last name and email are never sent
+  it('only asks for the name and last name of the author', async () => {
+    prisma.product.findUnique.mockResolvedValue({ id: 5 });
+    prisma.comment.findMany.mockResolvedValue([]);
+
+    await listApprovedComments(5);
+
+    expect(prisma.comment.findMany.mock.calls[0][0].include).toEqual({
+      user: { select: { name: true, lastname: true } },
+    });
+  });
+
+  //test 3: a record with no approved comments gives an empty list
+  it('returns an empty list when there are no approved comments', async () => {
+    prisma.product.findUnique.mockResolvedValue({ id: 5 });
+    prisma.comment.findMany.mockResolvedValue([]);
+    expect(await listApprovedComments(5)).toEqual([]);
+  });
+
+  //test 4: a record that does not exist gets 404
+  it('returns 404 for a record that does not exist', async () => {
+    prisma.product.findUnique.mockResolvedValue(null);
+    await expect(listApprovedComments(999)).rejects.toMatchObject({ status: 404 });
+    expect(prisma.comment.findMany).not.toHaveBeenCalled();
   });
 });

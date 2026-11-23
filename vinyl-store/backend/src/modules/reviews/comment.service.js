@@ -84,4 +84,35 @@ async function reviewComment(commentId, status) {
   return formatComment(comment);
 }
 
-module.exports = { createComment, formatComment, listPendingComments, reviewComment };
+//shows the author as first name and last initial, e.g. "Ada L.", so full names stay private
+function publicAuthorName(user) {
+  const initial = user.lastname ? ` ${user.lastname.charAt(0).toUpperCase()}.` : '';
+  return `${user.name}${initial}`;
+}
+
+//approved comments of one record for the product page, newest first (requirement 5)
+//pending and rejected comments are never shown here
+async function listApprovedComments(productId) {
+  await ensureProductExists(prisma, productId);
+
+  const comments = await prisma.comment.findMany({
+    where: { productId, status: 'APPROVED' },
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    include: { user: { select: { name: true, lastname: true } } },
+  });
+  return comments.map((comment) => ({
+    id: comment.id,
+    productId: comment.productId,
+    content: comment.content,
+    createdAt: comment.createdAt,
+    authorName: publicAuthorName(comment.user),
+  }));
+}
+
+module.exports = {
+  createComment,
+  formatComment,
+  listPendingComments,
+  reviewComment,
+  listApprovedComments,
+};

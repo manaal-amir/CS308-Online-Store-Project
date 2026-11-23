@@ -6,7 +6,10 @@ const request = require('supertest');
 const jwt = require('jsonwebtoken');
 
 //replace the review services with fake functions, so no database is needed
-jest.mock('../src/modules/reviews/comment.service', () => ({ createComment: jest.fn() }));
+jest.mock('../src/modules/reviews/comment.service', () => ({
+  createComment: jest.fn(),
+  listApprovedComments: jest.fn(),
+}));
 jest.mock('../src/modules/reviews/rating.service', () => ({
   rateProduct: jest.fn(),
   getMyReview: jest.fn(),
@@ -213,5 +216,38 @@ describe('GET /api/products/:id/reviews/me', () => {
     const res = await request(app).get('/api/products/0/reviews/me').set('Authorization', customer);
     expect(res.status).toBe(400);
     expect(ratingService.getMyReview).not.toHaveBeenCalled();
+  });
+});
+
+describe('GET /api/products/:id/comments', () => {
+  //test 1: anyone can read approved comments, no token needed
+  it('returns approved comments without a token', async () => {
+    const comments = [{ id: 4, content: 'Warm sound', authorName: 'Ada L.' }];
+    commentService.listApprovedComments.mockResolvedValue(comments);
+
+    const res = await request(app).get('/api/products/5/comments');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(comments);
+    expect(commentService.listApprovedComments).toHaveBeenCalledWith(5);
+  });
+
+  //test 2: the product id must be a valid number
+  it('rejects an invalid product id', async () => {
+    const res = await request(app).get('/api/products/abc/comments');
+    expect(res.status).toBe(400);
+    expect(commentService.listApprovedComments).not.toHaveBeenCalled();
+  });
+
+  //test 3: a missing record gives 404
+  it('passes a 404 from the service to the client', async () => {
+    const err = new Error('Product not found');
+    err.status = 404;
+    commentService.listApprovedComments.mockRejectedValue(err);
+
+    const res = await request(app).get('/api/products/999/comments');
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe('Product not found');
   });
 });
