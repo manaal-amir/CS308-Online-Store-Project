@@ -1,7 +1,8 @@
+import { authenticatedFetch } from "./authenticatedFetch.js";
 import { API_BASE_URL } from "./api.js";
 
 async function requestProducts(path, token, { method = "GET", body, signal } = {}) {
-  const response = await fetch(`${API_BASE_URL}/api/products${path}`, {
+  const response = await authenticatedFetch(`${API_BASE_URL}/api/products${path}`, token, {
     method,
     signal,
     headers: {

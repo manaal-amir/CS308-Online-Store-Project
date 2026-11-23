@@ -1,3 +1,4 @@
+import { authenticatedFetch } from "./authenticatedFetch.js";
 const API_BASE = (
   import.meta.env.VITE_API_BASE_URL || ""
 ).replace(/\/+$/, "");
@@ -10,7 +11,7 @@ export async function getDeliveries(token, { completed, signal } = {}) {
   let response;
 
   try {
-    response = await fetch(`${API_BASE}/api/deliveries${query}`, {
+    response = await authenticatedFetch(`${API_BASE}/api/deliveries${query}`, token, {
       signal,
       headers: { Authorization: `Bearer ${token}` },
     });

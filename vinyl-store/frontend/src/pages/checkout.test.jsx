@@ -9,6 +9,8 @@ import { getAuthenticatedCart } from "../services/cartApi.js";
 vi.mock("../utils/authSession.js", () => ({
   getAuthSession: vi.fn(),
   clearAuthSession: vi.fn(),
+  expireAuthSession: vi.fn(),
+  subscribeToAuthSession: vi.fn(() => () => {}),
 }));
 
 vi.mock("../services/cartApi.js", () => ({
