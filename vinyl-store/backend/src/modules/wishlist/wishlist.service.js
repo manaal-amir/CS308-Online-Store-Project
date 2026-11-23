@@ -1,9 +1,9 @@
-const prisma = require('../../config/prisma')
+const prisma = require('../../config/prisma');
 
 function httpError(status, message) {
-  const err = new Error(message)
-  err.status = status
-  return err
+  const err = new Error(message);
+  err.status = status;
+  return err;
 }
 
 async function getOrCreateWishList(userId) {
@@ -11,45 +11,45 @@ async function getOrCreateWishList(userId) {
     where: { userId },
     update: {},
     create: { userId },
-  })
+  });
 }
 
 async function addToWishList(userId, productId) {
-  const product = await prisma.product.findUnique({ where: { id: productId } })
+  const product = await prisma.product.findUnique({ where: { id: productId } });
   if (!product) {
-    throw httpError(404, 'Product not found')
+    throw httpError(404, 'Product not found');
   }
 
-  const wishList = await getOrCreateWishList(userId)
+  const wishList = await getOrCreateWishList(userId);
 
   try {
     await prisma.wishListItem.create({
       data: { wishListId: wishList.id, productId },
-    })
+    });
   } catch (err) {
     if (err.code === 'P2002') {
-      throw httpError(409, 'Product already in wish list')
+      throw httpError(409, 'Product already in wish list');
     }
-    throw err
+    throw err;
   }
 
-  return { productId, added: true }
+  return { productId, added: true };
 }
 
 async function removeFromWishList(userId, productId) {
-  const wishList = await prisma.wishList.findUnique({ where: { userId } })
+  const wishList = await prisma.wishList.findUnique({ where: { userId } });
   if (!wishList) {
-    throw httpError(404, 'Product not in wish list')
+    throw httpError(404, 'Product not in wish list');
   }
 
   const result = await prisma.wishListItem.deleteMany({
     where: { wishListId: wishList.id, productId },
-  })
+  });
   if (result.count === 0) {
-    throw httpError(404, 'Product not in wish list')
+    throw httpError(404, 'Product not in wish list');
   }
 
-  return { productId, removed: true }
+  return { productId, removed: true };
 }
 
 async function getWishList(userId) {
@@ -73,10 +73,10 @@ async function getWishList(userId) {
         orderBy: { createdAt: 'desc' },
       },
     },
-  })
+  });
 
   if (!wishList) {
-    return { items: [] }
+    return { items: [] };
   }
 
   return {
@@ -90,7 +90,7 @@ async function getWishList(userId) {
       stock: item.product.quantity,
       addedAt: item.createdAt,
     })),
-  }
+  };
 }
 
-module.exports = { addToWishList, removeFromWishList, getWishList }
+module.exports = { addToWishList, removeFromWishList, getWishList };
