@@ -28,7 +28,7 @@ async function buildInvoice(orderId, user) {
   const isOwner = order.userId === user.id;
   const isStaff = ['SALES_MANAGER', 'PRODUCT_MANAGER', 'SUPPORT_AGENT'].includes(user.role);
   if (!isOwner && !isStaff) {
-    const err = new Error('Order not found'); // 404, not 403 — don't leak existence
+    const err = new Error('Order not found');
     err.status = 404;
     throw err;
   }
@@ -59,4 +59,35 @@ async function buildInvoice(orderId, user) {
   };
 }
 
-module.exports = { buildInvoice, generateInvoiceNumber };
+async function listInvoices({ from, to } = {}) {
+  const where = {};
+  if (from || to) {
+    where.issuedAt = {};
+    if (from) where.issuedAt.gte = new Date(from);
+    if (to) where.issuedAt.lte = new Date(to);
+  }
+
+  const invoices = await prisma.invoice.findMany({
+    where,
+    orderBy: { issuedAt: 'desc' },
+    include: {
+      order: {
+        select: {
+          id: true,
+          user: { select: { name: true, lastname: true, email: true } },
+        },
+      },
+    },
+  });
+
+  return invoices.map((inv) => ({
+    id: inv.id,
+    invoiceNumber: inv.invoiceNumber,
+    totalAmount: Number(inv.totalAmount),
+    issuedAt: inv.issuedAt,
+    orderId: inv.orderId,
+    customer: inv.order.user,
+  }));
+}
+
+module.exports = { buildInvoice, generateInvoiceNumber, listInvoices };

@@ -1,10 +1,20 @@
 const express = require('express');
-const { authenticate } = require('../../middlewares/auth');
+const { authenticate, authorize } = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
-const { getInvoice } = require('./invoice.controller');
+const { getInvoice, list } = require('./invoice.controller');
 
 const router = express.Router();
 
+//list all invoices — product manager or sales manager (VS-47)
+//must come before /:orderId, otherwise "GET /" matches /:orderId with an empty id
+router.get(
+  '/',
+  authenticate,
+  authorize('PRODUCT_MANAGER', 'SALES_MANAGER'),
+  list
+);
+
+//single invoice — the owner or staff
 router.get(
   '/:orderId',
   authenticate,

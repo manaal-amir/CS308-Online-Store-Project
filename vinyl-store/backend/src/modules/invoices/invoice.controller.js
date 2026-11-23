@@ -1,4 +1,4 @@
-const { buildInvoice } = require('./invoice.service');
+const { buildInvoice, listInvoices } = require('./invoice.service');
 
 async function getInvoice(req, res, next) {
   try {
@@ -21,4 +21,14 @@ async function getInvoice(req, res, next) {
   }
 }
 
-module.exports = { getInvoice };
+async function list(req, res, next) {
+  try {
+    const { from, to } = req.query;
+    const invoices = await listInvoices({ from, to });
+    res.status(200).json(invoices);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getInvoice, list };
