@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { addProduct, getProductOptions } from "../services/manageProductsApi.js";
 import { getAuthSession } from "../utils/authSession.js";
+import CatalogueRecords from "../components/records/catalogueRecords.jsx";
 import "../styles/manageCatalogue.css";
 
 const textFields = [
@@ -15,9 +16,11 @@ function OptionField({ name, label, options, required = false }) {
   return (
     <label>
       {label}
-      <select name={name} required={required} defaultValue="">
-        <option value="">{required ? `Select ${label.toLowerCase()}` : "None"}</option>
-        {options.map(({ id, name }) => <option key={id} value={id}>{name}</option>)}
+      <select name={name} required={required} defaultValue="" disabled={!options}>
+        <option value="">
+          {!options ? "Options unavailable" : required ? `Select ${label.toLowerCase()}` : "None"}
+        </option>
+        {options?.map(({ id, name }) => <option key={id} value={id}>{name}</option>)}
       </select>
     </label>
   );
@@ -31,6 +34,7 @@ export default function ManageCatalogue() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [recordsVersion, setRecordsVersion] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -44,6 +48,7 @@ export default function ManageCatalogue() {
 
   async function submit(event) {
     event.preventDefault();
+    if (!options || saving) return;
     const form = event.currentTarget;
     const values = new FormData(form);
     const record = Object.fromEntries(
@@ -67,6 +72,7 @@ export default function ManageCatalogue() {
       await addProduct(token, record);
       form.reset();
       setSuccess(`Added ${record.name} to the catalogue.`);
+      setRecordsVersion((version) => version + 1);
     } catch (failure) {
       setError(failure.message);
     } finally {
@@ -80,7 +86,7 @@ export default function ManageCatalogue() {
       <h2>Add a record</h2>
       {optionsError && (
         <div role="alert">
-          <p>Could not load catalogue options. {optionsError}</p>
+          <p>Could not load categories, artists, and genres. You can enter record details, but saving requires a category from the server.</p>
           <button type="button" onClick={() => {
             setOptionsError("");
             setAttempt((value) => value + 1);
@@ -88,29 +94,28 @@ export default function ManageCatalogue() {
         </div>
       )}
       {!options && !optionsError && <p role="status">Loading catalogue options…</p>}
-      {options && (
-        <form onSubmit={submit} className="catalogue-form">
-          <fieldset disabled={saving}>
-            <legend>Record details</legend>
-            {textFields.map(([name, label]) => (
-              <label key={name}>{label}<input name={name} required /></label>
-            ))}
-            <OptionField name="categoryId" label="Category" options={options.categories} required />
-            <OptionField name="artistId" label="Artist" options={options.artists} />
-            <OptionField name="genreId" label="Genre" options={options.genres} />
-            <label>Stock quantity<input name="quantity" type="number" min="0" max="2147483647" step="1" required /></label>
-            <label>Selling price<input name="price" type="number" min="0" max="99999999.99" step="0.01" required /></label>
-            <label>Cost price (optional)<input name="cost" type="number" min="0" max="99999999.99" step="0.01" /></label>
-            <label>Cover image URL (optional)<input name="imageUrl" type="url" /></label>
-            <label className="catalogue-form-description">
-              Description<textarea name="description" rows="4" required />
-            </label>
-            <button type="submit">{saving ? "Adding record…" : "Add record"}</button>
-          </fieldset>
-          {error && <p role="alert">{error}</p>}
-          {success && <p role="status">{success}</p>}
-        </form>
-      )}
+      <form onSubmit={submit} className="catalogue-form">
+        <fieldset disabled={saving}>
+          <legend>Record details</legend>
+          {textFields.map(([name, label]) => (
+            <label key={name}>{label}<input name={name} required /></label>
+          ))}
+          <OptionField name="categoryId" label="Category" options={options?.categories} required />
+          <OptionField name="artistId" label="Artist" options={options?.artists} />
+          <OptionField name="genreId" label="Genre" options={options?.genres} />
+          <label>Stock quantity<input name="quantity" type="number" min="0" max="2147483647" step="1" required /></label>
+          <label>Selling price<input name="price" type="number" min="0" max="99999999.99" step="0.01" required /></label>
+          <label>Cost price (optional)<input name="cost" type="number" min="0" max="99999999.99" step="0.01" /></label>
+          <label>Cover image URL (optional)<input name="imageUrl" type="url" /></label>
+          <label className="catalogue-form-description">
+            Description<textarea name="description" rows="4" required />
+          </label>
+          <button type="submit" disabled={!options || saving}>{saving ? "Adding record…" : "Add record"}</button>
+        </fieldset>
+        {error && <p role="alert">{error}</p>}
+        {success && <p role="status">{success}</p>}
+      </form>
+      <CatalogueRecords token={token} version={recordsVersion} />
     </section>
   );
 }

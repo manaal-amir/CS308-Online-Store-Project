@@ -32,3 +32,7 @@ export async function getProductOptions(token, signal) {
 export function addProduct(token, body) {
   return requestProducts("", token, { method: "POST", body });
 }
+
+export function removeProduct(token, id) {
+  return requestProducts(`/${encodeURIComponent(id)}`, token, { method: "DELETE" });
+}
