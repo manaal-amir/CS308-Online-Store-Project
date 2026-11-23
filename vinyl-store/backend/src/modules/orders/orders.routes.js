@@ -24,13 +24,11 @@ const MAX_INT = 2147483647;
 //an order id in the url, e.g. /api/orders/42/cancel
 const orderIdParam = { params: { id: { required: true, type: 'integer', min: 1, max: MAX_INT } } };
 
-
 //history: the customer's own orders, newest first (requirement 3)
 router.get('/', customerOnly, historyController.listOrders);
 
 //one order with its items, a customer only sees their own orders (404 otherwise)
 router.get('/:id', customerOnly, validate(orderIdParam), historyController.getOrder);
-
 
 //the customer enters card details to buy (requirement 15)
 //they are checked here so the service only gets clean values

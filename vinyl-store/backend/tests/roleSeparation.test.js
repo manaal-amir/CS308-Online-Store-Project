@@ -11,15 +11,13 @@ function tokenFor(role) {
 
 describe('role separation', () => {
   it('unauthenticated request to checkout returns 401', async () => {
-    const res = await request(app)
-      .post('/api/orders')
-      .send({
-        cardNumber: '4242424242424242',
-        cardHolder: 'X',
-        expiryMonth: 12,
-        expiryYear: 2030,
-        cvv: '123',
-      });
+    const res = await request(app).post('/api/orders').send({
+      cardNumber: '4242424242424242',
+      cardHolder: 'X',
+      expiryMonth: 12,
+      expiryYear: 2030,
+      cvv: '123',
+    });
     expect(res.status).toBe(401);
   });
 
