@@ -9,6 +9,7 @@ const invoiceRoutes = require('./modules/invoices/invoice.routes');
 const orderRoutes = require('./modules/orders/orders.routes');
 const deliveryRoutes = require('./modules/deliveries/delivery.routes');
 const productReviewRoutes = require('./modules/reviews/reviews.routes');
+const commentRoutes = require('./modules/reviews/comments.routes');
 
 const app = express();
 
@@ -33,6 +34,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 //ratings and comments of one record, e.g. /api/products/5/comments
 app.use('/api/products/:id', productReviewRoutes);
+//comment approval, only for product managers
+app.use('/api/comments', commentRoutes);
 //cart routes, only for logged in customers
 app.use('/api/cart', cartRoutes);
 //order routes: checkout, cancel, history and status updates

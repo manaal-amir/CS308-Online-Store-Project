@@ -18,4 +18,25 @@ async function create(req, res, next) {
   }
 }
 
-module.exports = { create };
+//GET /api/comments/pending
+async function listPending(req, res, next) {
+  try {
+    const comments = await commentService.listPendingComments();
+    res.status(200).json(comments);
+  } catch (err) {
+    next(err);
+  }
+}
+
+//PATCH /api/comments/:id
+async function review(req, res, next) {
+  try {
+    //req.params.id is already a number and status is APPROVED or REJECTED, validate checked them
+    const comment = await commentService.reviewComment(req.params.id, req.body.status);
+    res.status(200).json(comment);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { create, listPending, review };
