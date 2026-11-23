@@ -1,4 +1,4 @@
-const prisma = require('../../config/prisma')
+const prisma = require('../../config/prisma');
 
 async function getMe(userId) {
   const user = await prisma.user.findUnique({
@@ -11,13 +11,13 @@ async function getMe(userId) {
       homeAddress: true,
       role: true,
     },
-  })
+  });
   if (!user) {
-    const err = new Error('User not found')
-    err.status = 404
-    throw err
+    const err = new Error('User not found');
+    err.status = 404;
+    throw err;
   }
-  return user
+  return user;
 }
 
-module.exports = { getMe }
+module.exports = { getMe };
