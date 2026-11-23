@@ -9,13 +9,17 @@ afterEach(() => {
 
 test("loads record options and submits the record without an empty optional cost", async () => {
   saveAuthSession({ token: "manager-token", user: { role: "PRODUCT_MANAGER" } });
-  const fetchMock = vi.fn()
-    .mockResolvedValueOnce(Response.json({
-      categories: [{ id: 12, name: "Vinyl" }],
-      artists: [],
-      genres: [],
-    }))
-    .mockResolvedValueOnce(Response.json({ id: 23 }, { status: 201 }));
+  const fetchMock = vi.fn(async (url, request) => {
+    if (url.endsWith("/options")) {
+      return Response.json({
+        categories: [{ id: 12, name: "Vinyl" }],
+        artists: [],
+        genres: [],
+      });
+    }
+    if (request.method === "POST") return Response.json({ id: 23 }, { status: 201 });
+    return Response.json([]);
+  });
   vi.stubGlobal("fetch", fetchMock);
   render(<ManageCatalogue />);
 
@@ -36,8 +40,8 @@ test("loads record options and submits the record without an empty optional cost
   fireEvent.click(screen.getByRole("button", { name: "Add record" }));
 
   await screen.findByText("Added Example record to the catalogue.");
-  expect(fetchMock.mock.calls[0][0]).toMatch(/\/api\/products\/options$/);
-  const [url, request] = fetchMock.mock.calls[1];
+  expect(fetchMock.mock.calls.some(([url]) => url.endsWith("/api/products/options"))).toBe(true);
+  const [url, request] = fetchMock.mock.calls.find(([, request]) => request.method === "POST");
   expect(url).toMatch(/\/api\/products$/);
   expect(request.method).toBe("POST");
   expect(request.headers.Authorization).toBe("Bearer manager-token");
