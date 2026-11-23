@@ -8,6 +8,7 @@ import ProductDetail from "./pages/productDetail.jsx";
 import Orders from "./pages/orders.jsx";
 import OrderDetail from "./pages/orderDetail.jsx";
 import Deliveries from "./pages/deliveries.jsx";
+import StaffPanel from "./pages/staffPanel.jsx";
 import Checkout from "./pages/checkout.jsx";
 import Invoice from "./pages/invoice.jsx";
 
@@ -32,8 +33,12 @@ function App() {
     return <ProductDetail id={productMatch[1]} />;
   }
 
-  if (path === "/manager/deliveries") {
-    return <Deliveries />;
+  if (path === "/manager" || path.startsWith("/manager/")) {
+    return (
+      <StaffPanel path={path}>
+        {path === "/manager/deliveries" && <Deliveries embedded />}
+      </StaffPanel>
+    );
   }
 
   const orderMatch = path.match(/^\/orders\/(\d+)\/?$/);

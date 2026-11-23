@@ -663,14 +663,10 @@ function AccountShell({
   user,
   onLogout,
 }) {
-  // Product managers also get a link to the delivery list.
-  const sections =
-    user?.role === "PRODUCT_MANAGER"
-      ? [
-          ...profileSections,
-          { href: "/manager/deliveries", label: "Delivery list", icon: "▦" },
-        ]
-      : profileSections;
+  const isStaff = ["PRODUCT_MANAGER", "SALES_MANAGER", "SUPPORT_AGENT"].includes(user?.role);
+  const sections = isStaff
+    ? [...profileSections, { href: "/manager", label: "Staff panel", icon: "▦" }]
+    : profileSections;
 
   const accountLabel =
     user?.email?.split("@")[0] || "Your account";

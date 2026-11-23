@@ -107,7 +107,7 @@ export function DeliveryTable({ deliveries, token, onChanged, onStale }) {
   );
 }
 
-export default function Deliveries() {
+export default function Deliveries({ embedded = false }) {
   const [session] = useState(getAuthSession);
   const isManager = session?.user?.role === "PRODUCT_MANAGER";
   const [filter, setFilter] = useState("all");
@@ -165,10 +165,8 @@ export default function Deliveries() {
     return () => controller.abort();
   }, [session, isManager, filter, reloadKey]);
 
-  return (
-    <div className="vinyl-site orders-site">
-      <NavBar />
-      <main className="orders-page orders-page-wide">
+  const content = (
+      <>
         <h1>Delivery list</h1>
         {status === "forbidden" && (
           <p className="orders-state" role="alert">
@@ -215,7 +213,15 @@ export default function Deliveries() {
             onStale={() => setReloadKey((key) => key + 1)}
           />
         )}
-      </main>
+      </>
+  );
+
+  if (embedded) return content;
+
+  return (
+    <div className="vinyl-site orders-site">
+      <NavBar />
+      <main className="orders-page orders-page-wide">{content}</main>
       <Footer />
     </div>
   );
