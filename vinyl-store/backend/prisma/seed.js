@@ -964,7 +964,54 @@ async function main() {
       },
     });
   }
+  // ----- A DELIVERED order for the customer (so ratings and comments can be tested) -----
+  // Ayesha's ratings/comments tests and Salma's review UI need a delivered order.
+  // The customer bought L.A. Woman and received it.
+  const customer = await prisma.user.findUnique({
+    where: { email: "customer@vinylstore.test" },
+  });
+  const laWoman = await prisma.product.findUnique({
+    where: { serialNumber: "VS-LP-007" },
+  });
 
+  if (customer && laWoman) {
+    const existingDelivered = await prisma.order.findFirst({
+      where: { userId: customer.id, status: "DELIVERED" },
+    });
+
+    if (!existingDelivered) {
+      await prisma.order.create({
+        data: {
+          userId: customer.id,
+          status: "DELIVERED",
+          totalPrice: laWoman.price,
+          deliveryAddress: "Test Street 1, Istanbul",
+          cardLast4: "4242",
+          items: {
+            create: [
+              {
+                productId: laWoman.id,
+                quantity: 1,
+                unitPrice: laWoman.price,
+                unitCost: Number(laWoman.price) / 2,
+              },
+            ],
+          },
+          payment: {
+            create: {
+              amount: laWoman.price,
+              status: "SUCCESSFUL",
+            },
+          },
+        },
+      });
+      console.log("Seeded a DELIVERED order for the test customer (L.A. Woman)");
+    } else {
+      console.log("Delivered order already exists for the test customer");
+    }
+  } else {
+    console.log("Skipped delivered order seed — customer or L.A. Woman not found");
+  }
   console.log("Done!");
 }
 
