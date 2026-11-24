@@ -13,6 +13,7 @@ const commentRoutes = require('./modules/reviews/comments.routes');
 const userRoutes = require('./modules/users/user.routes');
 const wishlistRoutes = require('./modules/wishlist/wishlist.routes');
 
+
 const app = express();
 
 app.use(
@@ -54,5 +55,9 @@ app.use(notFound);
 
 // Error handler must be last
 app.use(errorHandler);
+
+
+
+app.use('/api/invoices', invoiceRoutes);
 
 module.exports = app;
