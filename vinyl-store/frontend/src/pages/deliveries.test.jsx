@@ -55,12 +55,27 @@ describe("DeliveryTable", () => {
   test("shows the columns the delivery list needs", () => {
     render(<DeliveryTable deliveries={[row()]} token="t" onChanged={() => {}} />);
 
-    for (const heading of ["Delivery ID", "Customer ID", "Product", "Qty", "Total price", "Delivery address", "Status"]) {
+    for (const heading of ["Delivery ID", "Customer ID", "Product ID", "Product", "Qty", "Total price", "Delivery address", "Status"]) {
       expect(screen.getByRole("columnheader", { name: heading })).toBeTruthy();
     }
     expect(screen.getByText("#4")).toBeTruthy();
     expect(screen.getByText("Kind of Blue")).toBeTruthy();
     expect(screen.getByText("Test Street 1, Istanbul")).toBeTruthy();
+  });
+
+  test("shows each row's product ID in the Product ID column (SCRUM-177)", () => {
+    const rows = [
+      row({ deliveryId: 4, productId: 37, productName: "Kind of Blue" }),
+      row({ deliveryId: 4, productId: 52, productName: "Blue Train" }),
+    ];
+    render(<DeliveryTable deliveries={rows} token="t" onChanged={() => {}} />);
+
+    const headers = screen.getAllByRole("columnheader").map((cell) => cell.textContent);
+    const column = headers.indexOf("Product ID");
+    expect(column).toBeGreaterThan(-1);
+
+    const bodyRows = screen.getAllByRole("row").slice(1);
+    expect(bodyRows.map((tr) => tr.cells[column].textContent)).toEqual(["37", "52"]);
   });
 });
 
