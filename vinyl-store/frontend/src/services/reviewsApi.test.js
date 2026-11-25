@@ -1,6 +1,6 @@
-// Tests for the rating helpers (SCRUM-57 / SCRUM-162).
+// Tests for the rating and comment helpers (SCRUM-57, SCRUM-58, SCRUM-60).
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { getMyReview, rateProduct } from "./reviewsApi.js";
+import { getApprovedComments, getMyReview, postComment, rateProduct } from "./reviewsApi.js";
 
 function response(data, ok = true, status = 200) {
   return { ok, status, json: async () => data };
@@ -95,5 +95,52 @@ describe("errors", () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(abort));
 
     await expect(getMyReview("tok", 7)).rejects.toMatchObject({ name: "AbortError" });
+  });
+});
+
+describe("getApprovedComments", () => {
+  test("reads the approved comments without needing a token", async () => {
+    const comments = [{ id: 1, content: "Great", authorName: "Ada L.", createdAt: "2026-11-20T10:00:00.000Z" }];
+    const fetchMock = stubFetch(response(comments));
+
+    await expect(getApprovedComments(7)).resolves.toEqual(comments);
+
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/products/7/comments");
+    expect(options.method).toBe("GET");
+    expect(options.headers.Authorization).toBeUndefined();
+  });
+
+  test("passes the abort signal", async () => {
+    const fetchMock = stubFetch(response([]));
+    const controller = new AbortController();
+
+    await getApprovedComments(7, controller.signal);
+
+    expect(fetchMock.mock.calls[0][1].signal).toBe(controller.signal);
+  });
+});
+
+describe("postComment", () => {
+  test("posts the comment text with the token", async () => {
+    const created = { id: 3, productId: 7, content: "Lovely", status: "PENDING" };
+    const fetchMock = stubFetch(response(created, true, 201));
+
+    await expect(postComment("tok", 7, "Lovely")).resolves.toEqual(created);
+
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/products/7/comments");
+    expect(options.method).toBe("POST");
+    expect(options.headers.Authorization).toBe("Bearer tok");
+    expect(JSON.parse(options.body)).toEqual({ content: "Lovely" });
+  });
+
+  test("keeps the status when a comment is already waiting for approval", async () => {
+    stubFetch(response({ error: "You already have a comment waiting for approval on this record" }, false, 409));
+
+    await expect(postComment("tok", 7, "Again")).rejects.toMatchObject({
+      message: "You already have a comment waiting for approval on this record",
+      status: 409,
+    });
   });
 });
