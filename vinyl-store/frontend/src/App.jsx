@@ -12,6 +12,7 @@ import OrderDetail from "./pages/orderDetail.jsx";
 import Deliveries from "./pages/deliveries.jsx";
 import StaffPanel from "./pages/staffPanel.jsx";
 import ManageCatalogue from "./pages/manageCatalogue.jsx";
+import ManagerInvoices from "./pages/managerInvoices.jsx";
 import Checkout from "./pages/checkout.jsx";
 import Invoice from "./pages/invoice.jsx";
 
@@ -49,6 +50,7 @@ function App() {
       <StaffPanel path={path}>
         {path === "/manager/deliveries" && <Deliveries embedded />}
         {path === "/manager/catalogue" && <ManageCatalogue />}
+        {path === "/manager/invoices" && <ManagerInvoices />}
       </StaffPanel>
     );
   }

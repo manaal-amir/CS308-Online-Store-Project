@@ -11,6 +11,7 @@ const staffRoles = {
     overviewTab,
     { href: "/manager/deliveries", label: "Deliveries" },
     { href: "/manager/catalogue", label: "Catalogue" },
+    { href: "/manager/invoices", label: "Invoices" },
   ] },
   SALES_MANAGER: { title: "Sales management", tabs: [overviewTab] },
   SUPPORT_AGENT: { title: "Customer support", tabs: [overviewTab] },
