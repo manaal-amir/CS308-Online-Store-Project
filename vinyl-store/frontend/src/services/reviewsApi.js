@@ -56,3 +56,20 @@ export function rateProduct(token, productId, value) {
     body: { value },
   });
 }
+
+// GET /api/products/:id/comments: approved comments only, newest first. Public, so
+// no token is needed. Each one is { id, content, createdAt, authorName } with the
+// author shown as first name and last initial.
+export function getApprovedComments(productId, signal) {
+  return requestReviews(productId, "/comments", undefined, { signal });
+}
+
+// POST /api/products/:id/comments (customers who received the record): the comment
+// is saved as pending and stays hidden until a product manager approves it.
+// A second comment while one is pending is refused with 409.
+export function postComment(token, productId, content) {
+  return requestReviews(productId, "/comments", token, {
+    method: "POST",
+    body: { content },
+  });
+}
