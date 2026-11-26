@@ -234,7 +234,7 @@ export default function Account() {
     } catch (error) {
       setNotice(
         error.message ||
-          "Registration failed. Please try again."
+        "Registration failed. Please try again."
       );
     }
   }
@@ -296,7 +296,7 @@ export default function Account() {
     } catch (error) {
       setNotice(
         error.message ||
-          "Sign in failed. Please try again."
+        "Sign in failed. Please try again."
       );
     } finally {
       setIsSubmitting(false);
@@ -382,6 +382,7 @@ export default function Account() {
           onLogout={handleLogout}
         >
           <SettingsPage
+            user={session.user}
             notice={notice}
             setNotice={setNotice}
           />
@@ -449,9 +450,8 @@ function AuthPage({
 
   return (
     <div
-      className={`auth-page${
-        isSignIn ? " is-sign-in" : " is-create-account"
-      }`}
+      className={`auth-page${isSignIn ? " is-sign-in" : " is-create-account"
+        }`}
     >
       <p className="account-breadcrumb">
         <a href="/">Home</a>
@@ -907,8 +907,8 @@ function OverviewPage({
           value={
             user?.createdAt
               ? new Date(
-                  user.createdAt
-                ).getFullYear()
+                user.createdAt
+              ).getFullYear()
               : "—"
           }
           detail="Your account"
@@ -1140,7 +1140,14 @@ function WishlistCard({ record, onRemove }) {
   );
 }
 
-function SettingsPage({ notice, setNotice }) {
+function SettingsPage({ user, notice, setNotice }) {
+  const initials =
+    [user?.name?.[0], user?.lastname?.[0]]
+      .filter(Boolean)
+      .join("")
+      .toUpperCase() ||
+    user?.email?.charAt(0).toUpperCase() ||
+    "?";
   const [preferences, setPreferences] = useState({
     updates: true,
     offers: true,
@@ -1182,7 +1189,7 @@ function SettingsPage({ notice, setNotice }) {
         <section className="settings-panel">
           <div className="settings-section-heading">
             <span className="account-avatar small">
-              JL
+              {initials}
             </span>
             <div>
               <h2>Personal information</h2>
@@ -1198,7 +1205,7 @@ function SettingsPage({ notice, setNotice }) {
               First name
               <input
                 name="firstName"
-                defaultValue="Jamie"
+                defaultValue={user?.name ?? ""}
               />
             </label>
 
@@ -1206,7 +1213,7 @@ function SettingsPage({ notice, setNotice }) {
               Last name
               <input
                 name="lastName"
-                defaultValue="Laurent"
+                defaultValue={user?.lastname ?? ""}
               />
             </label>
 
@@ -1215,15 +1222,15 @@ function SettingsPage({ notice, setNotice }) {
               <input
                 name="email"
                 type="email"
-                defaultValue="jamie.laurent@email.com"
+                defaultValue={user?.email ?? ""}
               />
             </label>
 
             <label>
-              Location
+              Home address
               <input
-                name="location"
-                defaultValue="Brooklyn, New York"
+                name="homeAddress"
+                defaultValue={user?.homeAddress ?? ""}
               />
             </label>
 
@@ -1231,7 +1238,7 @@ function SettingsPage({ notice, setNotice }) {
               A little about you
               <textarea
                 name="bio"
-                defaultValue="Sunday mornings, a fresh coffee, and a record with a story to tell."
+                defaultValue=""
                 rows="3"
               />
             </label>
