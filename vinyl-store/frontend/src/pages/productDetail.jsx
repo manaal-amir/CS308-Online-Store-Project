@@ -19,6 +19,7 @@ import {
 import "../styles/home.css";
 import "../styles/catalog.css";
 import "../styles/product.css";
+import AverageRating from "../components/reviews/averageRating.jsx";
 
 export function ProductDetails({ product }) {
   const [cartError, setCartError] = useState("");
@@ -108,6 +109,10 @@ export function ProductDetails({ product }) {
         <p className="product-eyebrow">{genre || category || "Vinyl"}</p>
         <h1>{product.name}</h1>
         {artist && <p className="product-artist">{artist}</p>}
+        <AverageRating
+          averageRating={product.averageRating}
+          ratingCount={product.ratingCount}
+        />
         {(product.distributor || product.releaseYear) && (
           <p className="product-meta">
             {[product.distributor, product.releaseYear].filter(Boolean).join(" · ")}
