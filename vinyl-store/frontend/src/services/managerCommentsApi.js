@@ -71,4 +71,3 @@ export function reviewPendingComment(token, commentId, status) {
     status,
   });
 }
-
