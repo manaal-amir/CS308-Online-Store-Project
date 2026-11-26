@@ -29,6 +29,7 @@ import Footer from "../components/layout/footer.jsx";
 import heroImage from "../assets/hero/hero.png";
 import "../styles/home.css";
 import "../styles/account.css";
+import { getUserProfile } from "../services/userProfileApi.js";
 
 //only allow known pages as returnTo, so the link can't send users to another site
 const ALLOWED_RETURN_PATHS = [
@@ -234,7 +235,7 @@ export default function Account() {
     } catch (error) {
       setNotice(
         error.message ||
-          "Registration failed. Please try again."
+        "Registration failed. Please try again."
       );
     }
   }
@@ -296,7 +297,7 @@ export default function Account() {
     } catch (error) {
       setNotice(
         error.message ||
-          "Sign in failed. Please try again."
+        "Sign in failed. Please try again."
       );
     } finally {
       setIsSubmitting(false);
@@ -449,9 +450,8 @@ function AuthPage({
 
   return (
     <div
-      className={`auth-page${
-        isSignIn ? " is-sign-in" : " is-create-account"
-      }`}
+      className={`auth-page${isSignIn ? " is-sign-in" : " is-create-account"
+        }`}
     >
       <p className="account-breadcrumb">
         <a href="/">Home</a>
@@ -853,6 +853,37 @@ function OverviewPage({
 }) {
   const orderSummary = useOrderSummary(token, user?.role);
 
+  const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState("");
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    setProfile(null);
+    setProfileError("");
+    setProfileLoading(true);
+
+    getUserProfile(token, controller.signal)
+      .then((data) => {
+        if (!controller.signal.aborted) {
+          setProfile(data);
+        }
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted && error.name !== "AbortError") {
+          setProfileError(error.message);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setProfileLoading(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [token]);
+
   return (
     <>
       <header className="account-heading">
@@ -907,8 +938,8 @@ function OverviewPage({
           value={
             user?.createdAt
               ? new Date(
-                  user.createdAt
-                ).getFullYear()
+                user.createdAt
+              ).getFullYear()
               : "—"
           }
           detail="Your account"
@@ -931,29 +962,51 @@ function OverviewPage({
             </a>
           </div>
 
+
           <dl>
-            {user?.email ? (
+            {profileLoading && (
+              <div>
+                <dt>Status</dt>
+                <dd>Loading your profile...</dd>
+              </div>
+            )}
+
+            {profileError && (
+              <div>
+                <dt>Status</dt>
+                <dd role="alert">
+                  Could not load your profile: {profileError}
+                </dd>
+              </div>
+            )}
+
+            {profile && (
               <>
                 <div>
                   <dt>Account ID</dt>
-                  <dd>{user.id}</dd>
+                  <dd>{profile.id}</dd>
+                </div>
+                <div>
+                  <dt>First name</dt>
+                  <dd>{profile.name || "—"}</dd>
+                </div>
+                <div>
+                  <dt>Last name</dt>
+                  <dd>{profile.lastname || "—"}</dd>
                 </div>
                 <div>
                   <dt>Email</dt>
-                  <dd>{user.email}</dd>
+                  <dd>{profile.email}</dd>
+                </div>
+                <div>
+                  <dt>Home address</dt>
+                  <dd>{profile.homeAddress || "—"}</dd>
                 </div>
                 <div>
                   <dt>Role</dt>
-                  <dd>{user.role}</dd>
+                  <dd>{profile.role || "—"}</dd>
                 </div>
               </>
-            ) : (
-              <div>
-                <dt>Status</dt>
-                <dd>
-                  Sign in to view your account.
-                </dd>
-              </div>
             )}
           </dl>
         </section>
