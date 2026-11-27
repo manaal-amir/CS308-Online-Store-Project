@@ -31,7 +31,7 @@ import "../styles/home.css";
 import "../styles/account.css";
 
 //only allow known pages as returnTo, so the link can't send users to another site
-const ALLOWED_RETURN_PATHS = [/^\/checkout$/, /^\/invoice\/\d+$/];
+const ALLOWED_RETURN_PATHS = [/^\/checkout$/, /^\/invoice\/\d+$/, /^\/manager(?:\/deliveries)?$/];
 
 function getSafeReturnTo() {
   const returnTo = new URLSearchParams(window.location.search).get("returnTo") || "";
@@ -270,7 +270,7 @@ export default function Account() {
         }
       }
 
-      //guests sent here from checkout or an invoice go back to it, everyone else goes to the profile
+      // Return to the requested page when it is allowed.
       const returnTo = getSafeReturnTo();
       if (returnTo) {
         window.location.assign(returnTo);
