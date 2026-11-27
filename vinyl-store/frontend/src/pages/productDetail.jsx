@@ -6,6 +6,9 @@ import { getProductById } from "../services/api.js";
 import useCart from "../hooks/useCart.js";
 import CartIcon from "../components/icons/cartIcon.jsx";
 import CartToast from "../components/feedback/cartToast.jsx";
+import RatingSection from "../components/reviews/ratingSection.jsx";
+import CommentForm from "../components/reviews/commentForm.jsx";
+import ApprovedComments from "../components/reviews/commentList.jsx";
 import useCartToast from "../hooks/useCartToast.js";
 import {
   displayValue,
@@ -216,7 +219,14 @@ export default function ProductDetail({ id }) {
             Could not load this record. {errorMessage}
           </p>
         )}
-        {status === "ready" && <ProductDetails product={product} />}
+        {status === "ready" && (
+          <>
+            <ProductDetails product={product} />
+            <RatingSection productId={product.id} />
+            <CommentForm productId={product.id} />
+            <ApprovedComments productId={product.id} />
+          </>
+        )}
       </main>
       <Footer />
     </div>

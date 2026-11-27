@@ -6,7 +6,7 @@ import { StatusBadge } from "./orders.jsx";
 import { getDeliveries } from "../services/deliveriesApi.js";
 import { updateOrderStatus } from "../services/ordersApi.js";
 import { nextStatus, statusLabel } from "../utils/orderStatus.js";
-import { clearAuthSession, getAuthSession } from "../utils/authSession.js";
+import { expireAuthSession, getAuthSession } from "../utils/authSession.js";
 import { formatPrice } from "../utils/productFormat.js";
 import "../styles/home.css";
 import "../styles/orders.css";
@@ -75,6 +75,7 @@ export function DeliveryTable({ deliveries, token, onChanged, onStale }) {
           <tr>
             <th scope="col">Delivery ID</th>
             <th scope="col">Customer ID</th>
+            <th scope="col">Product ID</th>
             <th scope="col">Product</th>
             <th scope="col">Qty</th>
             <th scope="col">Total price</th>
@@ -87,6 +88,7 @@ export function DeliveryTable({ deliveries, token, onChanged, onStale }) {
             <tr key={`${row.deliveryId}-${row.productId}`}>
               <td>#{row.deliveryId}</td>
               <td>{row.customerId}</td>
+              <td>{row.productId}</td>
               <td>{row.productName}</td>
               <td>{row.quantity}</td>
               <td>{formatPrice(row.totalPrice)}</td>
@@ -150,8 +152,7 @@ export default function Deliveries({ embedded = false }) {
       .catch((error) => {
         if (error.name === "AbortError") return;
         if (error.status === 401) {
-          clearAuthSession();
-          window.location.replace("/sign-in");
+          if (expireAuthSession(session.token)) window.location.replace("/sign-in");
           return;
         }
         if (error.status === 403) {

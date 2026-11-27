@@ -43,6 +43,9 @@ router.get(
   ratingController.getMine
 );
 
+//anyone can read the approved comments of a record, no login needed
+router.get('/comments', validate({ params: productIdParam }), commentController.listApproved);
+
 //only customers who received the record can comment, product managers review comments elsewhere
 router.post(
   '/comments',

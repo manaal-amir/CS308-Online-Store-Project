@@ -1,0 +1,86 @@
+.catalogue-form fieldset {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 20px;
+  border: 1px solid var(--vinyl-border);
+  border-radius: 12px;
+}
+
+.catalogue-form label {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+
+.catalogue-form input,
+.catalogue-form select,
+.catalogue-form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--vinyl-border);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.catalogue-form-description {
+  grid-column: 1 / -1;
+}
+
+.catalogue-form button {
+  justify-self: start;
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--vinyl-burgundy);
+  color: white;
+  font: inherit;
+}
+
+.catalogue-records {
+  margin-top: 32px;
+}
+
+.catalogue-records li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--vinyl-border);
+}
+
+.catalogue-records small {
+  display: block;
+  color: var(--vinyl-muted);
+}
+
+.catalogue-records button {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--vinyl-burgundy);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--vinyl-burgundy);
+  font: inherit;
+}
+
+.catalogue-record-actions,
+.catalogue-stock-form,
+.catalogue-stock-form label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.catalogue-stock-form input {
+  width: 7rem;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 1px solid var(--vinyl-border);
+  border-radius: 8px;
+  font: inherit;
+}

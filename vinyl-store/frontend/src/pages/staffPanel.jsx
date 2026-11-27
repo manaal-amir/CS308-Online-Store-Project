@@ -10,6 +10,7 @@ const staffRoles = {
   PRODUCT_MANAGER: { title: "Product management", tabs: [
     overviewTab,
     { href: "/manager/deliveries", label: "Deliveries" },
+    { href: "/manager/catalogue", label: "Catalogue" },
   ] },
   SALES_MANAGER: { title: "Sales management", tabs: [overviewTab] },
   SUPPORT_AGENT: { title: "Customer support", tabs: [overviewTab] },
@@ -49,7 +50,7 @@ export default function StaffPanel({ path, children }) {
             {currentTab === overviewTab && (
               <p className="orders-state">
                 {panel.tabs.length > 1
-                  ? "Open Deliveries to review orders and update delivery status."
+                  ? "Choose a tab to manage the store."
                   : "No additional panels are available for your role yet."}
               </p>
             )}

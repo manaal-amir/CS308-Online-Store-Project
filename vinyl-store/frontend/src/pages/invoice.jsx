@@ -3,7 +3,7 @@ import NavBar from "../components/layout/navBar.jsx";
 import Footer from "../components/layout/footer.jsx";
 import { getInvoice } from "../services/invoicesApi.js";
 import { getOrder } from "../services/ordersApi.js";
-import { clearAuthSession, getAuthSession } from "../utils/authSession.js";
+import { expireAuthSession, getAuthSession } from "../utils/authSession.js";
 import { statusLabel } from "../utils/orderStatus.js";
 import { formatPrice } from "../utils/productFormat.js";
 
@@ -139,8 +139,7 @@ export default function Invoice({ orderId }) {
 
         //an expired login gets a 401, so sign in again and come back here
         if (error.status === 401) {
-          clearAuthSession();
-          window.location.replace(`/sign-in?returnTo=${returnTo}`);
+          if (expireAuthSession(session.token)) window.location.replace(`/sign-in?returnTo=${returnTo}`);
           return;
         }
 

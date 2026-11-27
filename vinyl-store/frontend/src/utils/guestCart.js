@@ -4,6 +4,8 @@
 //from the products api when the cart is shown, because prices can change
 
 //the key the cart is saved under in localStorage
+import { authenticatedFetch } from "../services/authenticatedFetch.js";
+
 const STORAGE_KEY = 'vinyl-store-guest-cart';
 
 //the event sent on window whenever this tab changes the cart
@@ -205,7 +207,7 @@ async function sendMerge(token, apiBaseUrl) {
 
   let response;
   try {
-    response = await fetch(`${apiBaseUrl}/api/cart/merge`, {
+    response = await authenticatedFetch(`${apiBaseUrl}/api/cart/merge`, token, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

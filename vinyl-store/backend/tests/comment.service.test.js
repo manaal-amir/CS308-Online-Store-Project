@@ -2,10 +2,19 @@
 //the real database test (comment.db.test.js) checks the delivered order rule and double clicks for real
 
 //replace prisma with fake functions
-jest.mock('../src/config/prisma', () => ({ $transaction: jest.fn() }));
+jest.mock('../src/config/prisma', () => ({
+  $transaction: jest.fn(),
+  product: { findUnique: jest.fn() },
+  comment: { findMany: jest.fn(), updateMany: jest.fn(), findUnique: jest.fn() },
+}));
 
 const prisma = require('../src/config/prisma');
-const { createComment } = require('../src/modules/reviews/comment.service');
+const {
+  createComment,
+  listPendingComments,
+  reviewComment,
+  listApprovedComments,
+} = require('../src/modules/reviews/comment.service');
 
 const createdAt = new Date('2026-11-23T10:00:00Z');
 
@@ -103,5 +112,162 @@ describe('create comment service', () => {
       select: { id: true },
     });
     expect(tx.comment.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('pending comments service', () => {
+  //test 1: pending comments come oldest first, with the record name and the author
+  it('lists pending comments oldest first with the record and author', async () => {
+    prisma.comment.findMany.mockResolvedValue([
+      {
+        id: 3,
+        productId: 5,
+        content: 'Warm sound',
+        status: 'PENDING',
+        createdAt,
+        product: { id: 5, name: 'Blue Train' },
+        user: { id: 7, name: 'Ada', lastname: 'Lovelace' },
+      },
+    ]);
+
+    const result = await listPendingComments();
+
+    expect(result).toEqual([
+      {
+        id: 3,
+        productId: 5,
+        content: 'Warm sound',
+        status: 'PENDING',
+        createdAt,
+        productName: 'Blue Train',
+        author: { id: 7, name: 'Ada Lovelace' },
+      },
+    ]);
+    expect(prisma.comment.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { status: 'PENDING' },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      })
+    );
+  });
+
+  //test 2: no pending comments gives an empty list
+  it('returns an empty list when nothing is pending', async () => {
+    prisma.comment.findMany.mockResolvedValue([]);
+    expect(await listPendingComments()).toEqual([]);
+  });
+});
+
+describe('review comment service', () => {
+  //test 1: a pending comment is approved and returned with its new status
+  it('approves a pending comment', async () => {
+    prisma.comment.updateMany.mockResolvedValue({ count: 1 });
+    prisma.comment.findUnique.mockResolvedValue({
+      id: 3,
+      productId: 5,
+      content: 'Warm sound',
+      status: 'APPROVED',
+      createdAt,
+    });
+
+    const result = await reviewComment(3, 'APPROVED');
+
+    expect(result).toEqual({
+      id: 3,
+      productId: 5,
+      content: 'Warm sound',
+      status: 'APPROVED',
+      createdAt,
+    });
+  });
+
+  //test 2: the status only changes while the comment is pending, in one step
+  it('changes the status only while the comment is pending', async () => {
+    prisma.comment.updateMany.mockResolvedValue({ count: 1 });
+    prisma.comment.findUnique.mockResolvedValue({ id: 3, status: 'REJECTED' });
+
+    await reviewComment(3, 'REJECTED');
+
+    expect(prisma.comment.updateMany).toHaveBeenCalledWith({
+      where: { id: 3, status: 'PENDING' },
+      data: { status: 'REJECTED' },
+    });
+  });
+
+  //test 3: a comment that was already reviewed gets 409 with its current status
+  it('rejects a comment that was already reviewed', async () => {
+    prisma.comment.updateMany.mockResolvedValue({ count: 0 });
+    prisma.comment.findUnique.mockResolvedValue({ id: 3, status: 'APPROVED' });
+
+    await expect(reviewComment(3, 'REJECTED')).rejects.toMatchObject({
+      status: 409,
+      message: 'This comment was already reviewed, it is APPROVED',
+    });
+  });
+
+  //test 4: a comment that does not exist gets 404
+  it('returns 404 for a comment that does not exist', async () => {
+    prisma.comment.updateMany.mockResolvedValue({ count: 0 });
+    prisma.comment.findUnique.mockResolvedValue(null);
+
+    await expect(reviewComment(999, 'APPROVED')).rejects.toMatchObject({
+      status: 404,
+      message: 'Comment not found',
+    });
+  });
+});
+
+describe('approved comments service', () => {
+  //test 1: approved comments come newest first, with a short author name
+  it('lists approved comments newest first with a short author name', async () => {
+    prisma.product.findUnique.mockResolvedValue({ id: 5 });
+    prisma.comment.findMany.mockResolvedValue([
+      {
+        id: 4,
+        productId: 5,
+        content: 'Warm sound',
+        status: 'APPROVED',
+        createdAt,
+        user: { name: 'Ada', lastname: 'lovelace' },
+      },
+    ]);
+
+    const result = await listApprovedComments(5);
+
+    expect(result).toEqual([
+      { id: 4, productId: 5, content: 'Warm sound', createdAt, authorName: 'Ada L.' },
+    ]);
+    expect(prisma.comment.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { productId: 5, status: 'APPROVED' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      })
+    );
+  });
+
+  //test 2: the author's full last name and email are never sent
+  it('only asks for the name and last name of the author', async () => {
+    prisma.product.findUnique.mockResolvedValue({ id: 5 });
+    prisma.comment.findMany.mockResolvedValue([]);
+
+    await listApprovedComments(5);
+
+    expect(prisma.comment.findMany.mock.calls[0][0].include).toEqual({
+      user: { select: { name: true, lastname: true } },
+    });
+  });
+
+  //test 3: a record with no approved comments gives an empty list
+  it('returns an empty list when there are no approved comments', async () => {
+    prisma.product.findUnique.mockResolvedValue({ id: 5 });
+    prisma.comment.findMany.mockResolvedValue([]);
+    expect(await listApprovedComments(5)).toEqual([]);
+  });
+
+  //test 4: a record that does not exist gets 404
+  it('returns 404 for a record that does not exist', async () => {
+    prisma.product.findUnique.mockResolvedValue(null);
+    await expect(listApprovedComments(999)).rejects.toMatchObject({ status: 404 });
+    expect(prisma.comment.findMany).not.toHaveBeenCalled();
   });
 });

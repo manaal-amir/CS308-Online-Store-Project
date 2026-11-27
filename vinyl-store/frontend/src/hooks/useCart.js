@@ -10,7 +10,8 @@ import {
 
 import {
   getAuthSession,
-  clearAuthSession,
+  expireAuthSession,
+  subscribeToAuthSession,
 } from "../utils/authSession.js";
 
 import {
@@ -97,12 +98,12 @@ export default function useCart() {
       return result.items;
     } catch (requestError) {
       if (requestError.status === 401) {
-        clearAuthSession();
-        setSession(null);
-        setItems([]);
-        setError(
-          "Your session has expired. Please sign in again."
-        );
+        expireAuthSession(currentSession.token);
+        if (!getAuthSession()) {
+          setSession(null);
+          setItems(getGuestCart());
+          setError("Your session has expired. Please sign in again.");
+        }
       } else {
         setError(requestError.message);
       }
@@ -130,16 +131,9 @@ export default function useCart() {
       }
     });
 
-    const onSessionChange = (event) => {
-      if (
-        event.key === "vinyl-store-auth-session" ||
-        event.key === null
-      ) {
-        load();
-      }
-    };
-
-    window.addEventListener("storage", onSessionChange);
+    const unsubscribeAuth = subscribeToAuthSession((event) => {
+      if (!event || event.detail.expired) load();
+    });
     window.addEventListener(CART_CHANGED_EVENT, load);
 
     load();
@@ -148,7 +142,7 @@ export default function useCart() {
       active = false;
       unsubscribe();
 
-      window.removeEventListener("storage", onSessionChange);
+      unsubscribeAuth();
       window.removeEventListener(CART_CHANGED_EVENT, load);
     };
   }, [refresh]);
