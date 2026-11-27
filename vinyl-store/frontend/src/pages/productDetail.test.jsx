@@ -180,6 +180,92 @@ describe("ProductDetails", () => {
     expect(getGuestCart()).toEqual([]);
   });
 
+
+  test("wishlist button adds, restores, and removes a product through the API", async () => {
+    saveAuthSession({
+      token: "customer-token",
+      user: { id: 8, role: "CUSTOMER" },
+    });
+
+    let isSaved = false;
+
+    const okResponse = (data, status = 200) => ({
+      ok: true,
+      status,
+      json: async () => data,
+    });
+
+    const fetchMock = vi.fn(async (url, options = {}) => {
+      const method = options.method || "GET";
+
+      if (url === "/api/cart" && method === "GET") {
+        return okResponse({ items: [], itemCount: 0, total: 0 });
+      }
+
+      if (url === "/api/wishlist" && method === "GET") {
+        return okResponse({
+          items: isSaved ? [{ productId: product.id }] : [],
+        });
+      }
+
+      if (url === `/api/wishlist/${product.id}` && method === "POST") {
+        isSaved = true;
+        return okResponse({ productId: product.id, added: true }, 201);
+      }
+
+      if (url === `/api/wishlist/${product.id}` && method === "DELETE") {
+        isSaved = false;
+        return okResponse({ productId: product.id, removed: true });
+      }
+
+      throw new Error(`Unexpected request: ${method} ${url}`);
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { unmount } = renderComponent(
+      <ProductDetails product={product} />
+    );
+
+    const addHeart = await screen.findByRole("button", {
+      name: "Add L.A. Woman to wishlist",
+    });
+
+    await waitFor(() => expect(addHeart.disabled).toBe(false));
+
+    fireEvent.click(addHeart);
+
+    expect(await screen.findByRole("button", {
+      name: "Remove L.A. Woman from wishlist",
+    })).toBeTruthy();
+
+    expect(fetchMock.mock.calls.some(
+      ([url, options]) =>
+        url === "/api/wishlist/7" && options.method === "POST"
+    )).toBe(true);
+
+    unmount();
+
+    renderComponent(<ProductDetails product={product} />);
+
+    const removeHeart = await screen.findByRole("button", {
+      name: "Remove L.A. Woman from wishlist",
+    });
+
+    await waitFor(() => expect(removeHeart.disabled).toBe(false));
+
+    fireEvent.click(removeHeart);
+
+    expect(await screen.findByRole("button", {
+      name: "Add L.A. Woman to wishlist",
+    })).toBeTruthy();
+
+    expect(fetchMock.mock.calls.some(
+      ([url, options]) =>
+        url === "/api/wishlist/7" && options.method === "DELETE"
+    )).toBe(true);
+  });
+
   test("authenticated Add to Cart uses the account API and displays the returned cart quantity", async () => {
     saveAuthSession({
       token: "customer-token",
@@ -195,22 +281,49 @@ describe("ProductDetails", () => {
       stock: product.quantity,
       lineTotal: product.price,
     };
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({ items: [], itemCount: 0, total: 0 }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({ items: [backendItem], itemCount: 1, total: product.price }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({ items: [backendItem], itemCount: 1, total: product.price }),
-      });
+
+    let itemAdded = false;
+
+    const fetchMock = vi.fn(async (url, options = {}) => {
+      const method = options.method || "GET";
+
+      if (url === "/api/wishlist" && method === "GET") {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ items: [] }),
+        };
+      }
+
+      if (url === "/api/cart" && method === "GET") {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            items: itemAdded ? [backendItem] : [],
+            itemCount: itemAdded ? 1 : 0,
+            total: itemAdded ? product.price : 0,
+          }),
+        };
+      }
+
+      if (url === "/api/cart/items" && method === "POST") {
+        itemAdded = true;
+
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            items: [backendItem],
+            itemCount: 1,
+            total: product.price,
+          }),
+        };
+      }
+
+      throw new Error(`Unexpected request: ${method} ${url}`);
+    });
+
     vi.stubGlobal("fetch", fetchMock);
     renderComponent(<ProductDetails product={product} />);
 
@@ -219,16 +332,33 @@ describe("ProductDetails", () => {
     fireEvent.click(addButton);
 
     expect(await screen.findByText("Cart quantity: 1")).toBeTruthy();
-    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+
+    expect(
+      fetchMock.mock.calls
+        .map(([url]) => url)
+        .filter((url) => url.startsWith("/api/cart"))
+    ).toEqual([
       "/api/cart",
       "/api/cart/items",
       "/api/cart",
       "/api/cart",
     ]);
-    expect(fetchMock.mock.calls[1][1]).toEqual(expect.objectContaining({
-      method: "POST",
-      body: JSON.stringify({ productId: product.id, quantity: 1 }),
-    }));
+
+    const addRequest = fetchMock.mock.calls.find(
+      ([url, options]) =>
+        url === "/api/cart/items" && options?.method === "POST"
+    );
+
+    expect(addRequest?.[1]).toEqual(
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          productId: product.id,
+          quantity: 1,
+        }),
+      })
+    );
+
     expect(getGuestCart()).toEqual([]);
   });
 
