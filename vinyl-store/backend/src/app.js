@@ -56,8 +56,4 @@ app.use(notFound);
 // Error handler must be last
 app.use(errorHandler);
 
-
-
-app.use('/api/invoices', invoiceRoutes);
-
 module.exports = app;
