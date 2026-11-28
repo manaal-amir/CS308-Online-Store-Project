@@ -4,6 +4,8 @@ import NavBar from "../components/layout/navBar.jsx";
 import Footer from "../components/layout/footer.jsx";
 import { getProductById } from "../services/api.js";
 import useCart from "../hooks/useCart.js";
+import useWishlist from "../hooks/useWishlist.js";
+import { getAuthSession } from "../utils/authSession.js";
 import CartIcon from "../components/icons/cartIcon.jsx";
 import CartToast from "../components/feedback/cartToast.jsx";
 import RatingSection from "../components/reviews/ratingSection.jsx";
@@ -33,6 +35,25 @@ export function ProductDetails({ product }) {
     error: cartLoadError,
   } = useCart();
   const { notification, showCartToast, dismissCartToast } = useCartToast();
+
+  const wishlist = useWishlist();
+
+  const isSaved = wishlist.savedIds.includes(String(product.id));
+
+  function handleToggleWishlist() {
+    const session = getAuthSession();
+
+    if (!session?.token || session.user?.id == null) {
+      window.location.href = "/sign-in";
+      return;
+    }
+
+    if (wishlist.loading || wishlist.savingId !== null) {
+      return;
+    }
+
+    wishlist.toggleWishlist(product.id);
+  }
 
   const artist = relationName(product.artist);
   const genre = relationName(product.genre);
@@ -120,6 +141,29 @@ export function ProductDetails({ product }) {
         )}
 
         <p className="product-price">{formatPrice(product.price)}</p>
+
+        <button
+          type="button"
+          className={`product-wishlist-button${isSaved ? " is-saved" : ""}`}
+          aria-label={
+            isSaved
+              ? `Remove ${product.name} from wishlist`
+              : `Add ${product.name} to wishlist`
+          }
+          aria-pressed={isSaved}
+          onClick={handleToggleWishlist}
+          disabled={wishlist.loading || wishlist.savingId !== null}
+        >
+          <span aria-hidden="true">{isSaved ? "♥" : "♡"}</span>
+          {isSaved ? "Saved to Wishlist" : "Add to Wishlist"}
+        </button>
+
+        {wishlist.error && (
+          <p className="product-feedback is-error" role="alert">
+            {wishlist.error}
+          </p>
+        )}
+
         <p className={`product-stock${inStock ? "" : " is-out"}`} role="status">
           {available === 0 && inStock ? "Stock limit reached" : stockLabel(product.quantity)}
         </p>

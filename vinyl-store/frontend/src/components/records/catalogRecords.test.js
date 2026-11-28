@@ -17,7 +17,7 @@ import { catalogPreview } from "../../data/catalogPreview.js";
 import { addCatalogProductToCart } from "../../utils/catalogCart.js";
 import { getGuestCart, resetGuestCartForTests } from "../../utils/guestCart.js";
 import { saveAuthSession } from "../../utils/authSession.js";
-import { getLocalWishlistIds } from "../../utils/localWishlist.js";
+
 
 const product = {
   id: 17,
@@ -105,22 +105,49 @@ describe("catalogRecords preview cart blocking", () => {
       stock: product.quantity,
       lineTotal: product.price,
     };
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({ items: [], itemCount: 0, total: 0 }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({ items: [cartItem], itemCount: 1, total: product.price }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({ items: [cartItem], itemCount: 1, total: product.price }),
-      });
+
+    let itemAdded = false;
+
+    const fetchMock = vi.fn(async (url, options = {}) => {
+      const method = options.method || "GET";
+
+      if (url === "/api/wishlist" && method === "GET") {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ items: [] }),
+        };
+      }
+
+      if (url === "/api/cart" && method === "GET") {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            items: itemAdded ? [cartItem] : [],
+            itemCount: itemAdded ? 1 : 0,
+            total: itemAdded ? product.price : 0,
+          }),
+        };
+      }
+
+      if (url === "/api/cart/items" && method === "POST") {
+        itemAdded = true;
+
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            items: [cartItem],
+            itemCount: 1,
+            total: product.price,
+          }),
+        };
+      }
+
+      throw new Error(`Unexpected request: ${method} ${url}`);
+    });
+
     vi.stubGlobal("fetch", fetchMock);
     const onCartAdded = vi.fn();
     render(React.createElement(CatalogCard, { product, onCartAdded }));
@@ -130,7 +157,11 @@ describe("catalogRecords preview cart blocking", () => {
     fireEvent.click(addButton);
 
     await waitFor(() => expect(onCartAdded).toHaveBeenCalledWith(cartItem));
-    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+    expect(
+      fetchMock.mock.calls
+        .map(([url]) => url)
+        .filter((url) => url.startsWith("/api/cart"))
+    ).toEqual([
       "/api/cart",
       "/api/cart/items",
       "/api/cart",
@@ -165,49 +196,123 @@ describe("catalogRecords preview cart blocking", () => {
   });
 });
 
+
 describe("catalog wishlist controls", () => {
-  test("heart state follows saved wishlist changes and survives remounting", () => {
+  test("adds and removes wishlist items through the API and restores saved state", async () => {
     saveAuthSession({
       token: "customer-token",
       user: { id: 8, role: "CUSTOMER" },
     }, true);
 
-    const cards = React.createElement(
-      React.Fragment,
-      null,
-      React.createElement(CatalogCard, { product }),
-      React.createElement(CatalogCard, { product }),
+    let isSaved = false;
+
+    const fetchMock = vi.fn(async (url, options = {}) => {
+      const method = options.method || "GET";
+
+      if (url.startsWith("/api/products")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => [product],
+        };
+      }
+
+      if (url === "/api/cart") {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            items: [],
+            itemCount: 0,
+            total: 0,
+          }),
+        };
+      }
+
+      if (url === "/api/wishlist" && method === "GET") {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            items: isSaved ? [{ productId: 17 }] : [],
+          }),
+        };
+      }
+
+      if (url === "/api/wishlist/17" && method === "POST") {
+        isSaved = true;
+        return {
+          ok: true,
+          status: 201,
+          json: async () => ({ productId: 17, added: true }),
+        };
+      }
+
+      if (url === "/api/wishlist/17" && method === "DELETE") {
+        isSaved = false;
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ productId: 17, removed: true }),
+        };
+      }
+
+      throw new Error(`Unexpected request: ${method} ${url}`);
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { unmount } = render(
+      React.createElement(CatalogRecords)
     );
-    const { unmount } = render(cards);
-    const hearts = screen.getAllByRole("button", {
+
+    const addHeart = await screen.findByRole("button", {
       name: "Add Test Record to wishlist",
     });
 
-    fireEvent.click(hearts[0]);
+    await waitFor(() => expect(addHeart.disabled).toBe(false));
 
-    const savedHearts = screen.getAllByRole("button", {
+    fireEvent.click(addHeart);
+
+    expect(await screen.findByRole("button", {
       name: "Remove Test Record from wishlist",
-    });
-    expect(savedHearts).toHaveLength(2);
-    expect(savedHearts.every((heart) => heart.getAttribute("aria-pressed") === "true"))
-      .toBe(true);
-    expect(getLocalWishlistIds()).toEqual(["17"]);
+    })).toBeTruthy();
+
+    expect(fetchMock.mock.calls.some(
+      ([url, options]) =>
+        url === "/api/wishlist/17" && options.method === "POST"
+    )).toBe(true);
 
     unmount();
-    render(cards);
-    expect(screen.getAllByRole("button", {
-      name: "Remove Test Record from wishlist",
-    })).toHaveLength(2);
 
-    fireEvent.click(screen.getAllByRole("button", {
+    render(React.createElement(CatalogRecords));
+
+    const removeHeart = await screen.findByRole("button", {
       name: "Remove Test Record from wishlist",
-    })[0]);
-    expect(getLocalWishlistIds()).toEqual([]);
-    expect(screen.getAllByRole("button", {
+    });
+
+    await waitFor(() => expect(removeHeart.disabled).toBe(false));
+
+    fireEvent.click(removeHeart);
+
+    expect(await screen.findByRole("button", {
       name: "Add Test Record to wishlist",
-    })).toHaveLength(2);
+    })).toBeTruthy();
+
+    expect(fetchMock.mock.calls.some(
+      ([url, options]) =>
+        url === "/api/wishlist/17" && options.method === "DELETE"
+    )).toBe(true);
+
+    const wishlistLoads = fetchMock.mock.calls.filter(
+      ([url, options]) =>
+        url === "/api/wishlist" && (options.method || "GET") === "GET"
+    );
+
+    expect(wishlistLoads).toHaveLength(2);
   });
 });
+
 
 describe("catalogRecords stock handling", () => {
   test("keeps a negative-stock search result visible with an out-of-stock label and disabled button", async () => {
