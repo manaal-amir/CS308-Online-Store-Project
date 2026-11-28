@@ -101,10 +101,8 @@ describe('role separation', () => {
       .set('Authorization', `Bearer ${tokenFor('PRODUCT_MANAGER')}`);
     expect(res.status).toBe(403);
   });
-});
 
-  // TODO: enable once the invoice PR merges to main
-  it.skip('GET /api/invoices rejects a customer with 403', async () => {
+  it('GET /api/invoices rejects a customer with 403', async () => {
     const res = await request(app)
       .get('/api/invoices')
       .set('Authorization', `Bearer ${tokenFor('CUSTOMER')}`);
@@ -127,3 +125,4 @@ describe('role separation', () => {
     const res = await request(app).get('/api/users/me');
     expect(res.status).toBe(401);
   });
+});
