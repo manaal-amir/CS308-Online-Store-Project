@@ -3,7 +3,11 @@ jest.mock('../src/config/prisma', () => ({
     findMany: jest.fn(),
     findUnique: jest.fn(),
     update: jest.fn(),
+    create: jest.fn(),
   },
+  category: { findMany: jest.fn() },
+  artist: { findMany: jest.fn() },
+  genre: { findMany: jest.fn() },
   rating: { groupBy: jest.fn(), aggregate: jest.fn() },
 }));
 const prisma = require('../src/config/prisma');
@@ -366,6 +370,182 @@ describe('product service', () => {
       prisma.product.update.mockRejectedValue(dbError);
 
       await expect(productService.updateStock(17, 5)).rejects.toBe(dbError);
+    });
+  });
+
+  describe('getProductOptions', () => {
+    //test 1: three lists of { id, name }, each sorted by name, in the shape the form expects
+    it('returns categories, artists and genres as id and name', async () => {
+      prisma.category.findMany.mockResolvedValue([{ id: 1, name: 'Vinyl' }]);
+      prisma.artist.findMany.mockResolvedValue([{ id: 2, name: 'Miles Davis' }]);
+      prisma.genre.findMany.mockResolvedValue([{ id: 3, name: 'Jazz' }]);
+
+      expect(await productService.getProductOptions()).toEqual({
+        categories: [{ id: 1, name: 'Vinyl' }],
+        artists: [{ id: 2, name: 'Miles Davis' }],
+        genres: [{ id: 3, name: 'Jazz' }],
+      });
+      const query = { select: { id: true, name: true }, orderBy: { name: 'asc' } };
+      expect(prisma.category.findMany).toHaveBeenCalledWith(query);
+      expect(prisma.artist.findMany).toHaveBeenCalledWith(query);
+      expect(prisma.genre.findMany).toHaveBeenCalledWith(query);
+    });
+  });
+
+  describe('createProduct', () => {
+    //the required fields the form always sends
+    const required = {
+      name: 'Kind of Blue',
+      model: 'Reissue',
+      serialNumber: 'VS-LP-100',
+      distributor: 'Blue Note',
+      warrantyStatus: '1 year',
+      description: 'A jazz record',
+      quantity: 5,
+      price: 19.99,
+      categoryId: 1,
+    };
+
+    //what prisma gives back for the new record, price is a Decimal there
+    function saved() {
+      return {
+        id: 50,
+        ...required,
+        price: { toString: () => '19.99' },
+        imageUrl: null,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        category: { name: 'Vinyl' },
+        artist: null,
+        genre: null,
+      };
+    }
+
+    //the data that reached prisma.product.create
+    function createdData() {
+      return prisma.product.create.mock.calls[0][0].data;
+    }
+
+    //test 1: every allowed field is passed on, with the public select
+    it('saves only the allowed fields', async () => {
+      prisma.product.create.mockResolvedValue(saved());
+      const optional = {
+        artistId: 2,
+        genreId: 3,
+        cost: 8.5,
+        imageUrl: 'https://example.com/cover.jpg',
+      };
+
+      await productService.createProduct({ ...required, ...optional });
+
+      expect(prisma.product.create).toHaveBeenCalledWith({
+        data: { ...required, ...optional },
+        select: SELECT,
+      });
+    });
+
+    //test 2: no cost means null, checkout then uses half the price (requirement 11)
+    it('saves null when no cost is given', async () => {
+      prisma.product.create.mockResolvedValue(saved());
+
+      await productService.createProduct(required);
+
+      expect(createdData().cost).toBeNull();
+    });
+
+    //test 3: 0 is a real cost, not a missing one
+    it('keeps a cost of 0', async () => {
+      prisma.product.create.mockResolvedValue(saved());
+
+      await productService.createProduct({ ...required, cost: 0 });
+
+      expect(createdData().cost).toBe(0);
+    });
+
+    //test 4: the validator lets empty optional values through, they are saved as null
+    it.each([
+      ['empty text', ''],
+      ['null', null],
+    ])('saves null for optional fields that are %s', async (_label, empty) => {
+      prisma.product.create.mockResolvedValue(saved());
+
+      await productService.createProduct({
+        ...required,
+        artistId: empty,
+        genreId: empty,
+        cost: empty,
+        imageUrl: empty,
+      });
+
+      expect(createdData()).toMatchObject({
+        artistId: null,
+        genreId: null,
+        cost: null,
+        imageUrl: null,
+      });
+    });
+
+    //test 5: fields that are not on the form can never be set by the request
+    it('ignores extra fields like id, createdAt and originalPrice', async () => {
+      prisma.product.create.mockResolvedValue(saved());
+
+      await productService.createProduct({
+        ...required,
+        id: 999,
+        createdAt: '2000-01-01',
+        originalPrice: 50,
+        isAdmin: true,
+      });
+
+      const data = createdData();
+      expect(data).not.toHaveProperty('id');
+      expect(data).not.toHaveProperty('createdAt');
+      expect(data).not.toHaveProperty('originalPrice');
+      expect(data).not.toHaveProperty('isAdmin');
+    });
+
+    //test 6: the new record comes back like the GET routes return it, without cost
+    it('returns the public record with a number price and no ratings', async () => {
+      prisma.product.create.mockResolvedValue(saved());
+
+      const product = await productService.createProduct({ ...required, cost: 8.5 });
+
+      expect(product.price).toBe(19.99);
+      expect(product.averageRating).toBeNull();
+      expect(product.ratingCount).toBe(0);
+      expect(product).not.toHaveProperty('cost');
+      expect(prisma.product.create.mock.calls[0][0].select).not.toHaveProperty('cost');
+    });
+
+    //test 7: serialNumber is unique, a second record with the same one is a conflict
+    it('turns a duplicate serial number into a 409', async () => {
+      prisma.product.create.mockRejectedValue(
+        Object.assign(new Error('unique'), { code: 'P2002' })
+      );
+
+      await expect(productService.createProduct(required)).rejects.toMatchObject({
+        status: 409,
+        message: 'A record with this serial number already exists',
+      });
+    });
+
+    //test 8: a category, artist or genre id that does not exist is the client's mistake
+    it('turns a missing category, artist or genre into a 400', async () => {
+      prisma.product.create.mockRejectedValue(
+        Object.assign(new Error('foreign key'), { code: 'P2003' })
+      );
+
+      await expect(productService.createProduct(required)).rejects.toMatchObject({
+        status: 400,
+        message: 'Category, artist or genre not found',
+      });
+    });
+
+    //test 9: any other database error is passed on unchanged
+    it('rethrows other database errors', async () => {
+      const dbError = new Error('Database unavailable');
+      prisma.product.create.mockRejectedValue(dbError);
+
+      await expect(productService.createProduct(required)).rejects.toBe(dbError);
     });
   });
 });

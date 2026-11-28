@@ -39,6 +39,16 @@ function checkField(name, value, rules) {
     return `${name} must be at most ${rules.max}`;
   }
 
+  //at most this many digits after the decimal point, e.g. maxDecimals: 2 for prices
+  //rounding with toFixed and comparing avoids float problems, so 19.99 passes and 1.999 fails
+  if (
+    rules.maxDecimals !== undefined &&
+    typeof value === 'number' &&
+    Number(value.toFixed(rules.maxDecimals)) !== value
+  ) {
+    return `${name} must have at most ${rules.maxDecimals} decimal places`;
+  }
+
   //value must be one of a fixed list, e.g. sort must be 'price' or 'popularity'
   if (rules.enum && !rules.enum.includes(value)) {
     return `${name} must be one of: ${rules.enum.join(', ')}`;

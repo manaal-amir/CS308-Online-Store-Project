@@ -5,6 +5,8 @@ jest.mock('../src/modules/products/product.service', () => ({
   getProducts: jest.fn(),
   getProductById: jest.fn(),
   updateStock: jest.fn(),
+  getProductOptions: jest.fn(),
+  createProduct: jest.fn(),
 }));
 const productService = require('../src/modules/products/product.service');
 const app = require('../src/app');
@@ -194,6 +196,180 @@ describe('product routes', () => {
 
       expect(response.status).toBe(404);
       expect(response.body).toEqual({ error: 'Product not found' });
+    });
+  });
+
+  describe('GET /api/products/options', () => {
+    function getOptions(auth = productManager) {
+      const req = request(app).get('/api/products/options');
+      if (auth) req.set('Authorization', auth);
+      return req;
+    }
+
+    //test 1: a product manager gets the dropdown lists, and "options" is not read as an id
+    it('returns the form options to a product manager', async () => {
+      const options = {
+        categories: [{ id: 1, name: 'Vinyl' }],
+        artists: [{ id: 2, name: 'Miles Davis' }],
+        genres: [{ id: 3, name: 'Jazz' }],
+      };
+      productService.getProductOptions.mockResolvedValue(options);
+
+      const response = await getOptions();
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual(options);
+      expect(productService.getProductById).not.toHaveBeenCalled();
+    });
+
+    //test 2: no token means 401
+    it('returns 401 without a token', async () => {
+      const response = await getOptions(null);
+
+      expect(response.status).toBe(401);
+      expect(productService.getProductOptions).not.toHaveBeenCalled();
+    });
+
+    //test 3: every other role is forbidden
+    it.each(['CUSTOMER', 'SALES_MANAGER', 'SUPPORT_AGENT'])('returns 403 for %s', async (role) => {
+      const response = await getOptions(`Bearer ${tokenFor(role)}`);
+
+      expect(response.status).toBe(403);
+      expect(response.body).toEqual({ error: 'Forbidden' });
+      expect(productService.getProductOptions).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('POST /api/products', () => {
+    //a valid record like the catalogue form sends it, optional fields left out
+    const record = {
+      name: 'Kind of Blue',
+      model: 'Reissue',
+      serialNumber: 'VS-LP-100',
+      distributor: 'Blue Note',
+      warrantyStatus: '1 year',
+      description: 'A jazz record',
+      quantity: 5,
+      price: 19.99,
+      categoryId: 1,
+    };
+
+    function postRecord(body, auth = productManager) {
+      const req = request(app).post('/api/products');
+      if (auth) req.set('Authorization', auth);
+      return req.send(body);
+    }
+
+    //record without the given field
+    function without(field) {
+      const copy = { ...record };
+      delete copy[field];
+      return copy;
+    }
+
+    //test 1: a product manager adds a record and gets it back with 201
+    it('lets a product manager add a record', async () => {
+      const created = { id: 50, ...record, averageRating: null, ratingCount: 0 };
+      productService.createProduct.mockResolvedValue(created);
+
+      const response = await postRecord(record);
+
+      expect(response.status).toBe(201);
+      expect(response.body).toEqual(created);
+      expect(productService.createProduct).toHaveBeenCalledWith(record);
+    });
+
+    //test 2: no token means 401
+    it('returns 401 without a token', async () => {
+      const response = await postRecord(record, null);
+
+      expect(response.status).toBe(401);
+      expect(productService.createProduct).not.toHaveBeenCalled();
+    });
+
+    //test 3: every other role is forbidden
+    it.each(['CUSTOMER', 'SALES_MANAGER', 'SUPPORT_AGENT'])('returns 403 for %s', async (role) => {
+      const response = await postRecord(record, `Bearer ${tokenFor(role)}`);
+
+      expect(response.status).toBe(403);
+      expect(response.body).toEqual({ error: 'Forbidden' });
+      expect(productService.createProduct).not.toHaveBeenCalled();
+    });
+
+    //test 4: every required field must be there
+    it.each(Object.keys(record))('returns 400 when %s is missing', async (field) => {
+      const response = await postRecord(without(field));
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe(`${field} is required`);
+      expect(productService.createProduct).not.toHaveBeenCalled();
+    });
+
+    //test 5: values the validator must reject, the service is never called for them
+    it.each([
+      ['name is only spaces', { name: '   ' }, 'name is required'],
+      ['quantity is negative', { quantity: -1 }, 'quantity must be at least 0'],
+      ['quantity is a decimal', { quantity: 2.5 }, 'quantity must be an integer'],
+      ['price is 0', { price: 0 }, 'price must be at least 0.01'],
+      ['price has 3 decimals', { price: 1.999 }, 'price must have at most 2 decimal places'],
+      ['price is too large', { price: 100000000 }, 'price must be at most 99999999.99'],
+      ['cost is negative', { cost: -1 }, 'cost must be at least 0'],
+      ['cost has 3 decimals', { cost: 0.005 }, 'cost must have at most 2 decimal places'],
+      ['categoryId is 0', { categoryId: 0 }, 'categoryId must be at least 1'],
+      ['categoryId is text', { categoryId: 'abc' }, 'categoryId must be an integer'],
+      ['artistId is a decimal', { artistId: 1.5 }, 'artistId must be an integer'],
+      [
+        'imageUrl is a javascript: link',
+        { imageUrl: 'javascript:alert(1)' },
+        'imageUrl must start with http:// or https://',
+      ],
+    ])('returns 400 when %s', async (_label, change, message) => {
+      const response = await postRecord({ ...record, ...change });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({ error: message });
+      expect(productService.createProduct).not.toHaveBeenCalled();
+    });
+
+    //test 6: prices with up to 2 decimals pass, even ones floats cannot store exactly
+    it.each([19.99, 0.01, 0.1, 99999999.99])('accepts a price of %s', async (price) => {
+      productService.createProduct.mockResolvedValue({ id: 50, ...record, price });
+
+      const response = await postRecord({ ...record, price });
+
+      expect(response.status).toBe(201);
+      expect(productService.createProduct.mock.calls[0][0].price).toBe(price);
+    });
+
+    //test 7: a cost of 0 and every optional field are accepted
+    it('accepts a cost of 0 and all optional fields', async () => {
+      const full = {
+        ...record,
+        cost: 0,
+        artistId: 2,
+        genreId: 3,
+        imageUrl: 'https://example.com/cover.jpg',
+      };
+      productService.createProduct.mockResolvedValue({ id: 50, ...record });
+
+      const response = await postRecord(full);
+
+      expect(response.status).toBe(201);
+      expect(productService.createProduct).toHaveBeenCalledWith(full);
+    });
+
+    //test 8: the service's 409 reaches the client in the shared error format
+    it('returns 409 for a duplicate serial number', async () => {
+      productService.createProduct.mockRejectedValue(
+        Object.assign(new Error('A record with this serial number already exists'), {
+          status: 409,
+        })
+      );
+
+      const response = await postRecord(record);
+
+      expect(response.status).toBe(409);
+      expect(response.body).toEqual({ error: 'A record with this serial number already exists' });
     });
   });
 });
