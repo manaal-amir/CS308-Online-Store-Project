@@ -101,4 +101,28 @@ describe('role separation', () => {
       .set('Authorization', `Bearer ${tokenFor('PRODUCT_MANAGER')}`);
     expect(res.status).toBe(403);
   });
+
+  it('GET /api/invoices rejects a customer with 403', async () => {
+    const res = await request(app)
+      .get('/api/invoices')
+      .set('Authorization', `Bearer ${tokenFor('CUSTOMER')}`);
+    expect(res.status).toBe(403);
+  });
+
+  it('GET /api/wishlist rejects a product manager with 403', async () => {
+    const res = await request(app)
+      .get('/api/wishlist')
+      .set('Authorization', `Bearer ${tokenFor('PRODUCT_MANAGER')}`);
+    expect(res.status).toBe(403);
+  });
+
+  it('POST /api/wishlist/:productId rejects a guest with 401', async () => {
+    const res = await request(app).post('/api/wishlist/7');
+    expect(res.status).toBe(401);
+  });
+
+  it('GET /api/users/me rejects a guest with 401', async () => {
+    const res = await request(app).get('/api/users/me');
+    expect(res.status).toBe(401);
+  });
 });
