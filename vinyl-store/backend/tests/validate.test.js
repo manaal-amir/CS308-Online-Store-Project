@@ -172,4 +172,15 @@ describe('validate middleware', () => {
     );
     expect(run(schema, { body: { password: 'a'.repeat(72) } })).toBeUndefined();
   });
+
+  //test 21: maxDecimals rejects extra decimal places without float mistakes like 19.99
+  it('limits the number of decimal places', () => {
+    const schema = { body: { price: { type: 'number', maxDecimals: 2 } } };
+    for (const price of [19.99, 0.1, 0.07, 5, 99999999.99]) {
+      expect(run(schema, { body: { price } })).toBeUndefined();
+    }
+    expect(run(schema, { body: { price: 1.999 } }).message).toBe(
+      'price must have at most 2 decimal places'
+    );
+  });
 });

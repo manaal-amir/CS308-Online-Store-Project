@@ -36,4 +36,24 @@ async function updateStock(req, res, next) {
   }
 }
 
-module.exports = { getProducts, getProductById, updateStock };
+//GET /api/products/options
+async function getProductOptions(req, res, next) {
+  try {
+    const options = await productService.getProductOptions();
+    res.status(200).json(options);
+  } catch (err) {
+    next(err);
+  }
+}
+
+//POST /api/products
+async function createProduct(req, res, next) {
+  try {
+    const product = await productService.createProduct(req.body);
+    res.status(201).json(product);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getProducts, getProductById, updateStock, getProductOptions, createProduct };
