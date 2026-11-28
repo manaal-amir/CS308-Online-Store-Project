@@ -26,4 +26,14 @@ async function getProductById(req, res, next) {
   }
 }
 
-module.exports = { getProducts, getProductById };
+//PATCH /api/products/:id/stock
+async function updateStock(req, res, next) {
+  try {
+    const product = await productService.updateStock(req.params.id, req.body.quantity);
+    res.status(200).json(product);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { getProducts, getProductById, updateStock };

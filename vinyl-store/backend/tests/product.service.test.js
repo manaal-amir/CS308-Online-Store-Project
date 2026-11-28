@@ -2,6 +2,7 @@ jest.mock('../src/config/prisma', () => ({
   product: {
     findMany: jest.fn(),
     findUnique: jest.fn(),
+    update: jest.fn(),
   },
   rating: { groupBy: jest.fn(), aggregate: jest.fn() },
 }));
@@ -323,6 +324,48 @@ describe('product service', () => {
 
       expect(await productService.getProductById(99999)).toBeNull();
       expect(prisma.rating.aggregate).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateStock', () => {
+    //test 1: the new total is the only field that changes, and only id and quantity come back
+    it('sends only the new quantity to the database', async () => {
+      prisma.product.update.mockResolvedValue({ id: 17, quantity: 12 });
+
+      expect(await productService.updateStock(17, 12)).toEqual({ id: 17, quantity: 12 });
+      expect(prisma.product.update).toHaveBeenCalledWith({
+        where: { id: 17 },
+        data: { quantity: 12 },
+        select: { id: true, quantity: true },
+      });
+    });
+
+    //test 2: 0 is a real stock value (sold out), not a missing one
+    it('accepts 0 as the new stock', async () => {
+      prisma.product.update.mockResolvedValue({ id: 17, quantity: 0 });
+
+      expect(await productService.updateStock(17, 0)).toEqual({ id: 17, quantity: 0 });
+      expect(prisma.product.update.mock.calls[0][0].data).toEqual({ quantity: 0 });
+    });
+
+    //test 3: prisma says P2025 when there is no product with that id
+    it('turns a missing product into a 404', async () => {
+      prisma.product.update.mockRejectedValue(
+        Object.assign(new Error('missing'), { code: 'P2025' })
+      );
+
+      await expect(productService.updateStock(99999, 5)).rejects.toMatchObject({
+        status: 404,
+        message: 'Product not found',
+      });
+    });
+
+    //test 4: any other database error is passed on unchanged
+    it('rethrows other database errors', async () => {
+      const dbError = new Error('Database unavailable');
+      prisma.product.update.mockRejectedValue(dbError);
+
+      await expect(productService.updateStock(17, 5)).rejects.toBe(dbError);
     });
   });
 });
