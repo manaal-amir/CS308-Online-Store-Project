@@ -3,12 +3,16 @@ jest.mock('../src/config/prisma', () => ({
     findMany: jest.fn(),
     findUnique: jest.fn(),
   },
+  rating: { groupBy: jest.fn(), aggregate: jest.fn() },
 }));
 const prisma = require('../src/config/prisma');
 const productService = require('../src/modules/products/product.service');
 
 beforeEach(() => {
   jest.resetAllMocks();
+  //by default no record has ratings, tests that need ratings set their own
+  prisma.rating.groupBy.mockResolvedValue([]);
+  prisma.rating.aggregate.mockResolvedValue({ _avg: { value: null }, _count: { _all: 0 } });
 });
 
 const SELECT = {
@@ -211,7 +215,16 @@ describe('product service', () => {
 
     const products = await productService.getProducts({ search: 'dolly' });
 
-    expect(products).toEqual([{ id: 4, name: 'Hello, Dolly!', quantity: 0, price: 1150 }]);
+    expect(products).toEqual([
+      {
+        id: 4,
+        name: 'Hello, Dolly!',
+        quantity: 0,
+        price: 1150,
+        averageRating: null,
+        ratingCount: 0,
+      },
+    ]);
   });
 
   it('never filters on stock, so search and the catalog keep quantity 0 records', async () => {
@@ -223,5 +236,93 @@ describe('product service', () => {
     for (const [query] of prisma.product.findMany.mock.calls) {
       expect(JSON.stringify(query.where ?? {})).not.toContain('quantity');
     }
+  });
+
+  //SCRUM-161 (requirement 5): the catalog and the product page show each record's rating
+  describe('ratings', () => {
+    //test 1: a rated record gets its rounded average and count, an unrated one gets null and 0
+    it('adds the average rating and count to each listed product', async () => {
+      prisma.product.findMany.mockResolvedValue([
+        { id: 1, name: 'Rated', price: '100.00' },
+        { id: 2, name: 'Not rated', price: '100.00' },
+      ]);
+      prisma.rating.groupBy.mockResolvedValue([
+        { productId: 1, _avg: { value: 13 / 3 }, _count: { _all: 3 } },
+      ]);
+
+      const products = await productService.getProducts();
+
+      expect(products).toEqual([
+        { id: 1, name: 'Rated', price: 100, averageRating: 4.3, ratingCount: 3 },
+        { id: 2, name: 'Not rated', price: 100, averageRating: null, ratingCount: 0 },
+      ]);
+    });
+
+    //test 2: one ratings query for the whole list, not one per record
+    it('looks up the ratings of all listed products in one query', async () => {
+      prisma.product.findMany.mockResolvedValue([
+        { id: 1, name: 'A', price: '100.00' },
+        { id: 2, name: 'B', price: '100.00' },
+        { id: 3, name: 'C', price: '100.00' },
+      ]);
+
+      await productService.getProducts();
+
+      expect(prisma.rating.groupBy).toHaveBeenCalledTimes(1);
+      expect(prisma.rating.groupBy).toHaveBeenCalledWith({
+        by: ['productId'],
+        where: { productId: { in: [1, 2, 3] } },
+        _avg: { value: true },
+        _count: { _all: true },
+      });
+    });
+
+    //test 3: an empty catalog does not query ratings at all
+    it('does not query ratings when no products are found', async () => {
+      prisma.product.findMany.mockResolvedValue([]);
+
+      const products = await productService.getProducts({ search: 'nothing' });
+
+      expect(products).toEqual([]);
+      expect(prisma.rating.groupBy).not.toHaveBeenCalled();
+    });
+
+    //test 4: the product page gets the same two fields, for rated and unrated records
+    it('adds the average rating and count to one product', async () => {
+      prisma.product.findUnique.mockResolvedValue({ id: 1, name: 'Rated', price: '100.00' });
+      prisma.rating.aggregate.mockResolvedValue({ _avg: { value: 4.5 }, _count: { _all: 2 } });
+
+      expect(await productService.getProductById(1)).toEqual({
+        id: 1,
+        name: 'Rated',
+        price: 100,
+        averageRating: 4.5,
+        ratingCount: 2,
+      });
+      expect(prisma.rating.aggregate).toHaveBeenCalledWith({
+        where: { productId: 1 },
+        _avg: { value: true },
+        _count: { _all: true },
+      });
+
+      prisma.product.findUnique.mockResolvedValue({ id: 2, name: 'Not rated', price: '100.00' });
+      prisma.rating.aggregate.mockResolvedValue({ _avg: { value: null }, _count: { _all: 0 } });
+
+      expect(await productService.getProductById(2)).toEqual({
+        id: 2,
+        name: 'Not rated',
+        price: 100,
+        averageRating: null,
+        ratingCount: 0,
+      });
+    });
+
+    //test 5: a missing product is still null, and its ratings are never looked up
+    it('does not query ratings for a product that does not exist', async () => {
+      prisma.product.findUnique.mockResolvedValue(null);
+
+      expect(await productService.getProductById(99999)).toBeNull();
+      expect(prisma.rating.aggregate).not.toHaveBeenCalled();
+    });
   });
 });

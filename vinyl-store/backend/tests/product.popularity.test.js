@@ -2,12 +2,15 @@
 jest.mock('../src/config/prisma', () => ({
   product: { findMany: jest.fn(), findUnique: jest.fn() },
   orderItem: { groupBy: jest.fn() },
+  rating: { groupBy: jest.fn() },
 }));
 const prisma = require('../src/config/prisma');
 const productService = require('../src/modules/products/product.service');
 
 beforeEach(() => {
   jest.resetAllMocks();
+  //no record has ratings in these tests
+  prisma.rating.groupBy.mockResolvedValue([]);
 });
 
 //products come from the database newest first, like the default order
@@ -55,7 +58,9 @@ describe('popularity sort', () => {
 
     const products = await productService.getProducts({ sort: 'popularity' });
 
-    expect(products).toEqual([{ id: 1, name: 'A', price: 1450.5 }]);
+    expect(products).toEqual([
+      { id: 1, name: 'A', price: 1450.5, averageRating: null, ratingCount: 0 },
+    ]);
   });
 
   //test 4: genre and search filters still apply, and sales are not looked up for other sorts

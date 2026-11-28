@@ -1,4 +1,8 @@
 const prisma = require('../../config/prisma');
+const { getRatingSummary, getRatingSummaries } = require('../reviews/reviews.common');
+
+//what an unrated record shows: no average yet and no ratings (requirement 5)
+const NO_RATINGS = { averageRating: null, ratingCount: 0 };
 
 //Total units sold per product, as a Map of productId -> units (requirement 7: sort by popularity).
 //Cancelled orders do not count, because cancelling gives the stock back and refunds the customer.
@@ -56,9 +60,16 @@ async function getProducts({ genre, search, sort } = {}) {
     },
   });
 
+  //one query for the ratings of every listed record, never one per record
+  const ratings = await getRatingSummaries(
+    prisma,
+    products.map((product) => product.id)
+  );
+
   const result = products.map((product) => ({
     ...product,
     price: Number(product.price),
+    ...(ratings.get(product.id) || NO_RATINGS),
   }));
 
   if (sort === 'popularity') {
@@ -95,7 +106,8 @@ async function getProductById(id) {
 
   if (!product) return null;
 
-  return { ...product, price: Number(product.price) };
+  const ratings = await getRatingSummary(prisma, id);
+  return { ...product, price: Number(product.price), ...ratings };
 }
 
 module.exports = { getProducts, getProductById };
