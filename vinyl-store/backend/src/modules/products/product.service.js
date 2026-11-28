@@ -110,4 +110,23 @@ async function getProductById(id) {
   return { ...product, price: Number(product.price), ...ratings };
 }
 
-module.exports = { getProducts, getProductById };
+//Sets the stock of one product to a new total, e.g. 12 means 12 left, not 12 more (requirement 12).
+//One update with no read first, so a missing product comes back from Prisma as P2025.
+async function updateStock(id, quantity) {
+  try {
+    return await prisma.product.update({
+      where: { id },
+      data: { quantity },
+      select: { id: true, quantity: true },
+    });
+  } catch (err) {
+    if (err.code === 'P2025') {
+      const notFound = new Error('Product not found');
+      notFound.status = 404;
+      throw notFound;
+    }
+    throw err;
+  }
+}
+
+module.exports = { getProducts, getProductById, updateStock };
