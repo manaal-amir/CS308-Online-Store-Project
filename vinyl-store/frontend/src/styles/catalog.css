@@ -672,3 +672,17 @@
     flex: 1;
   }
 }
+.average-rating {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #8b1538;
+}
+
+.average-rating span {
+  font-size: 18px;
+  color: #c18b35;
+}

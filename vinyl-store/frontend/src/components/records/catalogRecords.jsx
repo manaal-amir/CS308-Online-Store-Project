@@ -11,6 +11,7 @@ import {
 import CartIcon from "../icons/cartIcon.jsx";
 import CartToast from "../feedback/cartToast.jsx";
 import useCartToast from "../../hooks/useCartToast.js";
+import AverageRating from "../reviews/averageRating.jsx";
 
 function getRelationName(value) {
   return typeof value === "object" && value !== null ? value.name : value;
@@ -297,6 +298,10 @@ function CatalogCardContent({
         </span>
         <h2>{artist}</h2>
         <p>{product.name}</p>
+        <AverageRating
+          averageRating={product.averageRating}
+          ratingCount={product.ratingCount}
+        />
         <span className="catalog-record-price">{formatPrice(product.price)}</span>
         <span
           className={`catalog-stock${isOutOfStock ? " is-out" : ""}`}
@@ -305,8 +310,8 @@ function CatalogCardContent({
           {isOutOfStock ? "Out of stock" : "\u00a0"}
         </span>
       </a>
-      
-       <button
+
+      <button
         type="button"
         className="catalog-add-button"
         onClick={handleAddToCart}
@@ -314,17 +319,17 @@ function CatalogCardContent({
           isPreview || isOutOfStock || isAtStockLimit || isAdding ||
           (isAuthenticated && cartLoading)
         }
-       >
-       {!isOutOfStock && <CartIcon />}
-       {isOutOfStock
-         ? "Out of Stock"
-         : isAtStockLimit
-           ? "Stock Limit Reached"
-           : "Add to Cart"}
-       </button>
+      >
+        {!isOutOfStock && <CartIcon />}
+        {isOutOfStock
+          ? "Out of Stock"
+          : isAtStockLimit
+            ? "Stock Limit Reached"
+            : "Add to Cart"}
+      </button>
 
       {cartError && (
-       <p role="alert">{cartError}</p>
+        <p role="alert">{cartError}</p>
       )}
 
       {wishlistError && (

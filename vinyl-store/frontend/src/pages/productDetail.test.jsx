@@ -65,6 +65,21 @@ describe("ProductDetails", () => {
     expect(render(product)).toContain("8 in stock");
   });
 
+  test("displays the average rating on the product detail page", () => {
+    const ratedProduct = {
+      ...product,
+      averageRating: 4.7,
+      ratingCount: 23,
+    };
+
+    const html = render(ratedProduct);
+
+    expect(html).toContain("4.7 / 5 (23 ratings)");
+    expect(html).toContain(
+      "Average rating 4.7 out of 5, from 23 ratings"
+    );
+  });
+
   test("shows a low-stock warning at five or fewer", () => {
     expect(render({ ...product, quantity: 3 })).toContain("Only 3 left in stock");
   });

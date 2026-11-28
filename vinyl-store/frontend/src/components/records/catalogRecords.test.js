@@ -72,6 +72,24 @@ describe("catalogRecords preview cart blocking", () => {
     assert.deepEqual(getGuestCart(), [{ productId: 17, quantity: 1 }]);
   });
 
+  test("product cards display the average rating returned by the API", () => {
+    const ratedProduct = {
+      ...product,
+      averageRating: 4.2,
+      ratingCount: 8,
+    };
+
+    const card = renderToStaticMarkup(
+      React.createElement(CatalogCard, {
+        product: ratedProduct,
+        isPreview: false,
+      })
+    );
+
+    assert.match(card, /4\.2 \/ 5 \(8 ratings\)/);
+    assert.match(card, /Average rating 4\.2 out of 5, from 8 ratings/);
+  });
+
   test("signed-in catalog additions use the account cart and report its returned quantity", async () => {
     saveAuthSession({
       token: "customer-token",
