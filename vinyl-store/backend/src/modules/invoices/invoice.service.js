@@ -5,6 +5,7 @@ function generateInvoiceNumber(orderId) {
   return `INV-${date}-${String(orderId).padStart(5, '0')}`;
 }
 
+//turns order items into invoice lines (name, quantity, unit price, line total)
 function mapInvoiceItems(items) {
   return (items || []).map((item) => ({
     productName: item.product?.name,
@@ -63,6 +64,8 @@ async function buildInvoice(orderId, user) {
   };
 }
 
+//finds an existing invoice for GET /api/invoices/:orderId, never creates one
+//owner and staff can see it, anyone else gets 404
 async function getInvoiceForRead(orderId, user) {
   const invoice = await prisma.invoice.findUnique({
     where: { orderId },
@@ -105,6 +108,7 @@ async function getInvoiceForRead(orderId, user) {
   };
 }
 
+//turns a from/to query value into a Date, invalid text gives a 400 instead of a 500
 function parseDate(value, name) {
   const d = new Date(value);
   if (isNaN(d.getTime())) {
@@ -115,6 +119,7 @@ function parseDate(value, name) {
   return d;
 }
 
+//all invoices for product and sales managers, newest first, optional from/to date range
 async function listInvoices({ from, to } = {}) {
   const where = {};
   if (from || to) {
