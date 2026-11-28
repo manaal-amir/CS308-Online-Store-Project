@@ -1,9 +1,16 @@
 const express = require('express');
-const { authenticate } = require('../../middlewares/auth');
+const { authenticate, authorize } = require('../../middlewares/auth');
 const validate = require('../../middlewares/validate');
-const { getInvoice } = require('./invoice.controller');
+const { getInvoice, list } = require('./invoice.controller');
 
 const router = express.Router();
+
+router.get(
+  '/',
+  authenticate,
+  authorize('PRODUCT_MANAGER', 'SALES_MANAGER'),
+  list
+);
 
 router.get(
   '/:orderId',
