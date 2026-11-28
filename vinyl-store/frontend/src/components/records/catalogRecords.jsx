@@ -3,14 +3,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getCatalogProducts } from "../../services/api.js";
 import useCart from "../../hooks/useCart.js";
 import { getAuthSession } from "../../utils/authSession.js";
-import {
-  isInLocalWishlist,
-  subscribeToLocalWishlist,
-  toggleLocalWishlist,
-} from "../../utils/localWishlist.js";
+import useWishlist from "../../hooks/useWishlist.js";
 import CartIcon from "../icons/cartIcon.jsx";
 import CartToast from "../feedback/cartToast.jsx";
 import useCartToast from "../../hooks/useCartToast.js";
+import AverageRating from "../reviews/averageRating.jsx";
 
 function getRelationName(value) {
   return typeof value === "object" && value !== null ? value.name : value;
@@ -43,6 +40,7 @@ export default function CatalogRecords({
   const [isPreview, setIsPreview] = useState(false);
   const { notification, showCartToast, dismissCartToast } = useCartToast();
   const cart = useCart();
+  const wishlist = useWishlist();
   const isPopularitySort = sort === "popularity";
 
   useEffect(() => {
@@ -139,6 +137,11 @@ export default function CatalogRecords({
   return (
     <div className="catalog-results">
       {cart.error && <p className="catalog-state" role="alert">{cart.error}</p>}
+      {wishlist.error && (
+        <p className="catalog-state" role="alert">
+          {wishlist.error}
+        </p>
+      )}
       {isPreview && (
         <CatalogPreviewNotice />
       )}
@@ -155,6 +158,7 @@ export default function CatalogRecords({
               key={product.id}
               product={product}
               isPreview={isPreview}
+              wishlist={wishlist}
               onCartAdded={(cartItem) =>
                 showCartToast(product.name, cartItem?.quantity)
               }
@@ -185,7 +189,16 @@ export function CatalogCard(props) {
 
 function CatalogCardWithCart(props) {
   const cartState = useCart();
-  return <CatalogCardContent {...props} cartState={cartState} />;
+  const wishlist = useWishlist();
+
+  return (
+    <CatalogCardContent
+      {...props}
+      cartState={cartState}
+      wishlist={wishlist}
+      showWishlistError
+    />
+  );
 }
 
 function CatalogCardContent({
@@ -193,17 +206,16 @@ function CatalogCardContent({
   isPreview = false,
   onCartAdded,
   cartState,
+  wishlist,
+  showWishlistError = false,
 }) {
-  const [saved, setSaved] = useState(() => isInLocalWishlist(product.id));
+  const saved = wishlist?.savedIds.includes(String(product.id)) ?? false;
   const [cartError, setCartError] = useState("");
   const [wishlistError, setWishlistError] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const addInProgress = useRef(false);
   const { items: cart, add, loading: cartLoading, isAuthenticated } = cartState;
 
-  useEffect(() => subscribeToLocalWishlist((ids) => {
-    setSaved(ids.includes(String(product.id)));
-  }), [product.id]);
 
   function handleAddToCart() {
     if (addInProgress.current) return;
@@ -242,17 +254,17 @@ function CatalogCardContent({
 
   function handleToggleWishlist() {
     const session = getAuthSession();
+
     if (!session?.token || session.user?.id == null) {
       window.location.href = "/sign-in";
       return;
     }
 
-    try {
-      toggleLocalWishlist(product.id);
-      setWishlistError("");
-    } catch (error) {
-      setWishlistError(error.message);
+    if (isPreview || wishlist?.loading || wishlist?.savingId != null) {
+      return;
     }
+
+    wishlist?.toggleWishlist(product.id);
   }
 
   const artist = getRelationName(product.artist) || product.distributor || "Various Artists";
@@ -287,6 +299,7 @@ function CatalogCardContent({
           aria-label={saved ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
           aria-pressed={saved}
           onClick={handleToggleWishlist}
+          disabled={isPreview || Boolean(wishlist?.loading) || wishlist?.savingId != null}
         >
           {saved ? "♥" : "♡"}
         </button>
@@ -297,6 +310,10 @@ function CatalogCardContent({
         </span>
         <h2>{artist}</h2>
         <p>{product.name}</p>
+        <AverageRating
+          averageRating={product.averageRating}
+          ratingCount={product.ratingCount}
+        />
         <span className="catalog-record-price">{formatPrice(product.price)}</span>
         <span
           className={`catalog-stock${isOutOfStock ? " is-out" : ""}`}
@@ -305,8 +322,8 @@ function CatalogCardContent({
           {isOutOfStock ? "Out of stock" : "\u00a0"}
         </span>
       </a>
-      
-       <button
+
+      <button
         type="button"
         className="catalog-add-button"
         onClick={handleAddToCart}
@@ -314,21 +331,21 @@ function CatalogCardContent({
           isPreview || isOutOfStock || isAtStockLimit || isAdding ||
           (isAuthenticated && cartLoading)
         }
-       >
-       {!isOutOfStock && <CartIcon />}
-       {isOutOfStock
-         ? "Out of Stock"
-         : isAtStockLimit
-           ? "Stock Limit Reached"
-           : "Add to Cart"}
-       </button>
+      >
+        {!isOutOfStock && <CartIcon />}
+        {isOutOfStock
+          ? "Out of Stock"
+          : isAtStockLimit
+            ? "Stock Limit Reached"
+            : "Add to Cart"}
+      </button>
 
       {cartError && (
-       <p role="alert">{cartError}</p>
+        <p role="alert">{cartError}</p>
       )}
 
-      {wishlistError && (
-        <p role="alert">{wishlistError}</p>
+      {showWishlistError && wishlist?.error && (
+        <p role="alert">{wishlist.error}</p>
       )}
 
     </article>

@@ -190,3 +190,32 @@
     font-size: 34px;
   }
 }
+
+.product-wishlist-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  border: 1px solid #8b1538;
+  border-radius: 6px;
+  background: transparent;
+  color: #8b1538;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.product-wishlist-button span {
+  font-size: 22px;
+}
+
+.product-wishlist-button.is-saved {
+  background: #8b1538;
+  color: #fff;
+}
+
+.product-wishlist-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

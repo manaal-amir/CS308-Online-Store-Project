@@ -11,6 +11,7 @@ const staffRoles = {
     overviewTab,
     { href: "/manager/deliveries", label: "Deliveries" },
     { href: "/manager/catalogue", label: "Catalogue" },
+    { href: "/manager/comments", label: "Comments" },
   ] },
   SALES_MANAGER: { title: "Sales management", tabs: [overviewTab] },
   SUPPORT_AGENT: { title: "Customer support", tabs: [overviewTab] },
@@ -28,7 +29,9 @@ export default function StaffPanel({ path, children }) {
       <NavBar />
       <main className="orders-page orders-page-wide">
         {!session && (
-          <p className="orders-state"><a href="/sign-in">Sign in</a> to open the staff panel.</p>
+          <p className="orders-state">
+            <a href={`/sign-in?${new URLSearchParams({ returnTo: path })}`}>Sign in</a> to open the staff panel.
+          </p>
         )}
         {session && !panel && (
           <p className="orders-state" role="alert">This panel is available to staff only.</p>

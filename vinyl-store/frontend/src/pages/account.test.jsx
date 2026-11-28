@@ -197,3 +197,43 @@ describe("account wishlist", () => {
       .toContain("Could not load your wishlist: Catalog unavailable");
   });
 });
+
+describe("account settings profile data", () => {
+  test("shows signed-in user information instead of fake profile details", () => {
+    saveAuthSession({
+      token: "test-token",
+      user: {
+        id: 8,
+        name: "Nora",
+        lastname: "Yilmaz",
+        email: "nora@example.com",
+        homeAddress: "Test Street",
+        role: "CUSTOMER",
+      },
+    });
+
+    window.history.pushState({}, "", "/account-settings");
+    render(<Account />);
+
+    expect(screen.getByLabelText("First name").value).toBe("Nora");
+    expect(screen.getByLabelText("Last name").value).toBe("Yilmaz");
+    expect(screen.getByLabelText("Email address").value).toBe("nora@example.com");
+    expect(screen.getByLabelText("Home address").value).toBe("Test Street");
+
+    expect(screen.queryByDisplayValue("Jamie")).toBeNull();
+    expect(screen.queryByDisplayValue("Laurent")).toBeNull();
+    expect(screen.queryByText("JL")).toBeNull();
+  });
+
+  test("does not show account settings when signed out", () => {
+    window.history.pushState({}, "", "/account-settings");
+    render(<Account />);
+
+    expect(
+      screen.getByRole("heading", { name: "Please sign in" })
+    ).toBeTruthy();
+
+    expect(screen.queryByLabelText("First name")).toBeNull();
+    expect(screen.queryByLabelText("Email address")).toBeNull();
+  });
+});
