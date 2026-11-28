@@ -87,7 +87,7 @@ describe("profile overview", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response({ error: "boom" }, false, 500)));
     openProfile();
 
-    await waitFor(() => expect(screen.getByRole("alert").textContent).toContain("could not load"));
+    await screen.findByText("We could not load your orders right now.");
     expect(screen.queryByText(/VN-2048/)).toBeNull();
   });
 
