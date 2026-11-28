@@ -49,7 +49,11 @@ describe('rate product service', () => {
   it('looks for a delivered order of this customer containing the record', async () => {
     await rateProduct(7, 5, 4);
     expect(prisma.order.findFirst).toHaveBeenCalledWith({
-      where: { userId: 7, status: 'DELIVERED', items: { some: { productId: 5 } } },
+      where: {
+        userId: 7,
+        status: 'DELIVERED',
+        items: { some: { productId: 5, product: { isHidden: false } } },
+      },
       select: { id: true },
     });
     //a customer who received the record needs no extra product lookup
@@ -133,5 +137,32 @@ describe('my review service', () => {
   it('returns 404 for a record that does not exist', async () => {
     prisma.product.findUnique.mockResolvedValue(null);
     await expect(getMyReview(7, 999)).rejects.toMatchObject({ status: 404 });
+  });
+});
+
+//SCRUM-158 (requirement 12): a record removed by a product manager cannot get new ratings
+describe('rating a hidden record', () => {
+  //a delivered order of a hidden record does not count, and the record itself is not found
+  beforeEach(() => {
+    prisma.order.findFirst.mockResolvedValue(null);
+    prisma.product.findUnique.mockResolvedValue(null);
+  });
+
+  //test 1: rating a hidden record gets 404, nothing is saved
+  it('returns 404 and saves nothing', async () => {
+    await expect(rateProduct(7, 5, 4)).rejects.toMatchObject({
+      status: 404,
+      message: 'Product not found',
+    });
+    expect(prisma.product.findUnique).toHaveBeenCalledWith({
+      where: { id: 5, isHidden: false },
+      select: { id: true },
+    });
+    expect(prisma.rating.upsert).not.toHaveBeenCalled();
+  });
+
+  //test 2: the product page check gets 404 as well
+  it('returns 404 for my review', async () => {
+    await expect(getMyReview(7, 5)).rejects.toMatchObject({ status: 404 });
   });
 });

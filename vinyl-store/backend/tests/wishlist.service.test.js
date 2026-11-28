@@ -88,3 +88,38 @@ describe('wishlist service', () => {
     });
   });
 });
+
+//SCRUM-158 (requirement 12): records removed by a product manager
+describe('wishlist with hidden records', () => {
+  //test 1: adding a removed record is the same as adding one that does not exist
+  it('returns 404 when adding a hidden record', async () => {
+    prisma.product.findUnique.mockResolvedValue(null);
+
+    await expect(addToWishList(1, 7)).rejects.toMatchObject({
+      status: 404,
+      message: 'Product not found',
+    });
+    expect(prisma.product.findUnique).toHaveBeenCalledWith({ where: { id: 7, isHidden: false } });
+    expect(prisma.wishListItem.create).not.toHaveBeenCalled();
+  });
+
+  //test 2: the list only loads items whose record is not hidden, the rows themselves are kept
+  it('leaves hidden records out of the list', async () => {
+    prisma.wishList.findUnique.mockResolvedValue({ id: 10, items: [] });
+
+    await getWishList(1);
+
+    const { items } = prisma.wishList.findUnique.mock.calls[0][0].include;
+    expect(items.where).toEqual({ product: { isHidden: false } });
+    expect(prisma.wishListItem.deleteMany).not.toHaveBeenCalled();
+  });
+
+  //test 3: a hidden record can still be taken out of the wish list
+  it('still removes a hidden record from the wish list', async () => {
+    prisma.wishList.findUnique.mockResolvedValue({ id: 10, userId: 1 });
+    prisma.wishListItem.deleteMany.mockResolvedValue({ count: 1 });
+
+    expect(await removeFromWishList(1, 7)).toEqual({ productId: 7, removed: true });
+    expect(prisma.product.findUnique).not.toHaveBeenCalled();
+  });
+});

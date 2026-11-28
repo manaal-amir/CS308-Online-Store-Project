@@ -314,3 +314,60 @@ describe('mergeCart', () => {
     await expect(cartService.mergeCart(7, items)).rejects.toMatchObject({ status: 400 });
   });
 });
+
+//SCRUM-158 (requirement 12): records removed by a product manager leave the cart
+describe('hidden records', () => {
+  //test 1: adding a removed record is the same as adding one that does not exist
+  it('rejects adding a hidden record', async () => {
+    prisma.product.findUnique.mockResolvedValue(null);
+
+    await expect(cartService.addItem(7, 1, 1)).rejects.toMatchObject({
+      status: 404,
+      message: 'Product not found',
+    });
+    expect(prisma.product.findUnique).toHaveBeenCalledWith({ where: { id: 1, isHidden: false } });
+    expect(prisma.cartItem.create).not.toHaveBeenCalled();
+  });
+
+  //test 2: hidden records are not loaded for a merge, so they get the not found adjustment
+  it('skips hidden records when merging the browser cart', async () => {
+    prisma.product.findMany.mockResolvedValue([]);
+    prisma.cartItem.findMany.mockResolvedValue([]);
+
+    const result = await cartService.mergeCart(7, [{ productId: 1, quantity: 1 }]);
+
+    expect(prisma.product.findMany).toHaveBeenCalledWith({
+      where: { id: { in: [1] }, isHidden: false },
+    });
+    expect(result.adjustments).toEqual([{ productId: 1, reason: 'Product not found' }]);
+    expect(prisma.cartItem.upsert).not.toHaveBeenCalled();
+  });
+
+  //test 3: every cart load first removes items whose record was hidden
+  it('removes items of hidden records before loading the cart', async () => {
+    await cartService.getCart(7);
+
+    expect(prisma.cartItem.deleteMany).toHaveBeenCalledWith({
+      where: { cartId: 10, product: { isHidden: true } },
+    });
+    //the clean up runs before the cart is read
+    expect(prisma.cartItem.deleteMany.mock.invocationCallOrder[0]).toBeLessThan(
+      prisma.cart.findUnique.mock.invocationCallOrder[0]
+    );
+  });
+
+  //test 4: the quantity of a hidden record in the cart cannot be changed
+  it('rejects updating the quantity of a hidden record', async () => {
+    prisma.cartItem.findUnique.mockResolvedValue({
+      id: 50,
+      quantity: 1,
+      product: { ...inStock, isHidden: true },
+    });
+
+    await expect(cartService.updateItem(7, 1, 2)).rejects.toMatchObject({
+      status: 404,
+      message: 'Product not found',
+    });
+    expect(prisma.cartItem.update).not.toHaveBeenCalled();
+  });
+});

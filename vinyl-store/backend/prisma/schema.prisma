@@ -116,6 +116,7 @@ model Product {
   description    String //required for req 7
   imageUrl       String? //maybe can add default image
   createdAt      DateTime @default(now())
+  isHidden       Boolean  @default(false) //removed by a product manager, the row stays for order history (requirement 12)
 
   categoryId Int
   category   Category @relation(fields: [categoryId], references: [id])

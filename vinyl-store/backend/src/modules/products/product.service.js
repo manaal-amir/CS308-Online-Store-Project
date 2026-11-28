@@ -64,8 +64,9 @@ async function getProducts({ genre, search, sort } = {}) {
     orderBy = { price: 'desc' };
   }
 
+  //removed records are never listed, whatever the genre, search or sort (requirement 12)
   const products = await prisma.product.findMany({
-    where: conditions.length ? { AND: conditions } : undefined,
+    where: conditions.length ? { isHidden: false, AND: conditions } : { isHidden: false },
     orderBy,
     select: PUBLIC_SELECT,
   });
@@ -93,9 +94,10 @@ async function getProducts({ genre, search, sort } = {}) {
 }
 
 //Returns the full detail for one product, or null if it doesn't exist / isn't a valid id.
+//A removed record also gives null, so its page shows "not found".
 async function getProductById(id) {
   const product = await prisma.product.findUnique({
-    where: { id },
+    where: { id, isHidden: false },
     select: PUBLIC_SELECT,
   });
 
@@ -106,11 +108,11 @@ async function getProductById(id) {
 }
 
 //Sets the stock of one product to a new total, e.g. 12 means 12 left, not 12 more (requirement 12).
-//One update with no read first, so a missing product comes back from Prisma as P2025.
+//One update with no read first, so a missing or removed product comes back from Prisma as P2025.
 async function updateStock(id, quantity) {
   try {
     return await prisma.product.update({
-      where: { id },
+      where: { id, isHidden: false },
       data: { quantity },
       select: { id: true, quantity: true },
     });
@@ -177,10 +179,37 @@ async function createProduct(input) {
   }
 }
 
+//Removes a record from the shop by hiding it, the row is never deleted (requirement 12).
+//Orders keep pointing to it, so order history, invoices and cancellations still work.
+//Hiding it and taking it out of every cart happen together in one transaction.
+//The update only matches a record that is not hidden yet, so a missing or already
+//removed record comes back from Prisma as P2025. Stock is left as it is.
+async function removeProduct(id) {
+  try {
+    await prisma.$transaction([
+      prisma.product.update({
+        where: { id, isHidden: false },
+        data: { isHidden: true },
+        select: { id: true },
+      }),
+      prisma.cartItem.deleteMany({ where: { productId: id } }),
+    ]);
+    return { id, removed: true };
+  } catch (err) {
+    if (err.code === 'P2025') {
+      const notFound = new Error('Product not found');
+      notFound.status = 404;
+      throw notFound;
+    }
+    throw err;
+  }
+}
+
 module.exports = {
   getProducts,
   getProductById,
   updateStock,
   getProductOptions,
   createProduct,
+  removeProduct,
 };

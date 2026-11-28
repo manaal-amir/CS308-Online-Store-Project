@@ -59,7 +59,11 @@ describe('create comment service', () => {
   it('looks for a delivered order of this customer containing the record', async () => {
     await createComment(7, 5, 'Great pressing');
     expect(tx.order.findFirst).toHaveBeenCalledWith({
-      where: { userId: 7, status: 'DELIVERED', items: { some: { productId: 5 } } },
+      where: {
+        userId: 7,
+        status: 'DELIVERED',
+        items: { some: { productId: 5, product: { isHidden: false } } },
+      },
       select: { id: true },
     });
   });
@@ -268,6 +272,33 @@ describe('approved comments service', () => {
   it('returns 404 for a record that does not exist', async () => {
     prisma.product.findUnique.mockResolvedValue(null);
     await expect(listApprovedComments(999)).rejects.toMatchObject({ status: 404 });
+    expect(prisma.comment.findMany).not.toHaveBeenCalled();
+  });
+});
+
+//SCRUM-158 (requirement 12): a record removed by a product manager cannot get new comments
+describe('commenting on a hidden record', () => {
+  //test 1: a delivered order of a hidden record does not count, the record is not found, nothing is saved
+  it('returns 404 and saves nothing', async () => {
+    tx.order.findFirst.mockResolvedValue(null);
+    tx.product.findUnique.mockResolvedValue(null);
+
+    await expect(createComment(7, 5, 'Great pressing')).rejects.toMatchObject({
+      status: 404,
+      message: 'Product not found',
+    });
+    expect(tx.product.findUnique).toHaveBeenCalledWith({
+      where: { id: 5, isHidden: false },
+      select: { id: true },
+    });
+    expect(tx.comment.create).not.toHaveBeenCalled();
+  });
+
+  //test 2: the public comments of a hidden record get 404
+  it('returns 404 for the approved comments', async () => {
+    prisma.product.findUnique.mockResolvedValue(null);
+
+    await expect(listApprovedComments(5)).rejects.toMatchObject({ status: 404 });
     expect(prisma.comment.findMany).not.toHaveBeenCalled();
   });
 });

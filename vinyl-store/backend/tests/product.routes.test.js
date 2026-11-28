@@ -7,6 +7,7 @@ jest.mock('../src/modules/products/product.service', () => ({
   updateStock: jest.fn(),
   getProductOptions: jest.fn(),
   createProduct: jest.fn(),
+  removeProduct: jest.fn(),
 }));
 const productService = require('../src/modules/products/product.service');
 const app = require('../src/app');
@@ -193,6 +194,63 @@ describe('product routes', () => {
       );
 
       const response = await patchStock(99999, { quantity: 12 });
+
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ error: 'Product not found' });
+    });
+  });
+
+  //SCRUM-158 (requirement 12): a product manager removes a record, it is hidden and never deleted
+  describe('DELETE /api/products/:id', () => {
+    function removeRecord(id, auth = productManager) {
+      const req = request(app).delete(`/api/products/${id}`);
+      if (auth) req.set('Authorization', auth);
+      return req;
+    }
+
+    //test 1: a product manager removes a record, the service gets the id as a number
+    it('lets a product manager remove a record', async () => {
+      productService.removeProduct.mockResolvedValue({ id: 17, removed: true });
+
+      const response = await removeRecord(17);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ id: 17, removed: true });
+      expect(productService.removeProduct).toHaveBeenCalledWith(17);
+    });
+
+    //test 2: no login means 401
+    it('returns 401 without a token', async () => {
+      const response = await removeRecord(17, null);
+
+      expect(response.status).toBe(401);
+      expect(productService.removeProduct).not.toHaveBeenCalled();
+    });
+
+    //test 3: every other role is forbidden
+    it.each(['CUSTOMER', 'SALES_MANAGER', 'SUPPORT_AGENT'])('returns 403 for %s', async (role) => {
+      const response = await removeRecord(17, `Bearer ${tokenFor(role)}`);
+
+      expect(response.status).toBe(403);
+      expect(response.body).toEqual({ error: 'Forbidden' });
+      expect(productService.removeProduct).not.toHaveBeenCalled();
+    });
+
+    //test 4: the id is checked with the same rule as GET /:id
+    it.each(['abc', '0', '2147483648'])('returns 400 for the invalid id %s', async (id) => {
+      const response = await removeRecord(id);
+
+      expect(response.status).toBe(400);
+      expect(productService.removeProduct).not.toHaveBeenCalled();
+    });
+
+    //test 5: a missing or already removed record gives the service's 404
+    it('returns 404 when the record does not exist or was already removed', async () => {
+      productService.removeProduct.mockRejectedValue(
+        Object.assign(new Error('Product not found'), { status: 404 })
+      );
+
+      const response = await removeRecord(99999);
 
       expect(response.status).toBe(404);
       expect(response.body).toEqual({ error: 'Product not found' });

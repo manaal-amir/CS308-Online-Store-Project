@@ -122,8 +122,9 @@ async function checkout(userId, { cardNumber, expiryMonth, expiryYear, deliveryA
       const address = await findDeliveryAddress(tx, userId, deliveryAddress);
 
       //load the products in the cart, keyed by id for quick lookup
+      //removed records are left out, so they get the "no longer available" error below
       const products = await tx.product.findMany({
-        where: { id: { in: cartItems.map((item) => item.productId) } },
+        where: { id: { in: cartItems.map((item) => item.productId) }, isHidden: false },
       });
       const productsById = new Map(products.map((product) => [product.id, product]));
 
@@ -142,8 +143,9 @@ async function checkout(userId, { cardNumber, expiryMonth, expiryYear, deliveryA
 
         //decrease stock only if enough is left, the database checks and updates in one step
         //so two customers can never both buy the last copy (requirements 3 and 18)
+        //isHidden is checked again here, so a record removed during checkout cannot be sold
         const updated = await tx.product.updateMany({
-          where: { id: product.id, quantity: { gte: item.quantity } },
+          where: { id: product.id, isHidden: false, quantity: { gte: item.quantity } },
           data: { quantity: { decrement: item.quantity } },
         });
         if (updated.count === 0) {

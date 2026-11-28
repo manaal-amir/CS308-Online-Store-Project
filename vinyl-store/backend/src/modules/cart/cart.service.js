@@ -56,6 +56,10 @@ function formatCart(cart) {
 
 //loads a cart by its id with items and product details, oldest items first
 async function loadCart(cartId) {
+  //removing a record already takes it out of every cart, but an add running at the same moment
+  //can put it back afterwards, so items of removed records are cleaned here too (requirement 12)
+  await prisma.cartItem.deleteMany({ where: { cartId, product: { isHidden: true } } });
+
   const cart = await prisma.cart.findUnique({
     where: { id: cartId },
     include: {
@@ -74,9 +78,9 @@ async function getCart(userId) {
   return loadCart(cart.id);
 }
 
-//finds a product or throws 404
+//finds a product or throws 404, a removed record counts as not found
 async function findProduct(productId) {
-  const product = await prisma.product.findUnique({ where: { id: productId } });
+  const product = await prisma.product.findUnique({ where: { id: productId, isHidden: false } });
   if (!product) {
     throw httpError(404, 'Product not found');
   }
@@ -156,6 +160,10 @@ async function updateItem(userId, productId, quantity) {
   if (!existing) {
     throw httpError(404, 'Item is not in the cart');
   }
+  //the record was removed from the shop, the next cart load takes it out of the cart
+  if (existing.product.isHidden) {
+    throw httpError(404, 'Product not found');
+  }
 
   //stock may have changed since the item was added, so check again
   if (quantity > existing.product.quantity) {
@@ -219,8 +227,11 @@ async function mergeCart(userId, items) {
   const cart = await getOrCreateCart(userId);
 
   //load all the products and existing cart items in two queries instead of one per item
+  //removed records are left out, so they get the "Product not found" adjustment
   const productIds = [...incoming.keys()];
-  const products = await prisma.product.findMany({ where: { id: { in: productIds } } });
+  const products = await prisma.product.findMany({
+    where: { id: { in: productIds }, isHidden: false },
+  });
   const existingItems = await prisma.cartItem.findMany({
     where: { cartId: cart.id, productId: { in: productIds } },
   });

@@ -15,7 +15,8 @@ async function getOrCreateWishList(userId) {
 }
 
 async function addToWishList(userId, productId) {
-  const product = await prisma.product.findUnique({ where: { id: productId } });
+  //a removed record counts as not found
+  const product = await prisma.product.findUnique({ where: { id: productId, isHidden: false } });
   if (!product) {
     throw httpError(404, 'Product not found');
   }
@@ -57,6 +58,8 @@ async function getWishList(userId) {
     where: { userId },
     include: {
       items: {
+        //removed records are not shown, but their rows are kept so removing them still works
+        where: { product: { isHidden: false } },
         include: {
           product: {
             select: {
