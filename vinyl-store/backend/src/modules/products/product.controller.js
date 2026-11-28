@@ -56,4 +56,21 @@ async function createProduct(req, res, next) {
   }
 }
 
-module.exports = { getProducts, getProductById, updateStock, getProductOptions, createProduct };
+//DELETE /api/products/:id
+async function removeProduct(req, res, next) {
+  try {
+    const result = await productService.removeProduct(req.params.id);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = {
+  getProducts,
+  getProductById,
+  updateStock,
+  getProductOptions,
+  createProduct,
+  removeProduct,
+};

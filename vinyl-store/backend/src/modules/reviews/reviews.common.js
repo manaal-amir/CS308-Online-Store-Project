@@ -7,10 +7,13 @@ function httpError(status, message) {
   return err;
 }
 
-//throws 404 if the record does not exist
+//throws 404 if the record does not exist or was removed from the shop
 //db is prisma or a transaction, so the check can run inside one
 async function ensureProductExists(db, productId) {
-  const product = await db.product.findUnique({ where: { id: productId }, select: { id: true } });
+  const product = await db.product.findUnique({
+    where: { id: productId, isHidden: false },
+    select: { id: true },
+  });
   if (!product) {
     throw httpError(404, 'Product not found');
   }
@@ -18,9 +21,14 @@ async function ensureProductExists(db, productId) {
 
 //true if the customer has at least one delivered order with this record
 //only delivered orders count, processing, in transit and cancelled ones do not
+//a removed record never counts, so a new rating or comment on it gets 404 from ensureProductExists
 async function hasDeliveredOrder(db, userId, productId) {
   const order = await db.order.findFirst({
-    where: { userId, status: 'DELIVERED', items: { some: { productId } } },
+    where: {
+      userId,
+      status: 'DELIVERED',
+      items: { some: { productId, product: { isHidden: false } } },
+    },
     select: { id: true },
   });
   return order !== null;

@@ -140,8 +140,14 @@ describe('checkout service', () => {
   it('decreases stock only if enough is left, in product id order', async () => {
     await checkout(7, card);
     expect(tx.product.updateMany.mock.calls.map((call) => call[0])).toEqual([
-      { where: { id: 2, quantity: { gte: 1 } }, data: { quantity: { decrement: 1 } } },
-      { where: { id: 5, quantity: { gte: 2 } }, data: { quantity: { decrement: 2 } } },
+      {
+        where: { id: 2, isHidden: false, quantity: { gte: 1 } },
+        data: { quantity: { decrement: 1 } },
+      },
+      {
+        where: { id: 5, isHidden: false, quantity: { gte: 2 } },
+        data: { quantity: { decrement: 2 } },
+      },
     ]);
   });
 
@@ -278,5 +284,33 @@ describe('checkout money helpers', () => {
   it('uses half the price when there is no cost', () => {
     expect(unitCostCents({ price: '10.01', cost: null })).toBe(501);
     expect(unitCostCents({ price: '10.00', cost: '3.25' })).toBe(325);
+  });
+});
+
+//SCRUM-158 (requirement 12): a record removed by a product manager can never be sold
+describe('checkout with hidden records', () => {
+  //test 1: hidden records are not loaded, so the cart gets the "no longer available" error
+  it('rejects a cart with a hidden record', async () => {
+    tx.product.findMany.mockResolvedValue([player]);
+
+    await expect(checkout(7, card)).rejects.toMatchObject({
+      status: 409,
+      message: 'A product in your cart is no longer available',
+    });
+    expect(tx.product.findMany).toHaveBeenCalledWith({
+      where: { id: { in: [5, 2] }, isHidden: false },
+    });
+    expect(chargeCard).not.toHaveBeenCalled();
+    expect(tx.order.create).not.toHaveBeenCalled();
+  });
+
+  //test 2: a record hidden after it was loaded matches nothing in the stock update, nothing is sold
+  it('rejects a record hidden during checkout', async () => {
+    tx.product.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(checkout(7, card)).rejects.toMatchObject({ status: 409 });
+    expect(tx.product.updateMany.mock.calls[0][0].where.isHidden).toBe(false);
+    expect(chargeCard).not.toHaveBeenCalled();
+    expect(tx.order.create).not.toHaveBeenCalled();
   });
 });

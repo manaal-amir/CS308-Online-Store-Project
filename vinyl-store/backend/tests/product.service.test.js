@@ -5,6 +5,10 @@ jest.mock('../src/config/prisma', () => ({
     update: jest.fn(),
     create: jest.fn(),
   },
+  cartItem: { deleteMany: jest.fn() },
+  orderItem: { groupBy: jest.fn() },
+  //the array form of $transaction, it runs the queries it is given
+  $transaction: jest.fn(),
   category: { findMany: jest.fn() },
   artist: { findMany: jest.fn() },
   genre: { findMany: jest.fn() },
@@ -18,6 +22,8 @@ beforeEach(() => {
   //by default no record has ratings, tests that need ratings set their own
   prisma.rating.groupBy.mockResolvedValue([]);
   prisma.rating.aggregate.mockResolvedValue({ _avg: { value: null }, _count: { _all: 0 } });
+  prisma.orderItem.groupBy.mockResolvedValue([]);
+  prisma.$transaction.mockImplementation((queries) => Promise.all(queries));
 });
 
 const SELECT = {
@@ -62,7 +68,7 @@ describe('product service', () => {
     const products = await productService.getProducts();
 
     expect(prisma.product.findMany).toHaveBeenCalledWith({
-      where: undefined,
+      where: { isHidden: false },
       orderBy: { createdAt: 'desc' },
       select: SELECT,
     });
@@ -78,6 +84,7 @@ describe('product service', () => {
 
     expect(prisma.product.findMany).toHaveBeenCalledWith({
       where: {
+        isHidden: false,
         AND: [{ genre: { name: { equals: 'rock', mode: 'insensitive' } } }],
       },
       orderBy: { createdAt: 'desc' },
@@ -91,7 +98,7 @@ describe('product service', () => {
     await productService.getProducts({});
 
     expect(prisma.product.findMany).toHaveBeenCalledWith({
-      where: undefined,
+      where: { isHidden: false },
       orderBy: { createdAt: 'desc' },
       select: SELECT,
     });
@@ -118,7 +125,7 @@ describe('product service', () => {
     const product = await productService.getProductById(1);
 
     expect(prisma.product.findUnique).toHaveBeenCalledWith({
-      where: { id: 1 },
+      where: { id: 1, isHidden: false },
       select: SELECT,
     });
     expect(product.price).toBe(2500.5);
@@ -140,6 +147,7 @@ describe('product service', () => {
 
     expect(prisma.product.findMany).toHaveBeenCalledWith({
       where: {
+        isHidden: false,
         AND: [
           {
             OR: [
@@ -161,6 +169,7 @@ describe('product service', () => {
 
     expect(prisma.product.findMany).toHaveBeenCalledWith({
       where: {
+        isHidden: false,
         AND: [
           { genre: { name: { equals: 'Rock', mode: 'insensitive' } } },
           {
@@ -182,7 +191,7 @@ describe('product service', () => {
     await productService.getProducts({ sort: 'price_asc' });
 
     expect(prisma.product.findMany).toHaveBeenCalledWith({
-      where: undefined,
+      where: { isHidden: false },
       orderBy: { price: 'asc' },
       select: SELECT,
     });
@@ -194,7 +203,7 @@ describe('product service', () => {
     await productService.getProducts({ sort: 'price_desc' });
 
     expect(prisma.product.findMany).toHaveBeenCalledWith({
-      where: undefined,
+      where: { isHidden: false },
       orderBy: { price: 'desc' },
       select: SELECT,
     });
@@ -206,7 +215,7 @@ describe('product service', () => {
     await productService.getProducts({ sort: 'garbage' });
 
     expect(prisma.product.findMany).toHaveBeenCalledWith({
-      where: undefined,
+      where: { isHidden: false },
       orderBy: { createdAt: 'desc' },
       select: SELECT,
     });
@@ -338,7 +347,7 @@ describe('product service', () => {
 
       expect(await productService.updateStock(17, 12)).toEqual({ id: 17, quantity: 12 });
       expect(prisma.product.update).toHaveBeenCalledWith({
-        where: { id: 17 },
+        where: { id: 17, isHidden: false },
         data: { quantity: 12 },
         select: { id: true, quantity: true },
       });
@@ -370,6 +379,88 @@ describe('product service', () => {
       prisma.product.update.mockRejectedValue(dbError);
 
       await expect(productService.updateStock(17, 5)).rejects.toBe(dbError);
+    });
+  });
+
+  //SCRUM-158 (requirement 12): removed records are hidden from every list, search and sort
+  describe('hidden records', () => {
+    it.each([
+      ['no filters', {}],
+      ['a genre', { genre: 'Jazz' }],
+      ['a search', { search: 'blue' }],
+      ['genre and search', { genre: 'Jazz', search: 'blue' }],
+      ['price_asc', { sort: 'price_asc' }],
+      ['price_desc', { sort: 'price_desc' }],
+      ['newest', { sort: 'newest' }],
+      ['featured', { sort: 'featured' }],
+      ['popularity', { sort: 'popularity' }],
+    ])('leaves hidden records out with %s', async (_label, query) => {
+      prisma.product.findMany.mockResolvedValue([]);
+
+      await productService.getProducts(query);
+
+      expect(prisma.product.findMany.mock.calls[0][0].where.isHidden).toBe(false);
+    });
+
+    it('gives null for a hidden record on the product page', async () => {
+      prisma.product.findUnique.mockResolvedValue(null);
+
+      expect(await productService.getProductById(17)).toBeNull();
+      expect(prisma.product.findUnique.mock.calls[0][0].where).toEqual({
+        id: 17,
+        isHidden: false,
+      });
+    });
+
+    it('gives 404 when the stock of a hidden record is changed', async () => {
+      prisma.product.update.mockRejectedValue(
+        Object.assign(new Error('missing'), { code: 'P2025' })
+      );
+
+      await expect(productService.updateStock(17, 5)).rejects.toMatchObject({
+        status: 404,
+        message: 'Product not found',
+      });
+      expect(prisma.product.update.mock.calls[0][0].where).toEqual({ id: 17, isHidden: false });
+    });
+  });
+
+  describe('removeProduct', () => {
+    //test 1: the record is hidden and taken out of every cart in one transaction, stock is not touched
+    it('hides the record and removes it from every cart', async () => {
+      prisma.product.update.mockResolvedValue({ id: 17 });
+      prisma.cartItem.deleteMany.mockResolvedValue({ count: 2 });
+
+      expect(await productService.removeProduct(17)).toEqual({ id: 17, removed: true });
+      expect(prisma.product.update).toHaveBeenCalledWith({
+        where: { id: 17, isHidden: false },
+        data: { isHidden: true },
+        select: { id: true },
+      });
+      expect(prisma.cartItem.deleteMany).toHaveBeenCalledWith({ where: { productId: 17 } });
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    });
+
+    //test 2: a missing or already hidden record matches nothing, prisma says P2025
+    it('turns a missing or already hidden record into a 404', async () => {
+      prisma.product.update.mockRejectedValue(
+        Object.assign(new Error('missing'), { code: 'P2025' })
+      );
+      prisma.cartItem.deleteMany.mockResolvedValue({ count: 0 });
+
+      await expect(productService.removeProduct(17)).rejects.toMatchObject({
+        status: 404,
+        message: 'Product not found',
+      });
+    });
+
+    //test 3: any other database error is passed on unchanged
+    it('rethrows other database errors', async () => {
+      const dbError = new Error('Database unavailable');
+      prisma.product.update.mockRejectedValue(dbError);
+      prisma.cartItem.deleteMany.mockResolvedValue({ count: 0 });
+
+      await expect(productService.removeProduct(17)).rejects.toBe(dbError);
     });
   });
 

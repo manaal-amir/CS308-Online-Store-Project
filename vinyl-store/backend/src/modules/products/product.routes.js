@@ -90,4 +90,14 @@ router.patch(
   productController.updateStock
 );
 
+//only product managers can remove records, the auth is on this route only so the catalog stays public
+//the record is hidden, not deleted, so order history still shows it (requirement 12)
+router.delete(
+  '/:id',
+  authenticate,
+  authorize('PRODUCT_MANAGER'),
+  validate(idRule),
+  productController.removeProduct
+);
+
 module.exports = router;
